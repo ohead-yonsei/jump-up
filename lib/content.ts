@@ -24,7 +24,8 @@ export const missions: Mission[] = [
 export function recommend(energy:Energy,offset=0){const items=missions.filter(m=>energy>=m.min&&energy<=m.max);return Array.from({length:Math.min(3,items.length)},(_,i)=>items[(i+offset)%items.length]);}
 export const scenarios=[
  {id:'cafe',title:'카페에서 주문하기',description:'메뉴 고르기부터 주문 마무리까지',icon:'coffee',tag:'가벼운 시작',role:'카페 직원',opening:'어서 오세요. 어떤 음료로 드릴까요?',hints:['아메리카노 한 잔 주세요.','메뉴를 조금 더 보고 주문해도 될까요?','카페인이 없는 음료도 있나요?'],prompts:['따뜻하게 드릴까요, 차갑게 드릴까요?','매장에서 드시나요, 가지고 가시나요?','네, 주문 도와드렸어요. 편하게 기다려 주세요.']},
- {id:'appointment',title:'전화로 예약하기',description:'원하는 날짜와 시간을 말하는 연습',icon:'phone',tag:'천천히 한 문장',role:'예약 담당자',opening:'안녕하세요. 예약을 도와드릴게요. 언제 방문하고 싶으세요?',hints:['이번 주 금요일 오후에 예약할 수 있을까요?','가능한 시간을 알려주실 수 있나요?','처음 예약하는데 어떻게 하면 될까요?'],prompts:['오후 2시와 4시가 가능해요. 어느 시간이 편하세요?','네, 말씀하신 시간으로 도와드릴게요. 다른 궁금한 점이 있으세요?','예약 연습을 마쳤어요. 실제 예약은 해당 기관에 직접 확인해 주세요.']},
+ {id:'appointment',title:'병원 진료 예약 전화',description:'원하는 날짜와 시간을 말하는 연습',icon:'phone',tag:'천천히 한 문장',role:'병원 접수 담당자',opening:'네, 폴짝의원입니다. 무엇을 도와드릴까요?',hints:['진료 예약을 하고 싶어서 전화드렸어요.','처음 가보는데 예약할 수 있을까요?','가능한 시간을 알려주실 수 있나요?'],prompts:['네, 예약 도와드릴게요. 어떤 진료를 보려고 하세요? 자세히 말하기 어려우면 ‘진료 상담’이라고만 하셔도 돼요.','이번 주 금요일 오후 2시와 4시가 가능해요. 어느 시간이 편하세요?','예약 연습을 마쳤어요. 실제 예약은 병원에 직접 확인해 주세요.']},
+ {id:'interview',title:'아르바이트 면접',description:'짧은 자기소개와 요즘 이야기',icon:'work',tag:'한 걸음 더',role:'편의점 점장',opening:'안녕하세요, 면접 보러 오셨죠? 편하게 앉으세요. 간단히 자기소개 부탁드려요.',hints:['안녕하세요. 아르바이트에 지원했습니다. 잘 부탁드립니다.','조금 긴장되는데 천천히 말해도 될까요?','성실하게 배우면서 일하고 싶어요.'],prompts:['반가워요. 일할 수 있는 요일과 시간은 언제인가요?','좋아요. 최근에는 어떻게 지내셨어요? 편하게 말해도 돼요.','이야기 나눠줘서 고마워요. 면접 연습을 마쳤어요. 실제 면접에서도 지금처럼 천천히 말하면 충분해요.']},
  {id:'hello',title:'오랜만에 안부 전하기',description:'짧은 인사 한마디를 편하게',icon:'chat',tag:'익숙한 사람에게',role:'오랜만에 만난 지인',opening:'오랜만이야. 오늘 만나서 반가워!',hints:['오랜만이야. 나도 반가워.','요즘 어떻게 지내?','나 조금 긴장되는데 천천히 얘기해도 될까?'],prompts:['나는 요즘 동네를 산책하며 지내. 너는 요즘 관심 가는 게 있어?','그렇구나. 편한 만큼만 이야기해도 좋아.','오늘 이야기해 줘서 고마워. 다음에 또 편하게 안부 나누자.']},
 ] as const;
 export type ScenarioId=typeof scenarios[number]['id'];
@@ -44,7 +45,8 @@ export function practiceHints(id: ScenarioId, turn: number, reply = ''): readonl
  if (turn === 0) return scenarios.find(s => s.id === id)!.hints;
  const choices: Record<ScenarioId, string[][]> = {
   cafe: [['따뜻하게 주세요.', '차갑게 주세요.'], ['가져갈게요. 감사합니다.', '여기서 마실게요.']],
-  appointment: [['오후 2시로 할게요.', '오후 4시가 좋아요.'], ['처음 방문할 때 준비할 것이 있나요?', '네, 감사합니다.']],
+  appointment: [['감기 기운이 있어서 진료 받고 싶어요.', '진료 상담을 받고 싶어요.'], ['오후 2시로 할게요.', '오후 4시가 좋아요.']],
+  interview: [['평일 오후에 일할 수 있어요.', '주말 오전이 편해요.'], ['잠시 쉬면서 나를 돌보는 시간을 가졌어요.', '다시 일상을 시작하려고 준비하고 있었어요.']],
   hello: [['요즘 음악 듣는 걸 좋아해.', '나는 아직 잘 모르겠어.'], ['편하게 들어줘서 고마워.', '다음에 또 이야기하자.']],
  };
  return choices[id][Math.min(turn - 1, 1)];
