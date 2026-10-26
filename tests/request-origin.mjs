@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import ts from 'typescript';
+const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
+const source=await fs.readFile(new URL('../lib/request-origin.ts',import.meta.url),'utf8');
+await fs.writeFile(new URL('request-origin.js',out),ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+const {isSameOrigin}=await import(new URL('request-origin.js',out));
+const request=headers=>new Request('http://localhost:3000/api/chat',{headers});
+assert(isSameOrigin(request({host:'127.0.0.1:3000',origin:'http://127.0.0.1:3000'})));
+assert(isSameOrigin(request({host:'poljjak.example','x-forwarded-proto':'https',origin:'https://poljjak.example'})));
+assert(!isSameOrigin(request({host:'poljjak.example','x-forwarded-proto':'https',origin:'https://another.example'})));
+assert(!isSameOrigin(request({host:'poljjak.example','x-forwarded-proto':'https',origin:'http://poljjak.example'})));
+assert(!isSameOrigin(request({host:'poljjak.example'})));
+assert(!isSameOrigin(request({host:'poljjak.example',origin:'null'})));
+console.log('6 origin checks passed: local hostname mapping, HTTPS proxy, cross-site, protocol, absent and opaque origins.');

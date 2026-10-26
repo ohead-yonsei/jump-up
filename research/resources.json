@@ -1,0 +1,90 @@
+[
+  {
+    "id": "seongnam-spring",
+    "title": "성남 청년이봄",
+    "region": "성남",
+    "category": "청년 공간·활동",
+    "description": "청년 활동공간, 문화·정서 프로그램, 커뮤니티와 청년지원 정보를 살펴볼 수 있어요.",
+    "url": "https://www.snspring.or.kr/introduceCenter.do",
+    "phone": "070-4908-2094",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "센터 공식 안내입니다. 프로그램별 대상·모집기간과 공간 이용방법은 홈페이지 또는 센터에 확인해 주세요."
+  },
+  {
+    "id": "gyeonggi-with-me",
+    "title": "경기 고립·은둔 청년지원",
+    "region": "경기",
+    "category": "고립·은둔 지원",
+    "description": "경기도미래세대재단의 ‘나와, 볼만한 세상’ 사업 안내와 지역별 지원 소식을 확인할 수 있어요.",
+    "url": "https://youth.gg.go.kr/gg/intro/isol-notice.do",
+    "phone": "031-247-4209",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "전화는 경기청년포털에 안내된 재단 청년본부 대표번호입니다. 참여 자격·접수 여부는 최신 공지 또는 담당 기관에서 확인해 주세요."
+  },
+  {
+    "id": "seoul-stretch",
+    "title": "서울청년기지개센터",
+    "region": "서울",
+    "category": "고립·은둔 지원",
+    "description": "서울 고립·은둔 청년과 가족을 위한 심리지원, 관계·활동 프로그램과 정책 연결을 안내해요.",
+    "url": "https://youth.seoul.go.kr/youthConts.do?key=2310100062&sc_bbsCtgrySn=2310200007&sc_bbsStngSn=2212200001&sc_faqCtgryCd=013&sc_pbancSeCd=008",
+    "phone": "02-6953-2520",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "공식 안내상 서울 거주 만 19~39세 고립·은둔 청년 및 가족 대상이며 세부 기준과 예외가 있습니다. 접수·이용 가능 여부는 센터에 확인해 주세요."
+  },
+  {
+    "id": "national-youth-center",
+    "title": "온통청년",
+    "region": "전국",
+    "category": "청년 정책·상담",
+    "description": "일자리, 주거, 교육, 복지 등 청년정책을 찾고 자신에게 맞는 지원을 상담할 수 있어요.",
+    "url": "https://www.youthcenter.go.kr/main.do",
+    "phone": "1670-1839",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "전화상담은 평일 09:00~18:00입니다. 각 지원사업의 자격과 신청기간은 해당 공고를 확인해 주세요."
+  },
+  {
+    "id": "welfare-129",
+    "title": "보건복지상담센터 129",
+    "region": "전국",
+    "category": "생활·복지 상담",
+    "description": "생활이 어렵거나 어떤 복지제도를 이용할 수 있는지 궁금할 때 안내받을 수 있어요.",
+    "url": "https://129.go.kr/counsel/counsel01.do",
+    "phone": "129",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "국번 없이 무료. 일반상담은 평일 09:00~18:00, 긴급복지·복지사각지대 등 긴급지원 상담은 24시간입니다."
+  },
+  {
+    "id": "crisis-109",
+    "title": "자살예방상담전화 109",
+    "region": "전국",
+    "category": "지금 필요한 도움",
+    "description": "스스로를 해칠 생각이 들거나 혼자 견디기 어려울 때 전문 상담원과 이야기할 수 있어요.",
+    "url": "https://www.129.go.kr/faq/faq06.do?searchConsultingKeyword=F01&ssn=15223",
+    "phone": "109",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "365일 24시간 상담. 지금 다쳤거나 즉각적인 구조·구급이 필요하면 119, 경찰의 긴급한 도움이 필요하면 112로 연락해 주세요."
+  },
+  {
+    "id": "emergency-112",
+    "title": "경찰 긴급신고 112",
+    "region": "전국",
+    "category": "긴급 신고",
+    "description": "범죄나 위협으로 경찰의 긴급한 도움이 필요할 때 연락해요.",
+    "url": "https://www.112.go.kr/",
+    "phone": "112",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "긴급 상황은 112로 전화해 주세요. 공식 112신고포털에서 문자·영상 등 신고 방법도 안내합니다."
+  },
+  {
+    "id": "emergency-119",
+    "title": "구조·구급 긴급신고 119",
+    "region": "전국",
+    "category": "긴급 신고",
+    "description": "다쳤거나 응급상황, 화재·구조 상황에서 즉각적인 도움이 필요할 때 연락해요.",
+    "url": "https://www.119.go.kr/Center119/mobile/intro01.do",
+    "phone": "119",
+    "checkedAt": "2026-10-14",
+    "availabilityNote": "긴급 상황은 119로 전화해 주세요. 연결된 페이지는 소방청 119안전신고센터의 공식 안내입니다."
+  }
+]
