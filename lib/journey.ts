@@ -1,14 +1,18 @@
 import type {Energy, Mission} from './content';
 export type Goal = 'rhythm' | 'outside' | 'connect';
 export type SpringStage = 0 | 1 | 2 | 3;
-export type JourneyProfile = {version:1; outside:SpringStage; connection:SpringStage; goal:Goal; stage:SpringStage; completed:string[]};
+// 4 = 일상은 잘 지내지만 가끔 다시 혼자 있고 싶은, 고립과 일상을 오가는 리듬.
+export type OutsideLevel = SpringStage | 4;
+export type JourneyProfile = {version:1; outside:OutsideLevel; connection:SpringStage; goal:Goal; stage:SpringStage; completed:string[]};
 export type SpringMission = Mission & {goal:Goal; springStage:SpringStage};
 export const goals = [
  {id:'rhythm' as Goal,title:'내 일상 돌보기',description:'작은 생활 리듬을 만들고 싶어요.',icon:'sun'},
  {id:'outside' as Goal,title:'바깥과 가까워지기',description:'편한 만큼 밖으로 나가보고 싶어요.',icon:'walk'},
  {id:'connect' as Goal,title:'사람과 연결되기',description:'한마디를 나누는 연습을 하고 싶어요.',icon:'chat'},
 ];
-export const outsideOptions=['지금은 방 안이 가장 편해요','집 안이나 문 앞까지는 괜찮아요','익숙한 집 근처는 다닐 수 있어요','익숙한 가게나 공간에 갈 수 있어요'];
+export const outsideOptions=['지금은 방 안이 가장 편해요','집 안이나 문 앞까지는 괜찮아요','익숙한 집 근처는 다닐 수 있어요','익숙한 가게나 공간에 갈 수 있어요','일상 생활을 잘 지내고 있지만 가끔 다시 혼자 있고 싶어요'];
+export const WAVE:OutsideLevel=4;
+export const isWave=(profile:Pick<JourneyProfile,'outside'>|null)=>profile?.outside===WAVE;
 export const connectionOptions=['아직은 혼자 있는 시간이 필요해요','보내지 않을 말을 적어볼 수 있어요','편한 사람과 짧은 안부는 괜찮아요','새로운 대화도 조금 연습하고 싶어요'];
 export const springStages=[
  {title:'포근한 둥지',short:'둥지',description:'지금 있는 곳에서 나를 돌봐요.'},
@@ -16,17 +20,17 @@ export const springStages=[
  {title:'첫 징검다리',short:'징검다리',description:'편한 바깥과 연결을 시도해요.'},
  {title:'넓어지는 연못',short:'연못',description:'궁금한 일상을 내 속도로 만나봐요.'},
 ] as const;
-export function createProfile(outside:SpringStage,connection:SpringStage,goal:Goal):JourneyProfile {
- return {version:1,outside,connection,goal,stage:goal==='outside'?outside:goal==='connect'?connection:0,completed:[]};
+export function createProfile(outside:OutsideLevel,connection:SpringStage,goal:Goal):JourneyProfile {
+ return {version:1,outside,connection,goal,stage:goal==='outside'?Math.min(outside,3) as SpringStage:goal==='connect'?connection:0,completed:[]};
 }
-export function profileFromChoices(previous:JourneyProfile|null,outside:SpringStage,connection:SpringStage,goal:Goal):JourneyProfile {
+export function profileFromChoices(previous:JourneyProfile|null,outside:OutsideLevel,connection:SpringStage,goal:Goal):JourneyProfile {
  if(previous&&previous.outside===outside&&previous.connection===connection&&previous.goal===goal)return {...previous,completed:[...previous.completed]};
  return createProfile(outside,connection,goal);
 }
 export function validProfile(value:unknown):JourneyProfile|null {
  if(!value||typeof value!=='object')return null;
  const p=value as JourneyProfile;const level=(v:unknown)=>Number.isInteger(v)&&Number(v)>=0&&Number(v)<=3;
- if(p.version!==1||!level(p.outside)||!level(p.connection)||!level(p.stage)||!goals.some(g=>g.id===p.goal)||!Array.isArray(p.completed))return null;
+ if(p.version!==1||!(level(p.outside)||p.outside===WAVE)||!level(p.connection)||!level(p.stage)||!goals.some(g=>g.id===p.goal)||!Array.isArray(p.completed))return null;
  return {...p,completed:p.completed.filter(v=>typeof v==='string'&&springMissions.some(m=>m.id===v)).slice(-100)};
 }
 type Seed=[string,string,string,string,string[]];
@@ -51,6 +55,13 @@ const sets:Record<Goal,Seed[][]>={
  ],
 };
 export const springMissions:SpringMission[]=goals.flatMap(g=>sets[g.id].flatMap((group,index)=>group.map(([id,title,description,minutes,steps])=>({id:`${g.id}-${id}`,title,description,minutes,steps,goal:g.id,springStage:index as SpringStage,category:g.title,min:1,max:5,icon:g.icon}))));
+// 일상과 혼자의 시간을 오가는 사람을 위한 '나만의 썰물' 미션. 단계 이동에는 쓰지 않아요.
+export const waveMissions:Mission[]=[
+ ['wave-signal','혼자 있고 싶은 신호 알아차리기','지금 내 마음이 보내는 신호를 이름 붙여봐요.','1분',['요즘 혼자 있고 싶어진 순간을 떠올려요.','피곤함, 북적임, 걱정 중 가까운 것을 골라요.','신호를 알아차린 것만으로도 충분해요.']],
+ ['wave-plan','혼자만의 시간을 미리 정하기','숨는 대신, 쉬는 시간을 내가 정해요.','2분',['오늘이나 내일 쉬고 싶은 시간을 골라요.','그 시간엔 연락을 쉬어도 괜찮다고 정해요.','끝나는 시간도 함께 정해두면 돌아오기 쉬워요.']],
+ ['wave-thread','한 사람에게 쉬는 중이라고 알리기','연결의 끈은 가늘게 남겨둬요.','2분',['편한 사람 한 명을 떠올려요.','“나 며칠 조용히 쉬고 올게” 정도로 짧게 적어요.','보낼지 말지는 내가 정해요.']],
+ ['wave-anchor','하루 하나, 일상의 닻 지키기','쉬는 날에도 지킬 작은 습관 하나.','1분',['식사, 씻기, 창문 열기 중 하나를 골라요.','오늘 그 하나만 지켜봐요.','나머지는 쉬어가도 괜찮아요.']],
+].map(([id,title,description,minutes,steps])=>({id:id as string,title:title as string,description:description as string,minutes:minutes as string,steps:steps as string[],category:'나만의 썰물',min:1,max:5,icon:'leaf'}));
 export function energyCeiling(energy:Energy):SpringStage{return Math.min(3,energy-1) as SpringStage;}
 export function recommendSpring(profile:JourneyProfile,energy:Energy,offset=0):SpringMission[]{
  const ceiling=Math.min(profile.stage,energyCeiling(energy));
