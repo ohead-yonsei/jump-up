@@ -215,3 +215,31 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .breath-circle.in{transform:scale(1)}.breath-circle.out{transform:scale(.72)}
 .breath-guide strong{font-size:15px;color:#3b5a34}.breath-guide small{font-size:12px;color:#8a977e}
 @media(prefers-reduced-motion:reduce){.breath-circle{transition:none}.mic-button.on{animation:none}}
+/* journal: self check-in, note to the team, participant code */
+.mind-check,.app-note{margin-top:16px;padding:18px 16px;border-radius:22px;background:#fff;border:1px solid #edf0e5}
+.mind-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mind-head h2{font-size:19px!important;letter-spacing:-.5px}
+.mind-head .primary,.mind-head .secondary{min-height:40px!important;padding:8px 14px!important;font-size:13px!important;flex-shrink:0}
+.mind-form fieldset{border:0;padding:0;margin:16px 0 0}
+.mind-form legend{font-size:14px;font-weight:650;color:#3b4f35;margin-bottom:8px}
+.mind-scale{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.mind-scale button{display:grid;place-items:center;height:46px;border-radius:14px;border:1.5px solid #e6ecdb;background:#fbfcf7;color:#9db383}
+.mind-scale button.selected{background:#e9f4dc;border-color:#5aa34f;color:#3f8a3a}
+.mind-form .button-row{margin-top:16px;gap:8px}
+.mind-form small{display:block;margin-top:8px;font-size:12px;color:#8a977e}
+.mind-rows{display:grid;gap:10px;margin-top:14px}
+.mind-rows>div{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:6px;font-size:13px;color:#4f6544}
+.mind-dots{display:inline-flex;gap:3px}.mind-dots i{width:9px;height:9px;border-radius:50%;background:#e4eadb}.mind-dots i.on{background:#79b84f}
+.mind-note{font-size:12.5px!important;line-height:1.7;color:#7f8f74;margin-top:12px}
+.app-note h2{display:flex;align-items:center;gap:7px;font-size:18px!important;color:#3b4f35}
+.app-note>p{font-size:12.5px;line-height:1.7;color:#7f8f74;margin:6px 0 10px}
+.app-note textarea{width:100%;border:1.5px solid #e1e8d6;border-radius:14px;padding:12px;font-size:16px;line-height:1.6;resize:none;background:#fbfcf7;color:#3b4f35}
+.app-note-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:12px;color:#8a977e}
+.app-note-foot .secondary{min-height:40px!important;padding:8px 16px!important}
+.participant-code{margin-top:12px;padding:14px;border-radius:16px;background:#f6f8f0}
+.participant-code label{display:block;font-size:13px;font-weight:650;color:#3b4f35}
+.participant-code label small{display:block;font-weight:400;font-size:12px;color:#7f8f74;margin-top:2px}
+.participant-code>div{display:flex;gap:8px;margin-top:8px}
+.participant-code input{flex:1;min-width:0;border:1.5px solid #e1e8d6;border-radius:12px;padding:10px 12px;font-size:16px;background:#fff}
+.participant-code .secondary{min-height:44px!important;padding:8px 16px!important}
+.participant-code .error{display:block;margin-top:6px;font-size:12px;color:#c0574d}

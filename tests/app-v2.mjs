@@ -16,6 +16,15 @@ await test('CSV preserves Korean, quotes, newlines and missing energy',()=>{
  const csv=r.recordsCsv([{...entry,title:'말 "한 줄"\n연습',energy:null}]);
  assert(csv.startsWith('\uFEFF'));assert(csv.includes('"말 ""한 줄""\n연습"'));assert(csv.includes('"session-only"'));assert(!csv.includes('undefined'));
 });
+await test('self check-ins and notes are validated, exported and kept out of the activity garden',()=>{
+ const check={...entry,id:'c1',type:'checkin',title:'마음 살펴보기',calm:2,talk:3,outside:1};
+ assert.equal(r.validEntries([check,{...check,id:'c2',calm:9},{...check,id:'c3',note:'x'.repeat(301)}]).length,1);
+ const csv=r.recordsCsv([check,{...entry,id:'n1',type:'feedback',title:'폴짝에게 한마디',note:'글씨가 작아요'}],'P07');
+ assert(csv.includes('"calm","talk_comfort","outside_comfort","note"'));assert(csv.includes('"글씨가 작아요"'));assert(csv.includes('"P07"'));
+ const now=new Date('2026-10-24T15:00:00+09:00');assert.equal(r.weekMoments([{...check,at:now.toISOString()}],now)[6].count,0);
+ assert.equal(r.checkinDue([],now),true);assert.equal(r.checkinDue([{...check,at:'2026-10-20T12:00:00.000Z'}],now),false);assert.equal(r.checkinDue([{...check,at:'2026-10-10T12:00:00.000Z'}],now),true);
+ assert(r.validParticipant('P07'));assert(!r.validParticipant('홍길동'));assert(!r.validParticipant('a b'));
+});
 await test('CSV neutralizes spreadsheet formula cells',()=>{
  const csv=r.recordsCsv([{...entry,title:'=SUM(A1:A3)'}],'@untrusted');
  assert(csv.includes('"\'=SUM(A1:A3)"'));assert(csv.includes('"\'@untrusted"'));
