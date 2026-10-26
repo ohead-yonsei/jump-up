@@ -7,7 +7,7 @@ import {PoljjakJourney} from './poljjak-journey';
 import {PoljjakOnboarding} from './poljjak-onboarding';
 import {FrogMark,BrandLogo,Splash} from './frog-mark';
 import {CharacterCloset} from './character-closet';
-import {emptyGame,validGame,demoGame,createCharacter,earnActivity,balance,collectItem,removeItem,wearLook,looks,type Character,type CharacterGame} from '@/lib/character';
+import {emptyGame,validGame,demoGame,createCharacter,earnActivity,balance,collectItem,removeItem,wearLook,looks,claimReturn,RETURN_GIFT,type Character,type CharacterGame} from '@/lib/character';
 import {validProfile,demoProfile,type JourneyProfile} from '@/lib/journey';
 import {useAppPlatform,InstallGuide,OfflineNotice} from './app-install';
 import {haptic} from './frog-3d';
@@ -73,7 +73,7 @@ export default function OneStep({demo=false,demoStep=0}:{demo?:boolean;demoStep?
   <div className="workspace"><header className="topbar app-bar"><a className="app-logo" href="/" aria-label="폴짝 처음 화면"><BrandLogo height={26}/></a><div className="top-actions">{game.character&&<button className="leaf-chip" onClick={()=>go('closet')} aria-label={`모은 잎 ${balance(game)}잎, 꾸미기 열기`}><Leaf size={15}/><strong>{balance(game)}</strong></button>}<button onClick={()=>setModal('help')} className="help-button" aria-label="지금 도움이 필요해요"><Heart size={19}/></button><button className="icon-button app-menu" aria-label="앱 메뉴" onClick={()=>setModal('menu')}><MoreHorizontal size={22}/></button></div></header>
   {!platform.online&&<OfflineNotice/>}{demo&&<div className="demo-notice"><span/>발표용 체험 · 예시 대화 · 가상 기록</div>}
   <main id="main" tabIndex={-1}><div key={tab} className="screen">
-  {tab==='today'&&<PoljjakJourney game={game} profile={profile} onProfile={setProfile} energy={energy} onEnergy={chooseEnergy} onRecord={add} onNavigate={go} onStartCheck={openOnboarding} demoScene={demo?demoStep:undefined}/>}
+  {tab==='today'&&<PoljjakJourney game={game} profile={profile} onProfile={setProfile} energy={energy} onEnergy={chooseEnergy} onRecord={add} onNavigate={go} onStartCheck={openOnboarding} onClaimReturn={()=>{setGame(g=>claimReturn(g));setToast(`다시 만나서 반가워요. 환영 선물 ${RETURN_GIFT}잎을 받았어요.`)}} demoScene={demo?demoStep:undefined}/>}
   {tab==='closet'&&<CharacterCloset game={game} save={save} demo={demo} onCharacter={c=>{setGame(g=>createCharacter(g,c));setToast(game.character?'친구의 새 모습을 저장했어요.':'첫 만남의 선물, 30잎을 받았어요!')}} onCollect={id=>{setGame(g=>collectItem(g,id));setToast('내 옷장에서 꺼내 입었어요.')}} onLook={id=>{const look=looks.find(l=>l.id===id);if(!look)return;setGame(g=>wearLook(g,look));setToast(`‘${look.title}’ 코디로 갈아입었어요.`)}} onRemove={slot=>setGame(g=>removeItem(g,slot))} onEarn={()=>go('today')} onSave={toggleSave}/>}
   {tab==='practice'&&<>
    <div className="page-heading"><span className="eyebrow">A SAFE PLACE TO PRACTICE</span><h1>말해보기 전에,<br/>편하게 연습해요.</h1><p>완벽한 문장이 아니어도 괜찮아요. 멈추고 싶을 때는 언제든 멈춰요.</p></div>

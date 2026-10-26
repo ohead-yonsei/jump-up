@@ -82,13 +82,27 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .pond-stage-bottom>span{display:flex;align-items:center;gap:6px;font-size:12px;color:#5c7a4f;font-weight:600}
 .pond-stage-bottom>button{display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:15px;background:linear-gradient(180deg,#3d9a4c,#2f8441);color:#fff;font-size:13px;font-weight:650}
 .pond-stage-bottom>button:active{transform:scale(.96)}
-/* home: wave rhythm card */
-.wave-card{margin-top:16px;border-radius:24px;padding:20px 18px;background:linear-gradient(160deg,#eef4fb,#f4f1fb 60%,#fbf3ee);border:1px solid #e3e5f1}
+/* home: care cards (rest rhythm, bedtime) and the welcome-back gift */
+.care-card{margin-top:16px;border-radius:24px;padding:20px 18px;background:linear-gradient(160deg,#eef4fb,#f4f1fb 60%,#fbf3ee);border:1px solid #e3e5f1}
+.night-card{background:linear-gradient(160deg,#2f3557,#43406b 60%,#5a4f78);border-color:#4b4a72}.night-card h2,.night-card .wave-list strong,.night-card .wave-detail h3{color:#f4f1ff!important}.night-card>p,.night-card .step-label{color:#c9c6e6!important}.night-card .wave-icon{background:#ffffff1f;color:#ffe7a3}.night-card .wave-list>button{background:#ffffff14;border-color:#ffffff22;color:#e6e2ff}.night-card .wave-list small{color:#b9b6da}.night-card .wave-detail{background:#ffffff14}.night-card .wave-detail ol{color:#ddd9fb}.night-card .wave-done{background:#ffffff14;color:#cfe8c8}.night-card .wave-done strong{color:#fff}.night-card .close{color:#ddd9fb}
+.return-card{display:grid;grid-template-columns:auto 1fr;gap:12px;margin-top:16px;padding:18px;border-radius:24px;background:linear-gradient(150deg,#fff7df,#fdf0e4);border:1px solid #f1e3c4}
+.return-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:#fff;color:#d4974a;box-shadow:0 4px 12px #b0874a1f}
+.return-card h2{font-size:17px!important;line-height:1.45;letter-spacing:-.5px;color:#5b4524}
+.return-card p{font-size:12.5px;line-height:1.7;color:#8a7553;margin-top:4px}
+.return-card .primary{grid-column:1/-1;width:100%}
+.frog-says{display:flex;align-items:center;gap:8px;margin:12px auto 0;padding:10px 14px;max-width:320px;border-radius:16px;background:#fff;color:#3f6b33!important;font-size:13.5px!important;line-height:1.6;text-align:left;box-shadow:0 4px 14px #3c5a2a14}
+.pond-stage.is-night{background:linear-gradient(180deg,#2d3358 0,#454472 46%,#5d6c78 100%);box-shadow:inset 0 0 0 1px #3b3f68}
+.is-night .pond-stage-copy>span,.is-night .pond-stage-copy h1{color:#f3f0ff}.is-night .pond-stage-copy h1 em{color:#c8e89a}
+.is-night .pond-stage-hint{background:#ffffff26;color:#eae6ff}
+.is-night .sun{background:radial-gradient(circle,#fff6d6 0,#fff2c255 38%,transparent 62%)!important;right:24px!important;top:22px!important;width:70px!important;height:70px!important}
+.is-night .stars{position:absolute;inset:0 0 50% 0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 70% 18%,#fff,transparent),radial-gradient(1px 1px at 45% 42%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 46%,#fff,transparent),radial-gradient(1px 1px at 10% 60%,#fff,transparent);opacity:.8}
+.is-night .cloud{opacity:.18!important}.is-night .hill{filter:brightness(.55) saturate(.7)}.is-night .water{filter:brightness(.6)}.is-night .pad{filter:brightness(.75)}
+.is-night .pond-stage-bottom{background:#ffffff1f}.is-night .pond-stage-bottom>span{color:#e6e2ff}
 .wave-head{display:flex;gap:12px;align-items:center}
 .wave-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:#fff;color:#7c8fc2;box-shadow:0 4px 12px #5d6ea01a;flex-shrink:0}
-.wave-card h2{font-size:18px!important;line-height:1.45;letter-spacing:-.6px;color:#3c4a6b}
-.wave-card .step-label{color:#8a96b8}
-.wave-card>p{font-size:13px;line-height:1.8;color:#68708a;margin-top:12px}
+.care-card h2{font-size:18px!important;line-height:1.45;letter-spacing:-.6px;color:#3c4a6b}
+.care-card .step-label{color:#8a96b8}
+.care-card>p{font-size:13px;line-height:1.8;color:#68708a;margin-top:12px}
 .wave-list{display:grid;gap:8px;margin-top:14px}
 .wave-list>button{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:13px 14px;border-radius:16px;background:#ffffffd6;border:1px solid #e7e8f3;color:#5d6f9f}
 .wave-list strong{display:block;font-size:14px;color:#3f4a66;font-weight:650}

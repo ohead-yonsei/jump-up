@@ -39,9 +39,9 @@ export const wardrobeItems:WardrobeItem[]=[
  {id:'laptop',name:'작은 노트북',slot:'hand',price:80,description:'궁금한 것을 천천히 찾아보는 시간.',tag:'집중 모드'},
  {id:'teddy',name:'곰돌이 친구',slot:'hand',price:90,description:'꼭 안으면 마음이 말랑해지는 친구.',tag:'든든한 품'},
  {id:'happy',name:'활짝 웃음',slot:'face',price:0,description:'기분 좋은 날의 눈웃음.',tag:'오늘의 표정'},
- {id:'wink',name:'찡긋 윙크',slot:'face',price:10,description:'나에게 보내는 작은 응원.',tag:'오늘의 표정'},
- {id:'sleepy',name:'꾸벅꾸벅',slot:'face',price:15,description:'졸린 날엔 졸린 대로 괜찮아요.',tag:'오늘의 표정'},
- {id:'surprise',name:'깜짝!',slot:'face',price:15,description:'새로운 걸 만난 동그란 눈.',tag:'오늘의 표정'},
+ {id:'wink',name:'찡긋 윙크',slot:'face',price:0,description:'나에게 보내는 작은 응원.',tag:'오늘의 표정'},
+ {id:'sleepy',name:'꾸벅꾸벅',slot:'face',price:0,description:'졸린 날엔 졸린 대로 괜찮아요.',tag:'오늘의 표정'},
+ {id:'surprise',name:'깜짝!',slot:'face',price:0,description:'새로운 걸 만난 동그란 눈.',tag:'오늘의 표정'},
 ];
 export type Look={id:string;title:string;note:string;image:string;equipped:Partial<Record<Slot,string>>};
 // Example outfits from the character sheet. Applying one keeps the friend's own colour.
@@ -62,7 +62,7 @@ export const looks:Look[]=[
  {id:'scroll',title:'뒹굴뒹굴',note:'나의 폰 · 활짝 웃음',image:'/looks/scroll.webp',equipped:{hand:'phone',face:'happy'}},
  {id:'bedtime',title:'곰돌이와 잘 자',note:'수면 모자 · 곰돌이 · 활짝 웃음',image:'/looks/bedtime.webp',equipped:{head:'nightcap',hand:'teddy',face:'happy'}},
 ];
-export type Reward={key:string;day:string;amount:number;kind:'welcome'|'step'|'practice'|'rest'};
+export type Reward={key:string;day:string;amount:number;kind:'welcome'|'step'|'practice'|'rest'|'return'};
 export type CharacterGame={version:1;character:Character|null;owned:string[];equipped:Partial<Record<Slot,string>>;rewards:Reward[]};
 export const emptyGame=():CharacterGame=>({version:1,character:null,owned:['sprout'],equipped:{head:'sprout'},rewards:[]});
 export function cleanCharacter(value:unknown):Character|null{
@@ -77,6 +77,16 @@ export function createCharacter(game:CharacterGame,character:Character,date=new 
 }
 export function balance(game:CharacterGame){return game.rewards.reduce((n,r)=>n+r.amount,0)-wardrobeItems.filter(i=>game.owned.includes(i.id)).reduce((n,i)=>n+i.price,0);}
 export function activityDays(game:CharacterGame){return new Set(game.rewards.filter(r=>r.kind!=='welcome').map(r=>r.day)).size;}
+const daysBetween=(a:string,b:string)=>Math.round((Date.parse(b+'T12:00:00')-Date.parse(a+'T12:00:00'))/864e5);
+export const RETURN_GAP=3,RETURN_GIFT=10;
+/** Coming back after a quiet stretch is celebrated, never penalised. Returns how long the friend waited. */
+export function returnGift(game:CharacterGame,date=new Date()){
+ const today=dayKey(date);if(!game.character||!game.rewards.length||game.rewards.some(r=>r.day===today))return null;
+ const last=game.rewards.reduce((m,r)=>r.day>m?r.day:m,'');const away=daysBetween(last,today);return away>=RETURN_GAP?{away}:null;
+}
+export function claimReturn(game:CharacterGame,date=new Date()):CharacterGame{
+ if(!returnGift(game,date))return game;const day=dayKey(date);return {...game,rewards:[...game.rewards,{key:`${day}:return`,day,amount:RETURN_GIFT,kind:'return'}]};
+}
 export function earnActivity(game:CharacterGame,kind:'step'|'practice'|'rest',id:string,date=new Date()):CharacterGame{
  if(!id.trim())return game;const day=dayKey(date);const key=`${day}:${kind}:${kind==='rest'?'rest':id}`;
  const amount=kind==='practice'?15:kind==='step'?10:5;const cap=kind==='rest'?5:30;
@@ -102,6 +112,7 @@ export function validGame(raw:unknown):CharacterGame{
   if(!candidate||typeof candidate!=='object')continue;const r=candidate as Reward;
   if(typeof r.key!=='string'||typeof r.day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(r.day)||keys.has(r.key))continue;
   if(r.kind==='welcome'){if(r.key!=='welcome'||r.amount!==30||!character)continue;}
+  else if(r.kind==='return'){const last=rewards.reduce((m,x)=>x.day>m?x.day:m,'');if(r.amount!==RETURN_GIFT||r.key!==`${r.day}:return`||!last||daysBetween(last,r.day)<RETURN_GAP)continue;}
   else if(['step','practice','rest'].includes(r.kind)){
    const expected=r.kind==='practice'?15:r.kind==='step'?10:5;
    if(r.amount!==expected||!r.key.startsWith(`${r.day}:${r.kind}:`)||r.key===`${r.day}:${r.kind}:`)continue;
