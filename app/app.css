@@ -243,3 +243,14 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .participant-code input{flex:1;min-width:0;border:1.5px solid #e1e8d6;border-radius:12px;padding:10px 12px;font-size:16px;background:#fff}
 .participant-code .secondary{min-height:44px!important;padding:8px 16px!important}
 .participant-code .error{display:block;margin-top:6px;font-size:12px;color:#c0574d}
+/* readability: nothing a person needs to read is smaller than 11px on a phone */
+.app-root .step-label,.app-root .eyebrow,.app-root .onboarding-eyebrow{font-size:11px!important;letter-spacing:.6px!important}
+.app-root .onboarding-world-copy>span{font-size:10px!important}
+.app-root .mission-meta>span:last-child,.app-root .mission-card .category,.app-root .checked-date,.app-root .speaker,.app-root .composer-foot,.app-root .goal-line>span:last-child,.app-root .journey-path,.app-root .onboarding-footnote,.app-root .onboarding-bottom-note,.app-root .onboarding-demo{font-size:11.5px!important}
+.app-root .entry p,.app-root .chat-head span,.app-root .scale-labels,.app-root .hint-label,.app-root .practice-finish small,.app-root .journal-summary>p,.app-root .storage-caption,.app-root .entry-detail,.app-root .check-note,.app-root .route-note,.app-root .energy-note,.app-root .mission-reason,.app-root .spring-footer p,.app-root .onboarding-intro-path,.app-root .onboarding-reassurance p,.app-root .onboarding-progress-title,.app-root .onboarding-review-list span,.app-root .lily-stop,.app-root .mode-badge,.app-root .feedback-inline>.subtle{font-size:12px!important}
+.app-root .mission-card .mission-cta,.app-root .text-button,.app-root .onboarding-skip,.app-root .energy-short{font-size:12.5px!important}
+.app-root .mission-card p,.app-root .scenario-card p,.app-root .teaser p,.app-root .resource-card p,.app-root .page-heading>p,.app-root .small-note p{font-size:13px!important;line-height:1.75!important}
+.app-root .mission-card h3{font-size:17px!important}
+.app-root .message p{font-size:14px!important}
+.app-root .hints button{font-size:13px!important}
+.app-root .rest-link{font-size:13px!important}
