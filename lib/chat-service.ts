@@ -1,6 +1,14 @@
 import {isScenarioId,scenarios,needsSupport,supportiveText, type ScenarioId} from './content';
 export type ChatMessage={role:'user'|'assistant';content:string};
 export type ChatInput={scenario:ScenarioId;messages:ChatMessage[];consent:true};
+/** Hints are asked for after the reply arrives, so their history ends with the partner's line. */
+export function validateHints(value:unknown):ChatInput|null{
+ if(!value||typeof value!=='object')return null;const v=value as Record<string,unknown>;
+ if(!Array.isArray(v.messages))return null;const last=v.messages.at(-1) as Record<string,unknown>|undefined;
+ if(last?.role!=='assistant'||typeof last.content!=='string'||!last.content.trim()||last.content.length>600)return null;
+ const head=validateChat({...v,messages:v.messages.slice(0,-1)});
+ return head&&{...head,messages:[...head.messages,{role:'assistant',content:last.content.trim()}]};
+}
 export function validateChat(value:unknown):ChatInput|null{
  if(!value||typeof value!=='object')return null;const v=value as Record<string,unknown>;
  if(!isScenarioId(v.scenario)||v.consent!==true||!Array.isArray(v.messages)||v.messages.length<1||v.messages.length>14)return null;
@@ -27,7 +35,7 @@ const facts:Record<ScenarioId,{me:string;label:string;user:string;speech:Speech;
   example:{user:'평일 오후에 일할 수 있어요.',reply:'좋아요, 평일 오후면 저희도 딱 좋아요. 요즘은 어떻게 지내셨어요?',hints:['집에서 쉬면서 지냈어요.','그냥 천천히 지냈어요.']}},
  support:{me:'청년지원센터 상담 선생님',label:'상담 선생님',user:'처음 문의하는 청년',speech:'polite',tone:'따뜻하고 차분한',facts:'고립·은둔 청년을 위한 1:1 상담, 집 근처나 집으로 찾아가는 상담, 비슷한 경험을 한 청년들의 작은 모임, 생활 리듬과 취미를 되찾는 일상 회복 프로그램이 있음. 많은 곳이 만 19~39세를 청년으로 보지만 지역·기관마다 조금씩 다름. 처음 상담은 서류 없이 할 수 있는 경우가 많고, 공공 기관 상담은 무료인 경우가 많음. 나이와 사는 지역 정도는 나중에 확인함. 연락은 전화·문자·방문 중 편한 방법으로 시작. 가족에게 알릴지는 본인과 먼저 상의함. 확실하지 않은 것은 약속하지 말고, 실제 조건은 기관마다 다르니 확인해 보겠다고 말함. 어려움을 자세히 캐묻지 말고 이런 도움을 짧게 안내해.',flow:'① 용건 듣기 → ② 받을 수 있는 도움 안내(잘 몰라도 괜찮다고) → ③ 편한 연락 방법 → 연락해줘서 고맙다며 마무리(done=true).',
   example:{user:'문자로 연락해도 되나요?',reply:'네, 문자로 시작해도 괜찮아요. 편할 때 천천히 보내 주시면 돼요.',hints:['그럼 문자로 해볼게요.','답장은 언제쯤 오나요?']}},
- hello:{me:'사용자와 오랜만에 만난 친구',label:'친구',user:'오랜만에 친구를 만난 사람',speech:'casual',tone:'다정하고 편한',facts:'너는 요즘 동네 산책을 하며 지내고, 아침 커피를 좋아함. 네 이야기는 짧게 하고 상대 이야기를 더 들어줌. 상대가 무엇을 하며 지냈든 반갑게 받아들임.',flow:'① 반가운 인사 → ② 요즘 지내는 이야기 → ③ 관심 있는 것 → 다음에 또 보자며 마무리(done=true).',
+ hello:{me:'사용자와 오랜만에 만난 친구',label:'친구',user:'오랜만에 친구를 만난 사람',speech:'casual',tone:'다정하고 편한',facts:'너는 요즘 동네 산책을 하며 지내고, 아침 커피를 좋아함. 네 이야기는 짧게 하고 상대 이야기를 더 들어줌. 상대가 무엇을 하며 지냈든 반갑게 받아들임. 상대가 힘들었다고 하면 왜 힘들었는지, 무슨 일이 있었는지 묻지 말고 "그랬구나, 말해줘서 고마워"처럼 받아준 뒤, 대답하기 쉬운 가벼운 이야기(요즘 보는 것, 날씨, 산책)로 넘어가.',flow:'① 반가운 인사 → ② 요즘 지내는 이야기 → ③ 관심 있는 것 → 다음에 또 보자며 마무리(done=true).',
   example:{user:'나는 그냥 집에서 지냈어.',reply:'그랬구나, 집에서 푹 쉬는 것도 좋지. 요즘 재밌게 보는 거 있어?',hints:['요즘 영화를 가끔 봐.','딱히 없어. 너는?']}},
 };
 const speechRule:Record<Speech,{rule:string;hint:string;thanks:string;dodge:string;pause:string[]}>={
@@ -47,7 +55,7 @@ export function systemPrompt(id:ScenarioId,userTurns=1){
 1. 사용자가 방금 한 말에 먼저 자연스럽게 반응해. 질문을 받으면 그 질문에 먼저 답해.
 2. 실제 그 상황의 ${f.me}가 할 법한 말만 해. 상담사처럼 감정을 분석하거나 조언하지 마.
 3. 표현을 평가하거나 고쳐주지 마. 과한 칭찬도 하지 마. 어색한 문장도 뜻을 알아듣고 자연스럽게 이어가.
-4. 재촉하거나 캐묻지 마. 쉬었던 기간·공백·나이·사는 곳·학교·직업을 묻지 마. 사용자가 공백이나 힘들었던 이야기를 꺼내면 "${sp.thanks}"처럼 가볍게 받아주고 문제 삼지 마.
+4. 재촉하거나 캐묻지 마. 쉬었던 기간·공백·나이·사는 곳·학교·직업을 묻지 마. 사용자가 공백이나 힘들었던 이야기를 꺼내면 "${sp.thanks}"처럼 가볍게 받아주고, 이유나 사정은 묻지 마. 문제 삼지도 마.
 5. 사용자가 머뭇거리거나 "모르겠다"고 하면 그대로 따라 말할 수 있는 짧은 문장을 하나 알려주고 기다려.
 6. 이름·전화번호·주소 같은 개인정보는 묻지 마(부를 이름도 묻지 마). 역할극 안에서 주문이나 예약을 받아 마무리하는 건 괜찮아.
 7. 의료·법률·돈 문제를 판단하거나 진단하지 마. 위험한 행동을 안내하지 마.
@@ -65,6 +73,7 @@ export function hintPrompt(id:ScenarioId,history:{role:string;content:string}[])
  const sp=speechRule[f.speech];const pause=sp.pause[history.length%sp.pause.length];
  return `아래는 '${s.title}' 연습 대화야. ${who} = ${f.me}, [나] = ${f.user}. [나]는 한동안 집에서 지내며 사람과 대화하는 게 오랜만인 청년이야.
 ${lines}
+마지막 ${who}의 말: "${history.at(-1)?.content??''}"
 [나]가 바로 이어서 ${who}에게 그대로 말할 수 있는 대답 2개를 써.
 - 마지막 ${who}의 말에 대한 [나]의 대답이야. 질문을 받았으면 그 질문에 답해.
 - ${sp.hint}로, 각 20자 안팎의 쉬운 말. 하나는 질문에 바로 답하는 말, 하나는 다르게 답하거나 시간을 버는 말(예: "${pause}").
@@ -109,27 +118,34 @@ export function cleanTeamReply(raw:unknown,userTurns:number,id?:ScenarioId){
  const hints=cleanHints(r.hints,id,reply);
  return {reply,done:r.done||userTurns>=6,support:false,hints};
 }
-export async function generateTeamReply(input:ChatInput,server:TeamServer,fetcher:typeof fetch=fetch){
- const last=input.messages.at(-1)!.content;
- if(needsSupport(last))return {reply:supportiveText,done:true,support:true,hints:[] as string[]};
- const turns=input.messages.filter(m=>m.role==='user').length;
- const call=async(messages:{role:string;content:string}[],format:object,temperature:number,num_predict:number,ms:number)=>{
+type Call=(messages:{role:string;content:string}[],format:object,temperature:number,num_predict:number,ms:number)=>Promise<unknown>;
+function caller(server:TeamServer,fetcher:typeof fetch):Call{
+ return async(messages,format,temperature,num_predict,ms)=>{
   const res=await fetcher(server.base+'/api/chat',{method:'POST',headers:{'Content-Type':'application/json',...(server.key?{Authorization:`Bearer ${server.key}`}:{})},signal:AbortSignal.timeout(ms),body:JSON.stringify({
    model:server.model,stream:false,keep_alive:'30m',format,options:{temperature,num_predict},messages})});
   if(!res.ok)throw new Error('provider_unavailable');
   const data=await res.json() as {message?:{content?:string}};
   try{return JSON.parse(data.message?.content??'') as unknown;}catch{throw new Error('invalid_reply');}
  };
+}
+/** The partner's reply only; the app asks for suggested lines separately so the reply shows sooner. */
+export async function generateTeamReply(input:ChatInput,server:TeamServer,fetcher:typeof fetch=fetch){
+ const last=input.messages.at(-1)!.content;
+ if(needsSupport(last))return {reply:supportiveText,done:true,support:true,hints:[] as string[]};
+ const turns=input.messages.filter(m=>m.role==='user').length;const call=caller(server,fetcher);
  const ask=async(temperature:number)=>cleanTeamReply(await call([{role:'system',content:systemPrompt(input.scenario,turns)},...input.messages],schema,temperature,160,40000),turns,input.scenario);
  let result=await ask(.4);
  // A reply that slips out of the scenario's speech level gets one calmer retry.
  if(!result.support&&!keepsSpeech(input.scenario,result.reply))result=await ask(.15).catch(()=>result);
  if(!result.support&&!result.done&&turns>=5&&closing.test(last))result={...result,done:true};
  if(result.done&&!result.support)result={...result,reply:settle(result.reply)};
- if(result.support||result.done)return result;
- const hints=await call([{role:'system',content:'너는 대화 연습 앱에서 사용자가 고를 수 있는 대답 예시를 쓰는 작가야. JSON만 출력해.'},{role:'user',content:hintPrompt(input.scenario,[...input.messages,{role:'assistant',content:result.reply}])}],hintSchema,.5,120,15000)
-  .then(h=>cleanHints((h as {hints?:unknown})?.hints,input.scenario,result.reply)).catch(()=>[] as string[]);
- return {...result,hints};
+ return {...result,hints:[] as string[]};
+}
+/** Two lines the user could say next, written out of character from the transcript that ends with the partner's reply. */
+export async function generateTeamHints(input:ChatInput,server:TeamServer,fetcher:typeof fetch=fetch){
+ if(input.messages.some(m=>m.role==='user'&&needsSupport(m.content)))return [] as string[];
+ const h=await caller(server,fetcher)([{role:'system',content:'너는 대화 연습 앱에서 사용자가 고를 수 있는 대답 예시를 쓰는 작가야. JSON만 출력해.'},{role:'user',content:hintPrompt(input.scenario,input.messages)}],hintSchema,.5,120,15000);
+ return cleanHints((h as {hints?:unknown})?.hints,input.scenario,input.messages.at(-1)!.content);
 }
 /** Loads the model into memory before the first message so the first reply is not a cold start. */
 export async function warmTeamServer(server:TeamServer,fetcher:typeof fetch=fetch){
