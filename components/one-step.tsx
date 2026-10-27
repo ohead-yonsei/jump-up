@@ -11,6 +11,7 @@ import {emptyGame,validGame,demoGame,createCharacter,earnActivity,balance,collec
 import {validProfile,demoProfile,type JourneyProfile} from '@/lib/journey';
 import {useAppPlatform,InstallGuide,OfflineNotice} from './app-install';
 import {haptic} from './frog-3d';
+import {applyTone} from './tone';
 import {useVoice} from './use-voice';
 import {BreathGuide} from './breath-guide';
 import {MindCheck,AppNote,ParticipantCode} from './mind-check';
@@ -49,6 +50,7 @@ export default function OneStep({demo=false,demoStep=0}:{demo?:boolean;demoStep?
  useEffect(()=>{if(!ready||demo)return;if(save){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({version:1,save:true,participant,entries,profile,game}));}catch{setToast('기기에 기록을 저장하지 못했어요. 내보내기로 보관해 주세요.');}}},[entries,profile,game,save,ready,participant,demo]);
  useEffect(()=>{if(toast){const t=setTimeout(()=>setToast(''),4000);return ()=>clearTimeout(t)}},[toast]);
  useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:'smooth',block:'nearest'})},[messages,busy]);
+ useEffect(()=>{applyTone(game.character?.color);},[game.character?.color]);
  useEffect(()=>{if(tab==='practice'&&provider==='team'&&!warmed.current){warmed.current=true;fetch('/api/chat?warm=1').catch(()=>{});}},[tab,provider]);
  useEffect(()=>{voice.stopSpeaking();voice.stopListening();setBreath(false);},[tab,stage]);// eslint-disable-line react-hooks/exhaustive-deps
  // Read the other person's newest line aloud when the listener is on.

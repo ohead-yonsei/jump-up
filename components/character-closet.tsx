@@ -5,12 +5,13 @@ import {Leaf,ArrowRight,Check,Gift,Shirt,Glasses,Crown,X,Sparkles,Coffee,Smile,P
 import {activityDays,balance,lookCost,looks,suggestName,wardrobeItems,type Character,type CharacterGame,type Slot} from '@/lib/character';
 import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
 import {CharacterEditor} from './character-editor';
+import {useTonePreview} from './tone';
 type Tab='looks'|Slot|'color';
 const tabs:{id:Tab;label:string;Icon:typeof Crown}[]=[{id:'looks',label:'코디 예시',Icon:Sparkles},{id:'head',label:'모자',Icon:Crown},{id:'eyes',label:'안경',Icon:Glasses},{id:'outfit',label:'옷',Icon:Shirt},{id:'hand',label:'소품',Icon:Coffee},{id:'face',label:'표정',Icon:Smile},{id:'color',label:'색 · 이름',Icon:Palette}];
 const slotLabel:Record<Slot,string>={head:'모자',eyes:'안경',outfit:'옷',hand:'소품',face:'표정'};
 type Props={game:CharacterGame;save:boolean;demo:boolean;onCharacter:(c:Character)=>void;onCollect:(id:string)=>void;onLook:(id:string)=>void;onRemove:(slot:Slot)=>void;onEarn:()=>void;onSave:()=>void};
 export function CharacterCloset({game,save,demo,onCharacter,onCollect,onLook,onRemove,onEarn,onSave}:Props){
- const [tab,setTab]=useState<Tab>('looks');const [selected,setSelected]=useState<string|null>(null);const [lookId,setLookId]=useState<string|null>(null);const [draft,setDraft]=useState<Character>(()=>game.character??{name:suggestName(),color:'leaf'});
+ const [tab,setTab]=useState<Tab>('looks');const [selected,setSelected]=useState<string|null>(null);const [lookId,setLookId]=useState<string|null>(null);const [draft,setDraft]=useState<Character>(()=>game.character??{name:suggestName(),color:'leaf'});useTonePreview(!game.character||tab==='color'?draft.color:null);
  const frog=useRef<Frog3DHandle>(null);
  const coins=balance(game);const item=wardrobeItems.find(i=>i.id===selected);const look=looks.find(l=>l.id===lookId);
  const owned=!!item&&game.owned.includes(item.id);const wearing=!!item&&game.equipped[item.slot]===item.id;const cost=look?lookCost(game,look):0;

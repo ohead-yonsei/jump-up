@@ -4,8 +4,13 @@ import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
 const source=await fs.readFile(new URL('../lib/character.ts',import.meta.url),'utf8');
 await fs.writeFile(new URL('character.js',out),ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
-const c=await import(new URL('character.js',out));let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
+const c=await import(new URL('character.js',out));const appCss=await fs.readFile(new URL('../app/app.css',import.meta.url),'utf8');let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
 const day=new Date(2026,9,26,12),nextDay=new Date(2026,9,27,12);
+test('every friend color has a full tone whose accent reads at least as well as the team blue',()=>{
+ const css=appCss;const lum=h=>{const [r,g,b]=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:((v+.055)/1.055)**2.4);return .2126*r+.7152*g+.0722*b};const onWhite=h=>1.05/(lum(h)+.05);
+ for(const color of c.frogColors.filter(f=>f.id!=='sky')){const rule=css.match(new RegExp(`:root\\[data-tone=${color.id}\\]\\{([^}]*)\\}`));assert(rule,color.id);for(const t of ['--btn','--accent','--sky','--sky-2'])assert.match(rule[1],new RegExp(t+':#[0-9a-f]{6}'));assert(onWhite(rule[1].match(/--accent:(#[0-9a-f]{6})/)[1])>=onWhite('#5bb5e3'),color.id);}
+ assert.equal((css.match(/#5bb5e3/gi)||[]).length,1);
+});
 test('suggested nicknames are two gentle words, fit the 12-character field and change on refresh',()=>{
  const seen=new Set();let name='';for(let i=0;i<60;i++){const next=c.suggestName(name);assert.notEqual(next,name);assert(next.length<=12);assert.match(next,/^\S+ \S+$/);assert(c.cleanCharacter({name:next,color:'leaf'}));seen.add(next);name=next;}
  assert(seen.size>20);const fixed=()=>0;assert.equal(c.suggestName('',fixed),'든든한 폴짝이');assert.notEqual(c.suggestName('든든한 폴짝이',(()=>{let k=0;return()=>[0,0,.5,.5][k++%4];})()),'든든한 폴짝이');
