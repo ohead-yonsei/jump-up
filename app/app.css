@@ -1,7 +1,7 @@
 /* App-first layer: one phone-sized column on every screen, loaded after the legacy page styles. */
-:root{--app-w:480px;--brand:#5bb5e3;--brand-2:#5bb5e3;--brand-ink:#1f2a37;--sky:#e9f9fd;--paper:#e9f9fd;--card:#fff;--hair:#dddcd6;--soft:#eae9e5;--muted:#6b7684;--btn:#e5f9fd;--accent:#5bb5e3;--ivory:#eae9e5;--tab-h:68px}
-html{background:#e9f9fd}
-body{background:radial-gradient(1200px 600px at 15% -10%,#f5f4f1 0,transparent 60%),radial-gradient(900px 500px at 110% 20%,#eae9e5 0,transparent 55%),#e9f9fd;min-height:100dvh;overscroll-behavior-y:none}
+:root{--app-w:480px;--brand:#5bb5e3;--brand-2:#5bb5e3;--brand-ink:#1f2a37;--sky:#e9f9fd;--paper:#ffffff;--card:#fff;--hair:#dddcd6;--soft:#eae9e5;--muted:#6b7684;--btn:#e5f9fd;--accent:#5bb5e3;--ivory:#eae9e5;--tab-h:68px}
+html{background:#ffffff}
+body{background:#ffffff;min-height:100dvh;overscroll-behavior-y:none}
 .app-root{max-width:var(--app-w);margin:0 auto;background:var(--paper);min-height:100dvh;position:relative}
 @media(min-width:521px){.app-root{box-shadow:0 0 0 1px #bfe7f6,0 40px 120px #313b4a26}}
 .sidebar,.crumb,.mvp-tag,.mobile-brand{display:none!important}
@@ -49,7 +49,7 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .secondary:active{transform:scale(.97)}
 .text-button{color:#5bb5e3}
 /* splash */
-.splash{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(circle at 50% 42%,#ffffff 0,#e9f9fd 55%,#bfe7f6 100%);animation:splash-out .5s ease 1.35s forwards;pointer-events:none}
+.splash{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#ffffff;animation:splash-out .5s ease 1.35s forwards;pointer-events:none}
 .splash-logo{animation:splash-hop 1.05s cubic-bezier(.3,.7,.4,1) .05s both}
 .splash>span{font-size:13px;color:#647080;letter-spacing:-.2px;animation:fade-up .5s ease .6s both}
 @keyframes splash-out{to{opacity:0;visibility:hidden}}
