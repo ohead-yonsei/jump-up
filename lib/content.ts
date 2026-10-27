@@ -30,24 +30,6 @@ export const scenarios=[
 ] as const;
 export type ScenarioId=typeof scenarios[number]['id'];
 export function isScenarioId(value:unknown):value is ScenarioId{return scenarios.some(s=>s.id===value);}
-export function needsSupport(text:string){return /자살|자해|죽고\s*싶|죽어\s*버리|목숨을?\s*(끊|버리)|살고\s*싶지|스스로.{0,8}(해치|다치)|극단적\s*선택/u.test(text);}
-export function exampleReply(id:ScenarioId,turn:number,text:string){
- const s=scenarios.find(s=>s.id===id)!;
- if(id==='cafe'&&turn===0&&/따뜻|차갑|아이스|뜨거/.test(text))return {text:'말씀하신 온도로 주문하는 연습을 해볼게요. 크기는 기본으로 괜찮으세요?',done:false};
- if(/모르|어려|긴장|무서|떨려/.test(text))return {text:'천천히 해도 괜찮아요. 아래 예시 문장을 골라 말해 보셔도 좋아요.',done:false};
- if(/다시|한번더|한 번 더/.test(text))return {text:s.opening,done:false};
- return {text:s.prompts[Math.min(turn,s.prompts.length-1)],done:turn>=s.prompts.length-1};
-}
+export function needsSupport(text:string){return /자살|자해|죽고\s*싶|죽어\s*버리|목숨을?\s*(끊|버리)|살고\s*싶지|살기\s*싫|그만\s*살|사라지고\s*싶|없어지고\s*싶|스스로.{0,8}(해치|다치)|극단적\s*선택/u.test(text);}
 export const supportiveText='지금 많이 힘든 마음이 느껴져요. 혼자 견디지 않아도 괜찮아요. 지금 다칠 위험이 있거나 이미 다쳤다면 119 또는 112에 연락해 주세요. 자살예방상담전화 109에서는 24시간 도움을 받을 수 있어요. 가능하다면 믿을 수 있는 사람에게 지금 함께 있어 달라고 요청해 주세요.';
 
-export function practiceHints(id: ScenarioId, turn: number, reply = ''): readonly string[] {
- if(reply.includes('크기는 기본'))return ['네, 기본 크기로 주세요.', '작은 크기도 있나요?'];
- if (turn === 0) return scenarios.find(s => s.id === id)!.hints;
- const choices: Record<ScenarioId, string[][]> = {
-  cafe: [['따뜻하게 주세요.', '차갑게 주세요.'], ['가져갈게요. 감사합니다.', '여기서 마실게요.']],
-  appointment: [['감기 기운이 있어서 진료 받고 싶어요.', '진료 상담을 받고 싶어요.'], ['오후 2시로 할게요.', '오후 4시가 좋아요.']],
-  interview: [['평일 오후에 일할 수 있어요.', '주말 오전이 편해요.'], ['잠시 쉬면서 나를 돌보는 시간을 가졌어요.', '다시 일상을 시작하려고 준비하고 있었어요.']],
-  hello: [['요즘 음악 듣는 걸 좋아해.', '나는 아직 잘 모르겠어.'], ['편하게 들어줘서 고마워.', '다음에 또 이야기하자.']],
- };
- return choices[id][Math.min(turn - 1, 1)];
-}

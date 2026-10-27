@@ -1,0 +1,96 @@
+// Offline practice that listens: each step answers what the person actually said, and only moves on
+// once the step's question is answered. Used when the AI server is off or not chosen.
+import type {ScenarioId} from './content';
+type Rule={re:RegExp;say:string|((m:RegExpMatchArray)=>string);next?:boolean;done?:boolean};
+type Step={rules:Rule[];again:string;hints:string[]};
+type Dialog={steps:Step[];slow:string;close:string};
+const drink=/(디카페인 ?아메리카노|아메리카노|바닐라 ?라떼|카페 ?라떼|라떼|카푸치노|캐모마일|허브티|녹차|홍차|루이보스|코코아|초코|주스|에이드|스무디)/;
+const topic=/(음악|노래|게임|영화|드라마|웹툰|만화|애니|책|그림|요리|운동|산책|유튜브|사진|고양이|강아지)/;
+export const dialogs:Record<ScenarioId,Dialog>={
+ cafe:{slow:'천천히 말씀하셔도 괜찮아요. 아래 예시 문장을 골라 말해 보셔도 좋아요.',close:'네, 주문 도와드렸어요. 편하게 기다려 주세요.',steps:[
+  {again:'천천히 골라도 괜찮아요. “아메리카노 한 잔 주세요”처럼 말씀하셔도 돼요.',hints:['아메리카노 한 잔 주세요.','카페인이 없는 음료도 있나요?','메뉴를 조금 더 보고 주문해도 될까요?'],rules:[
+   {re:/카페인|디카페인/,say:'네, 디카페인 아메리카노와 캐모마일, 루이보스 같은 차가 있어요. 어떤 걸로 드릴까요?'},
+   {re:/추천|뭐가 (맛|좋)|인기|많이 (먹|마시)/,say:'요즘은 바닐라라떼를 많이 찾으세요. 커피가 부담되면 캐모마일도 좋아요.'},
+   {re:/얼마|가격|비싸/,say:'아메리카노는 4,000원, 라떼는 4,500원, 차 종류는 4,500원이에요.'},
+   {re:/(메뉴|보고|볼게|천천히|잠시|잠깐)/,say:'네, 천천히 보세요. 정하시면 편하게 말씀해 주세요.'},
+   {re:drink,say:m=>`${m[1]} 한 잔이요. 따뜻하게 드릴까요, 차갑게 드릴까요?`,next:true},
+   {re:/(커피|음료|주세요|할게요|로 할게|주문)/,say:'네, 따뜻하게 드릴까요, 차갑게 드릴까요?',next:true},
+  ]},
+  {again:'온도는 따뜻하게, 차갑게 중에 편한 걸로 말씀해 주세요.',hints:['따뜻하게 주세요.','차갑게 주세요.'],rules:[
+   {re:/(크기|사이즈|큰|작은)/,say:'기본 크기와 큰 크기가 있어요. 기본으로 해드릴게요. 온도는 어떻게 할까요?'},
+   {re:/(따뜻|뜨거|핫)/,say:'따뜻하게 준비할게요. 매장에서 드시나요, 가지고 가시나요?',next:true},
+   {re:/(차갑|차가|아이스|시원)/,say:'시원하게 준비할게요. 매장에서 드시나요, 가지고 가시나요?',next:true},
+   {re:/(상관|아무|괜찮|편한)/,say:'그럼 따뜻하게 준비할게요. 매장에서 드시나요, 가지고 가시나요?',next:true},
+  ]},
+  {again:'매장에서 드실지, 가지고 가실지 말씀해 주세요.',hints:['가져갈게요.','여기서 마실게요.'],rules:[
+   {re:/(매장|여기|앉아|마시고 갈|먹고 갈)/,say:'네, 자리에서 기다려 주시면 가져다드릴게요. 주문 도와드렸어요.',done:true},
+   {re:/(포장|가져|가지고|테이크|들고)/,say:'네, 포장해 드릴게요. 앞에서 잠시만 기다려 주세요. 주문 도와드렸어요.',done:true},
+   {re:/(카드|결제|계산|현금)/,say:'카드로 결제하시면 돼요. 매장에서 드시나요, 가지고 가시나요?'},
+  ]},
+ ]},
+ appointment:{slow:'괜찮아요, 천천히 말씀하셔도 돼요. 아래 문장을 골라 말해 보셔도 좋아요.',close:'말씀하신 내용으로 예약 연습을 마쳤어요. 실제 예약은 병원에 직접 확인해 주세요.',steps:[
+  {again:'예약을 원하시면 “진료 예약하고 싶어요”라고 말씀해 주세요.',hints:['진료 예약을 하고 싶어서 전화드렸어요.','처음 가보는데 예약할 수 있을까요?','가능한 시간을 알려주실 수 있나요?'],rules:[
+   {re:/(언제|몇 시|가능한 시간|시간 (있|되))/,say:'이번 주 금요일 오후 2시와 4시가 비어 있어요. 어떤 진료를 보시려는지도 알려주시겠어요?',next:true},
+   {re:/처음/,say:'처음 오시는군요, 괜찮아요. 어떤 진료를 보려고 하세요? 자세히 말하기 어려우면 ‘진료 상담’이라고 하셔도 돼요.',next:true},
+   {re:/(예약|진료|보고 싶|받고 싶|가려고)/,say:'네, 예약 도와드릴게요. 어떤 진료를 보려고 하세요? 자세히 말하기 어려우면 ‘진료 상담’이라고 하셔도 돼요.',next:true},
+  ]},
+  {again:'증상을 자세히 말하지 않아도 괜찮아요. ‘진료 상담’이라고만 하셔도 돼요.',hints:['감기 기운이 있어서 진료 받고 싶어요.','진료 상담을 받고 싶어요.'],rules:[
+   {re:/(말하기 어려|모르겠|그냥|비밀|나중에)/,say:'괜찮아요. 진료 상담으로 적어둘게요. 금요일 오후 2시와 4시 중 언제가 편하세요?',next:true},
+   {re:/(준비|챙겨|가져가|필요한)/,say:'신분증만 챙겨 오시면 돼요. 어떤 진료로 예약해 드릴까요?'},
+   {re:/.{2,}/,say:'알겠습니다. 이번 주 금요일 오후 2시와 4시가 가능해요. 어느 시간이 편하세요?',next:true},
+  ]},
+  {again:'금요일 오후 2시와 4시 중에 편한 시간을 말씀해 주세요. 어려우면 다른 날도 찾아볼게요.',hints:['오후 2시로 할게요.','다른 날도 가능할까요?'],rules:[
+   {re:/(2시|두 ?시)/,say:'금요일 오후 2시로 예약 연습을 마쳤어요. 신분증을 챙겨 오시면 돼요. 실제 예약은 병원에 직접 확인해 주세요.',done:true},
+   {re:/(4시|네 ?시)/,say:'금요일 오후 4시로 예약 연습을 마쳤어요. 신분증을 챙겨 오시면 돼요. 실제 예약은 병원에 직접 확인해 주세요.',done:true},
+   {re:/(다른|안 ?돼|어려|다음 ?주|오전|힘들)/,say:'다음 주 월요일 오전 10시도 가능해요. 그 시간은 괜찮으세요?'},
+   {re:/(네|좋아|괜찮|그걸로|그때)/,say:'그 시간으로 예약 연습을 마쳤어요. 실제 예약은 병원에 직접 확인해 주세요.',done:true},
+   {re:/(준비|챙겨|가져가)/,say:'신분증만 챙겨 오시면 돼요. 시간은 언제가 편하세요?'},
+  ]},
+ ]},
+ interview:{slow:'그럼요, 천천히 하셔도 돼요. 아래 문장을 골라 말해 보셔도 좋아요.',close:'이야기 나눠줘서 고마워요. 면접 연습을 마쳤어요. 실제 면접에서도 지금처럼 천천히 말하면 충분해요.',steps:[
+  {again:'간단하게 인사만 해도 괜찮아요. “안녕하세요, 지원했습니다”처럼요.',hints:['안녕하세요. 아르바이트에 지원했습니다. 잘 부탁드립니다.','조금 긴장되는데 천천히 말해도 될까요?','성실하게 배우면서 일하고 싶어요.'],rules:[
+   {re:/(안녕|지원|입니다|저는|잘 부탁|배우|성실|일하고)/,say:'반가워요. 일할 수 있는 요일과 시간은 언제인가요?',next:true},
+  ]},
+  {again:'편한 요일이나 시간대를 말씀해 주세요. “평일 오후”처럼 말해도 돼요.',hints:['평일 오후에 일할 수 있어요.','주말 오전이 편해요.'],rules:[
+   {re:/(시급|급여|월급|얼마)/,say:'시급은 최저임금 이상이고, 정해진 날에 맞춰 드려요. 일할 수 있는 시간은 언제인가요?'},
+   {re:/(평일|주말|오전|오후|저녁|밤|요일|시간|언제든|아무 때|월|화|수|목|금|토|일)/,say:'좋아요. 최근에는 어떻게 지내셨어요? 편하게 말해도 돼요.',next:true},
+  ]},
+  {again:'짧게 말해도 괜찮아요. “잠시 쉬면서 준비하고 있었어요”처럼요.',hints:['잠시 쉬면서 나를 돌보는 시간을 가졌어요.','다시 일상을 시작하려고 준비하고 있었어요.'],rules:[
+   {re:/.{2,}/,say:'그렇군요, 말해줘서 고마워요. 혹시 궁금한 게 있으면 물어봐도 돼요.',next:true},
+  ]},
+  {again:'궁금한 게 없으면 “괜찮아요”라고 하셔도 돼요.',hints:['어떤 일을 주로 하게 되나요?','궁금한 건 없어요. 감사합니다.'],rules:[
+   {re:/(무슨 일|업무|뭐 하|하는 일|어떤 일)/,say:'계산이랑 물건 정리를 주로 해요. 처음엔 같이 하면서 알려드려요. 오늘 면접은 여기까지예요. 와줘서 고마워요.',done:true},
+   {re:/(없|괜찮|아니|감사|고맙)/,say:'오늘 이야기 나눠줘서 고마워요. 면접 연습을 마쳤어요. 실제 면접에서도 지금처럼 천천히 말하면 충분해요.',done:true},
+   {re:/.{2,}/,say:'좋은 질문이에요. 그건 첫날 같이 확인해요. 오늘 면접은 여기까지예요. 와줘서 고마워요.',done:true},
+  ]},
+ ]},
+ hello:{slow:'천천히 해도 괜찮아. 아래 문장을 골라서 말해도 돼.',close:'오늘 이야기해 줘서 고마워. 다음에 또 편하게 안부 나누자.',steps:[
+  {again:'나도 좀 어색하다. “오랜만이야”라고만 해도 반가워.',hints:['오랜만이야. 나도 반가워.','요즘 어떻게 지내?','나 조금 긴장되는데 천천히 얘기해도 될까?'],rules:[
+   {re:/(어떻게 지내|잘 지냈|요즘 뭐|요즘 어때|넌|너는)/,say:'나는 요즘 동네 산책하면서 지내. 너는 요즘 관심 가는 거 있어?',next:true},
+   {re:/(반가|오랜만|안녕|보고 싶|잘 지냈)/,say:'진짜 오랜만이다. 요즘 어떻게 지내? 관심 가는 거 있어?',next:true},
+  ]},
+  {again:'딱히 없어도 괜찮아. 그냥 쉬고 있었다고 해도 돼.',hints:['요즘 음악 듣는 걸 좋아해.','나는 아직 잘 모르겠어.'],rules:[
+   {re:topic,say:m=>`오, ${m[1]} 좋다! 요즘 제일 좋았던 거 하나만 알려줄래?`,next:true},
+   {re:/(모르|없|그냥|딱히|쉬|별로)/,say:'그렇구나. 쉬는 것도 중요하지. 편한 만큼만 이야기해도 좋아.',next:true},
+   {re:/(너는|넌|너도)/,say:'나는 요즘 아침에 산책하는 게 좋더라. 너는 요즘 어때?'},
+  ]},
+  {again:'편한 만큼만 이야기해도 좋아.',hints:['편하게 들어줘서 고마워.','다음에 또 이야기하자.'],rules:[
+   {re:/(너는|넌|너도)/,say:'나는 아침에 커피 마시면서 걷는 게 좋더라. 오늘 이야기해 줘서 고마워. 다음에 또 보자!',done:true},
+   {re:/.{1,}/,say:'들려줘서 고마워. 오늘 이야기해서 좋았어. 다음에 또 편하게 안부 나누자.',done:true},
+  ]},
+ ]},
+};
+const MAX_TURNS=6;
+/** One reply for the practice partner. `step` is how far the conversation has come. */
+export function exampleTurn(id:ScenarioId,step:number,text:string,turns=0):{text:string;step:number;done:boolean}{
+ const d=dialogs[id];const at=Math.min(step,d.steps.length-1);const s=d.steps[at];
+ if(/(모르겠|어려워|긴장|무서|떨려|잘 못|못 하겠)/.test(text))return {text:d.slow,step:at,done:false};
+ if(/^(다시|한 ?번 ?더)/.test(text.trim()))return {text:s.again,step:at,done:false};
+ for(const r of s.rules){const m=text.match(r.re);if(!m)continue;const say=typeof r.say==='string'?r.say:r.say(m);
+  if(r.done)return {text:say,step:at+1,done:true};
+  if(r.next&&at+1>=d.steps.length)return {text:`${say} ${d.close}`,step:at+1,done:true};
+  return {text:say,step:r.next?at+1:at,done:false};}
+ if(turns+1>=MAX_TURNS)return {text:d.close,step:d.steps.length,done:true};
+ return {text:s.again,step:at,done:false};
+}
+export const stepHints=(id:ScenarioId,step:number)=>dialogs[id].steps[Math.min(step,dialogs[id].steps.length-1)].hints;
