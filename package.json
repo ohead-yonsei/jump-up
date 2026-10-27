@@ -1,6 +1,6 @@
 {
   "name": "poljjak-jump-up",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/run.mjs && node tests/app-v2.mjs && node tests/journey.mjs && node tests/character.mjs && node tests/companion.mjs && node tests/request-origin.mjs"
+    "test": "node tests/run.mjs && node tests/app-v2.mjs && node tests/journey.mjs && node tests/character.mjs && node tests/companion.mjs && node tests/support.mjs && node tests/request-origin.mjs"
   },
   "dependencies": {
     "lucide-react": "1.31.0",

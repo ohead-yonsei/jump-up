@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import ts from 'typescript';
+const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
+const src=await fs.readFile(new URL('../lib/support.ts',import.meta.url),'utf8');
+await fs.writeFile(new URL('support.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+const s=await import(new URL('support.js',out));let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
+const ids=q=>s.matchSupport(s.supportItems,{need:null,contact:null,age:null,region:null,...q}).map(i=>i.id);
+test('every service answers what help, who can use it, how to start, and links to an official https page',()=>{assert(s.supportItems.length>=12);assert.equal(new Set(s.supportItems.map(i=>i.id)).size,s.supportItems.length);for(const i of s.supportItems){assert(i.url.startsWith('https://'),i.id);assert(i.help.length&&i.how.length&&i.channels.length,i.id);assert(i.who,i.id);assert(i.needs.length,i.id);assert.equal(i.checkedAt,'2026-10-27');for(const c of i.channels)if(c.type==='online'||c.type==='chat')assert(c.value.startsWith('https://'),i.id)}assert(!s.supportItems.some(i=>i.url.includes('youthcenter.go.kr/main.do')))});
+test('성남 users also see 경기 services; 서울 users do not; centres outside the area stay hidden',()=>{const sn=ids({region:'성남'});assert(sn.includes('gyeonggi-nawa'));assert(sn.includes('seongnam-isolated-youth'));assert(!sn.includes('seoul-gijigae'));assert(!sn.includes('youth-future-center'));const se=ids({region:'서울'});assert(se.includes('seoul-gijigae'));assert(!se.includes('gyeonggi-nawa'));assert(ids({region:'기타'}).includes('youth-future-center'))});
+test('age only filters services with a stated range, and contact preference reorders without hiding',()=>{assert(!ids({age:'25-34'}).includes('youth-1388'));assert(ids({age:'19-24'}).includes('youth-1388'));assert(ids({age:'40+'}).includes('mental-crisis-line'));const all=ids({});const text=ids({contact:'text'});assert.equal(text.length,all.length);assert(['youth-1388','seongnam-youth-spring','gyeonggi-mind-counsel'].includes(text[0]))});
+test('needs narrow the list and every non-emergency service offers a first sentence to say',()=>{assert(ids({need:'restart'}).includes('youth-challenge'));assert(!ids({need:'space'}).includes('youth-challenge'));assert.equal(ids({need:'info'}).length,ids({}).length);for(const i of s.supportItems.filter(x=>x.tier!=='crisis')){const w=s.firstWords(i);assert(w&&w.startsWith('안녕하세요'),i.id)}});
+console.log(`${n} support finder checks passed. Program details still need re-checking with each agency before the field study.`);
