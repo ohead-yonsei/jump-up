@@ -6,17 +6,20 @@ export function useAppPlatform() {
   const [online, setOnline] = useState(true);
   const [installed, setInstalled] = useState(false);
   const [installEvent, setInstallEvent] = useState<InstallEvent | null>(null);
+  // The iOS app (Capacitor shell) marks its user agent; there is nothing to install from inside it.
+  const [native, setNative] = useState(false);
   useEffect(() => {
     const mq = matchMedia('(display-mode: standalone)');
     const update = () => {setOnline(navigator.onLine);setInstalled(mq.matches || !!(navigator as Navigator & {standalone?: boolean}).standalone);};
     const before = (e: Event) => {e.preventDefault();setInstallEvent(e as InstallEvent);};
     const added = () => {setInstalled(true);setInstallEvent(null);};
+    setNative(/PoljjakApp/.test(navigator.userAgent));
     update(); window.addEventListener('online',update);window.addEventListener('offline',update);window.addEventListener('beforeinstallprompt',before);window.addEventListener('appinstalled',added);mq.addEventListener('change',update);
     if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
     return () => {window.removeEventListener('online',update);window.removeEventListener('offline',update);window.removeEventListener('beforeinstallprompt',before);window.removeEventListener('appinstalled',added);mq.removeEventListener('change',update);};
   }, []);
   async function install() {if (!installEvent) return;try {await installEvent.prompt();await installEvent.userChoice;} finally {setInstallEvent(null);}}
-  return {online,installed,canInstall: !!installEvent,install};
+  return {online,installed: installed || native,native,canInstall: !!installEvent,install};
 }
 export function InstallGuide({platform}: {platform: ReturnType<typeof useAppPlatform>}) {
   return <><span className="dialog-symbol"><Smartphone/></span><span className="eyebrow">ALWAYS A LITTLE CLOSER</span><h2>나의 홈 화면에<br/>폴짝을 놓아두세요.</h2><p>아이콘을 누르면 앱 화면으로 바로 시작해요. 앱스토어 설치는 필요하지 않아요.</p>

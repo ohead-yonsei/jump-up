@@ -66,6 +66,25 @@ Vercel 프로젝트의 **Settings → Environment Variables**에 아래 값을 �
 
 Funnel로 연 주소는 인터넷 어디서나 닿기 때문에, 토큰을 확인하는 프록시를 앞에 두고 같은 토큰을 `CHAT_API_KEY`로 넣어요(운영 서버는 2026-10-27부터 키 없이 오는 요청을 401로 막습니다). 로컬에서 실제 모델로 시험할 때도 `.env.local`에 같은 키가 있어야 해요. 사용자는 AI 대화를 시작하기 전에 ‘팀이 운영하는 AI 서버로 전송’에 동의하며, 폴짝은 대화 원문을 저장하지 않습니다.
 
+## iOS 앱(TestFlight)
+
+`ios/`는 운영 주소(https://jump-up-chi.vercel.app)를 여는 Capacitor 앱 껍데기예요. 화면과 AI 대화는 웹 배포를 그대로 쓰기 때문에 `main`에 배포하면 새 빌드 없이 앱에도 반영돼요. 앱은 사용자 에이전트에 `PoljjakApp`을 붙이고, 웹은 이걸 보고 홈 화면 설치 안내를 숨겨요. 연결이 안 되면 앱에 들어 있는 `native/www/offline.html`을 보여줘요. 기록은 앱 안에 따로 저장돼서 Safari나 홈 화면 앱의 기록과 이어지지 않아요.
+
+```sh
+npm run ios
+```
+
+설정(`capacitor.config.ts`)을 iOS 프로젝트에 반영하고 Xcode를 열어요. 시뮬레이터에서 로컬 개발 서버를 열어보려면 `CAP_SERVER_URL=http://localhost:3000 npx cap sync ios`로 바꾼 뒤 실행하고, 끝나면 `npx cap sync ios`로 운영 주소로 되돌려요.
+
+TestFlight에 올리는 순서예요.
+
+1. Xcode › Settings › Accounts에 Apple ID로 로그인하고, App 타깃의 **Signing & Capabilities**에서 팀을 고릅니다. 번들 ID `io.github.oheadyonsei.poljjak`은 임시값이라 처음 등록하기 전에 바꿔도 돼요(바꾸면 `capacitor.config.ts`의 `appId`도 같이 바꿔 주세요).
+2. App Store Connect에서 같은 번들 ID로 새 앱을 만듭니다.
+3. 실행 대상을 **Any iOS Device**로 두고 **Product › Archive** → **Distribute App** → **App Store Connect**로 올립니다. 다시 올릴 때는 빌드 번호(`CURRENT_PROJECT_VERSION`)를 하나 올려요.
+4. TestFlight 탭에서 테스트 정보(베타 앱 설명, 피드백 이메일, 연락처)를 채우고 외부 테스트 그룹에 빌드를 넣어 베타 심사를 받습니다. 통과하면 이메일이나 공개 링크로 친구를 초대해요.
+
+앱 아이콘(1024px)은 `public/icons/icon-512.png`를 키워 만든 것이라, 정식 출시 전에는 원본 그림에서 다시 뽑는 게 좋아요.
+
 ## 검증
 
 ```sh

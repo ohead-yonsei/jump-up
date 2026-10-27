@@ -1,6 +1,6 @@
 {
   "name": "poljjak-jump-up",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,9 +11,11 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "ios": "cap sync ios && cap open ios",
     "test": "node tests/run.mjs && node tests/app-v2.mjs && node tests/journey.mjs && node tests/character.mjs && node tests/companion.mjs && node tests/support.mjs && node tests/request-origin.mjs"
   },
   "dependencies": {
+    "@capacitor/core": "8.5.3",
     "lucide-react": "1.31.0",
     "next": "16.3.4",
     "react": "19.2.6",
@@ -21,6 +23,8 @@
     "three": "0.180.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
+    "@capacitor/ios": "8.5.3",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
