@@ -1,9 +1,9 @@
 .frog3d{position:relative;width:100%;height:100%;outline:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .frog3d canvas{display:block;width:100%;height:100%;touch-action:pan-y;cursor:grab;opacity:0;transition:opacity .45s ease}
 .frog3d.is-ready canvas{opacity:1}.frog3d canvas:active{cursor:grabbing}
-.frog3d:focus-visible{outline:3px solid #a7be82;outline-offset:-3px;border-radius:24px}
+.frog3d:focus-visible{outline:3px solid #5a9fd8;outline-offset:-3px;border-radius:24px}
 .frog3d>.frog-avatar{width:100%;height:100%}
-.frog3d-shadow{position:absolute;left:50%;bottom:9%;width:46%;height:9%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,#40592a33,transparent);opacity:1;transition:opacity .4s}
+.frog3d-shadow{position:absolute;left:50%;bottom:9%;width:46%;height:9%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,#343f4f33,transparent);opacity:1;transition:opacity .4s}
 .frog3d.is-ready .frog3d-shadow{opacity:0}
 .frog3d.is-loading:after{content:'';position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1.1;transform:translate(-50%,-50%);border-radius:48% 48% 44% 44%;background:radial-gradient(circle at 50% 70%,#f5ecc0 0 38%,transparent 60%),radial-gradient(circle at 30% 18%,#c6d97d 0 16%,transparent 17%),radial-gradient(circle at 70% 18%,#c6d97d 0 16%,transparent 17%),#c9da86;opacity:.5;animation:frog-wait 1.2s ease-in-out infinite}
 @keyframes frog-wait{50%{transform:translate(-50%,-56%) scale(1.03,.97)}}
@@ -13,11 +13,11 @@
 .burst i:nth-child(3n){color:#f2b3a6}.burst i:nth-child(3n+1){color:#f0cf62}
 .burst-pat i,.burst-hug i{color:#f39b9b!important;font-size:19px}
 @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-62px) scale(1.1)}}
-.frog3d-bubble{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:#fff;color:#3d5a33;font-size:13px;font-weight:650;letter-spacing:-.2px;padding:8px 14px;border-radius:16px;box-shadow:0 8px 22px #3a5a2a1f;white-space:nowrap;pointer-events:none;animation:bubble 1.9s ease forwards;z-index:2}
+.frog3d-bubble{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:#fff;color:#384455;font-size:13px;font-weight:650;letter-spacing:-.2px;padding:8px 14px;border-radius:16px;box-shadow:0 8px 22px #35404f1f;white-space:nowrap;pointer-events:none;animation:bubble 1.9s ease forwards;z-index:2}
 .frog3d-bubble:after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:0 0 3px 0}
 @keyframes bubble{0%{opacity:0;transform:translate(-50%,8px) scale(.85)}12%{opacity:1;transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
 .frog-still{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:inherit}
-.frog-still:not(.is-ready):before{content:'';position:absolute;inset:22%;border-radius:50%;background:#eef2e2;animation:still-wait 1.4s ease-in-out infinite}
+.frog-still:not(.is-ready):before{content:'';position:absolute;inset:22%;border-radius:50%;background:#e6e9ee;animation:still-wait 1.4s ease-in-out infinite}
 @keyframes still-wait{50%{opacity:.4}}
 .frog-still img{display:block;width:100%;height:100%;object-fit:contain;animation:still-in .35s ease}
 @keyframes still-in{from{opacity:0;transform:scale(.96)}}
