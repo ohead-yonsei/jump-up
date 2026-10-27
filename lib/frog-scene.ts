@@ -6,7 +6,7 @@ import {frogColors,type FrogColor,type CharacterGame} from './character';
 
 export type FrogLook={color:FrogColor;equipped:CharacterGame['equipped']};
 export type Reaction='jump'|'pat'|'hug'|'spin'|'cheer';
-export type Framing='full'|'portrait'|'face';
+export type Framing='full'|'portrait'|'face'|'stage';
 type V3=[number,number,number];
 type Sdf=(x:number,y:number,z:number)=>number;
 type Palette=typeof frogColors[number];
@@ -83,8 +83,9 @@ const cucumberFace=()=>canvasTexture('cucumber',128,(c,s)=>{const g=c.createRadi
 const shadowTexture=()=>canvasTexture('shadow',128,(c,s)=>{const g=c.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,'rgba(58,78,36,.42)');g.addColorStop(.55,'rgba(58,78,36,.16)');g.addColorStop(1,'rgba(58,78,36,0)');c.fillStyle=g;c.fillRect(0,0,s,s);});
 
 /* ---------- small construction helpers ---------- */
-function clay(color:THREE.ColorRepresentation,o:THREE.MeshPhysicalMaterialParameters={}){return new THREE.MeshPhysicalMaterial({color,roughness:.82,sheen:.6,sheenRoughness:.5,sheenColor:new THREE.Color('#fff8e8'),normalMap:fuzz(),normalScale:new THREE.Vector2(.16,.16),...o});}
-const fluffy=(color:THREE.ColorRepresentation,o:THREE.MeshPhysicalMaterialParameters={})=>clay(color,{roughness:1,sheen:1,sheenRoughness:.8,normalMap:fleece(),normalScale:new THREE.Vector2(.55,.55),...o});
+/** Smooth satin clay, like a soft vinyl figure. Fabric items opt into a fuzzy surface with `fluffy`. */
+function clay(color:THREE.ColorRepresentation,o:THREE.MeshPhysicalMaterialParameters={}){return new THREE.MeshPhysicalMaterial({color,roughness:.56,sheen:.28,sheenRoughness:.6,sheenColor:new THREE.Color('#fffbef'),clearcoat:.14,clearcoatRoughness:.45,...o});}
+const fluffy=(color:THREE.ColorRepresentation,o:THREE.MeshPhysicalMaterialParameters={})=>clay(color,{roughness:1,sheen:1,sheenRoughness:.8,clearcoat:0,normalMap:fleece(),normalScale:new THREE.Vector2(.55,.55),...o});
 const glossy=(color:THREE.ColorRepresentation,o:THREE.MeshPhysicalMaterialParameters={})=>new THREE.MeshPhysicalMaterial({color,roughness:.28,clearcoat:.6,clearcoatRoughness:.3,...o});
 const Z=new THREE.Vector3(0,0,1),Y=new THREE.Vector3(0,1,0);
 function part(g:THREE.BufferGeometry,m:THREE.Material|THREE.Material[],p:V3|THREE.Vector3=[0,0,0],s:V3|number=1,r:V3=[0,0,0]){const o=new THREE.Mesh(g,m);if(Array.isArray(p))o.position.set(...p);else o.position.copy(p);if(typeof s==='number')o.scale.setScalar(s);else o.scale.set(...s);o.rotation.set(...r);return o;}
@@ -115,7 +116,10 @@ function hood(color:THREE.ColorRepresentation,fur:boolean,openW:number,openH:num
 function shirt(color:THREE.ColorRepresentation){return part(cached('shirt',()=>cut(blob(shirtSdf,[0,.53,0],80,60),p=>p.y>.17)),clay(color));}
 function hairband(){const g=new THREE.Group();g.position.set(0,.33,0);g.rotation.x=.16;g.add(part(new THREE.TorusGeometry(1,.1,14,72),fluffy('#f5efe4'),[0,0,0],[.84,.68,1.1],[Math.PI/2,0,0]));return g;}
 const builders:Record<string,(pal:Palette)=>Parts>={
- sprout:()=>{const {p}=surface(headSdf,[0,0,.02],[0,1,0]);const g=group(part(new THREE.CylinderGeometry(.022,.03,.2,10),clay('#76a744'),[0,.08,0],1,[0,0,-.12]),part(ball(),clay('#8fc053'),[-.1,.17,0],[.13,.032,.075],[0,.3,.5]),part(ball(),clay('#b3d873'),[.11,.2,0],[.14,.034,.08],[0,-.3,-.45]));g.position.copy(p).y-=.02;return {head:g};},
+ sprout:()=>{const {p}=surface(headSdf,[0,0,.02],[0,1,0]);const green=clay('#8ccb43',{roughness:.42,clearcoat:.3,clearcoatRoughness:.35});
+  const g=group(taperTube([[0,-.04,0],[0,.08,.01],[-.008,.17,.005],[.005,.24,0]],.034,.6,green),part(ball(.021,14,10),green,[.005,.24,0]));
+  for(const s of [-1,1]){const leaf=part(cached('sprout-leaf',()=>ball(1,32,20)),green,[s*.12,.31,0],[.15,.062,.07],[0,s*.12,s*.62]);g.add(leaf);}
+  g.scale.setScalar(1.25);g.position.copy(p).y-=.04;g.rotation.z=.05;return {head:g};},
  daisy:()=>{const {p,n}=surface(headSdf,EYE_BUMP,[.4,.55,.75]);const petal=clay('#fffaf0'),g=new THREE.Group();for(let i=0;i<7;i++){const a=i/7*Math.PI*2;g.add(part(ball(),petal,[Math.cos(a)*.075,Math.sin(a)*.075,0],[.036,.072,.018],[0,0,a-Math.PI/2]));}g.add(part(ball(),clay('#f2c04c'),[0,0,.015],[.045,.045,.03]));return {head:at(g,p,n,.02)};},
  ribbon:()=>{const bow=new THREE.Group();const m=fluffy('#f7f1e6');bow.add(part(ball(),m,[-.14,0,0],[.16,.11,.06],[0,0,.45]),part(ball(),m,[.14,0,0],[.16,.11,.06],[0,0,-.45]),part(ball(),m,[0,0,.03],[.07,.065,.055]));bow.position.set(-.42,.55,.5);bow.rotation.set(-.3,-.25,.3);return {head:group(hairband(),bow)};},
  headphones:()=>{const cream=clay('#f1e9dc'),cup=clay('#e6dccb'),ring=clay('#cdbfa8');const g=group(part(new THREE.TorusGeometry(.95,.065,14,56,Math.PI),cream,[0,-.06,-.04],1,[-.12,0,0]));for(const s of [-1,1])g.add(part(new THREE.CylinderGeometry(.25,.25,.17,32),cup,[s*.97,.02,-.05],1,[0,0,Math.PI/2]),part(new THREE.TorusGeometry(.2,.05,12,32),ring,[s*1.06,.02,-.05],1,[0,Math.PI/2,0]));return {head:g};},
@@ -214,7 +218,7 @@ function release(o:THREE.Object3D,deep=true){
 const palette=(color:FrogColor)=>frogColors.find(c=>c.id===color)??frogColors[0];
 
 /* ---------- stage: renderer, lights, camera, animation and touch ---------- */
-const FRAMES:Record<Framing,{target:V3;dist:number}>={full:{target:[0,1.02,0],dist:6.4},portrait:{target:[0,1.1,0],dist:5.2},face:{target:[0,1.36,0],dist:4.1}};
+const FRAMES:Record<Framing,{target:V3;dist:number}>={full:{target:[0,1.02,0],dist:6.4},stage:{target:[0,1.36,0],dist:8.5},portrait:{target:[0,1.1,0],dist:5.2},face:{target:[0,1.36,0],dist:4.1}};
 function makeScene(renderer:THREE.WebGLRenderer){
  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.92;renderer.setClearColor(0x000000,0);
  const scene=new THREE.Scene();const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.4;pmrem.dispose();

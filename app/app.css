@@ -68,14 +68,14 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .hill-a{width:300px;height:170px;left:-90px;bottom:104px}
 .hill-b{width:330px;height:190px;right:-120px;bottom:92px;background:radial-gradient(ellipse at 50% 30%,#d8eab6,#c1dc96)!important}
 .pond-stage-sky .water{position:absolute;left:-10%;right:-10%;bottom:-40px;height:212px;border-radius:50% 50% 0 0;background:linear-gradient(180deg,#bfe3dc,#a9d6cf)}
-.pond-stage-sky .pad{position:absolute;left:50%;bottom:80px;width:270px;height:64px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#b9d886,#97c065);box-shadow:0 7px 0 #86ad58,0 18px 24px #4a7a4a26}
+.pond-stage-sky .pad{position:absolute;left:50%;bottom:84px;width:206px;height:50px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#b9d886,#97c065);box-shadow:0 7px 0 #86ad58,0 18px 24px #4a7a4a26}
 .pond-stage-sky .pad:after{content:'';position:absolute;left:50%;top:50%;width:46px;height:30px;background:#bfe3dc;clip-path:polygon(0 0,100% 0,50% 100%);transform:translate(-50%,-140%) rotate(180deg);opacity:0}
 .pond-stage-copy{position:relative;z-index:1;padding:20px 22px 0;pointer-events:none;width:max-content}
 .pond-stage-copy>span{font-size:12px;color:#6f8f6a;font-weight:600}
 .pond-stage-copy h1{font-size:27px;line-height:1.35;letter-spacing:-1px;margin-top:6px;color:#2f4b2c;font-weight:750}
 .pond-stage-copy h1 em{font-style:normal;color:var(--brand)}
 .pond-stage-frog{position:absolute;left:0;right:0;top:72px;height:430px}
-.pond-stage-frog .frog3d-bubble{top:17%}
+.pond-stage-frog .frog3d-bubble{top:24%}
 .pond-stage-hint{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 10px;border-radius:12px;background:#ffffffb3;font-size:11px;color:#4f7a52}
 .pond-stage-bottom{position:absolute;left:14px;right:14px;bottom:12px;display:flex;align-items:center;justify-content:space-between;padding:6px 6px 6px 14px;border-radius:20px;background:#ffffffd9;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pond-stage-bottom>span{display:flex;align-items:center;gap:6px;font-size:12px;color:#5c7a4f;font-weight:600}
@@ -292,3 +292,9 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .middle-tier{margin-top:20px;padding:18px 14px;border-radius:24px;background:#fdf6ee;border:1px solid #f1e3cf}
 .middle-tier h2{font-size:18px!important;letter-spacing:-.5px;color:#5b4524}
 .middle-tier>p{font-size:12.5px;color:#8a7553;margin:5px 0 12px;line-height:1.65}
+/* seasonal scenes on the welcome card and the home hero shown before a friend exists */
+.onboarding-world>img.onboarding-world-season{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:80% 62%!important}
+.onboarding-world[class*=season-]:after{display:block!important;content:'';position:absolute;inset:0;background:linear-gradient(90deg,#ffffffd9 0,#ffffff80 38%,transparent 62%)!important}
+.onboarding-world-copy small{display:block;margin-top:8px;font-size:11.5px;color:#4f6b45;font-weight:600}
+.season-autumn .onboarding-world-copy p{color:#6b3f1f!important}.season-autumn .onboarding-world-copy small{color:#8a5a2b}
+.pond-hero .pond-image{object-fit:cover;object-position:78% 60%}
