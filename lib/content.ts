@@ -31,6 +31,6 @@ export const scenarios=[
 ] as const;
 export type ScenarioId=typeof scenarios[number]['id'];
 export function isScenarioId(value:unknown):value is ScenarioId{return scenarios.some(s=>s.id===value);}
-export function needsSupport(text:string){return /자살|자해|죽고\s*싶|죽어\s*버리|목숨을?\s*(끊|버리)|살고\s*싶지|살기\s*싫|그만\s*살|사라지고\s*싶|없어지고\s*싶|스스로.{0,8}(해치|다치)|극단적\s*선택/u.test(text);}
+export function needsSupport(text:string){return /자살|자해|죽고\s*싶|죽어\s*버리|목숨을?\s*(끊|버리)|살고\s*싶지|살기\s*싫|그만\s*살|사라지고\s*싶|없어지고\s*싶|스스로.{0,8}(해치|다치)|극단적\s*선택|다\s*(그만두|포기하|내려놓)고\s*싶/u.test(text);}
 export const supportiveText='지금 많이 힘든 마음이 느껴져요. 혼자 견디지 않아도 괜찮아요. 지금 다칠 위험이 있거나 이미 다쳤다면 119 또는 112에 연락해 주세요. 자살예방상담전화 109에서는 24시간 도움을 받을 수 있어요. 가능하다면 믿을 수 있는 사람에게 지금 함께 있어 달라고 요청해 주세요.';
 
