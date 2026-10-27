@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import {useRef,useState} from 'react';
 import {Leaf,ArrowRight,Check,Gift,Shirt,Glasses,Crown,X,Sparkles,Coffee,Smile,Palette} from 'lucide-react';
-import {activityDays,balance,lookCost,looks,wardrobeItems,type Character,type CharacterGame,type Slot} from '@/lib/character';
+import {activityDays,balance,lookCost,looks,suggestName,wardrobeItems,type Character,type CharacterGame,type Slot} from '@/lib/character';
 import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
 import {CharacterEditor} from './character-editor';
 type Tab='looks'|Slot|'color';
@@ -10,7 +10,7 @@ const tabs:{id:Tab;label:string;Icon:typeof Crown}[]=[{id:'looks',label:'코디 
 const slotLabel:Record<Slot,string>={head:'모자',eyes:'안경',outfit:'옷',hand:'소품',face:'표정'};
 type Props={game:CharacterGame;save:boolean;demo:boolean;onCharacter:(c:Character)=>void;onCollect:(id:string)=>void;onLook:(id:string)=>void;onRemove:(slot:Slot)=>void;onEarn:()=>void;onSave:()=>void};
 export function CharacterCloset({game,save,demo,onCharacter,onCollect,onLook,onRemove,onEarn,onSave}:Props){
- const [tab,setTab]=useState<Tab>('looks');const [selected,setSelected]=useState<string|null>(null);const [lookId,setLookId]=useState<string|null>(null);const [draft,setDraft]=useState<Character>(game.character??{name:'새봄',color:'leaf'});
+ const [tab,setTab]=useState<Tab>('looks');const [selected,setSelected]=useState<string|null>(null);const [lookId,setLookId]=useState<string|null>(null);const [draft,setDraft]=useState<Character>(()=>game.character??{name:suggestName(),color:'leaf'});
  const frog=useRef<Frog3DHandle>(null);
  const coins=balance(game);const item=wardrobeItems.find(i=>i.id===selected);const look=looks.find(l=>l.id===lookId);
  const owned=!!item&&game.owned.includes(item.id);const wearing=!!item&&game.equipped[item.slot]===item.id;const cost=look?lookCost(game,look):0;

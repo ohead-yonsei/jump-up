@@ -5,14 +5,14 @@ import {FrogMark,BrandLogo} from './frog-mark';
 import {CharacterEditor} from './character-editor';
 import {FrogStill} from './frog-3d';
 import {seasons,seasonOf} from '@/lib/season';
-import {type Character} from '@/lib/character';
+import {suggestName,type Character} from '@/lib/character';
 import {energies,type Energy} from '@/lib/content';
 import {outsideOptions,connectionOptions,goals,springStages,profileFromChoices,recommendSpring,WAVE,type JourneyProfile,type SpringStage,type OutsideLevel,type Goal} from '@/lib/journey';
 type Props={initialCharacter:Character|null;initialProfile:JourneyProfile|null;initialEnergy:Energy|null;initialSave:boolean;startAtQuestions?:boolean;demo?:boolean;onComplete:(profile:JourneyProfile,energy:Energy,save:boolean,character:Character)=>void;onBrowse:()=>void;onHelp:()=>void};
 const goalIcons={rhythm:Sun,outside:Footprints,connect:MessageCircle};
 const questionLabels=['나의 공간','나의 연결','나의 목표','오늘의 마음'];
 export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy,initialSave,startAtQuestions=false,demo=false,onComplete,onBrowse,onHelp}:Props){
- const [step,setStep]=useState(startAtQuestions&&initialCharacter?1:0);const [creating,setCreating]=useState(startAtQuestions&&!initialCharacter);const [character,setCharacter]=useState<Character>(initialCharacter??{name:'새봄',color:'leaf'});const [outside,setOutside]=useState<OutsideLevel|null>(initialProfile?.outside??null);const [connection,setConnection]=useState<SpringStage|null>(initialProfile?.connection??null);const [goal,setGoal]=useState<Goal|null>(initialProfile?.goal??null);const [energy,setEnergy]=useState<Energy|null>(initialEnergy);const [remember,setRemember]=useState(initialSave);
+ const [step,setStep]=useState(startAtQuestions&&initialCharacter?1:0);const [creating,setCreating]=useState(startAtQuestions&&!initialCharacter);const [character,setCharacter]=useState<Character>(()=>initialCharacter??{name:suggestName(),color:'leaf'});const [outside,setOutside]=useState<OutsideLevel|null>(initialProfile?.outside??null);const [connection,setConnection]=useState<SpringStage|null>(initialProfile?.connection??null);const [goal,setGoal]=useState<Goal|null>(initialProfile?.goal??null);const [energy,setEnergy]=useState<Energy|null>(initialEnergy);const [remember,setRemember]=useState(initialSave);
  const root=useRef<HTMLDivElement>(null);const heading=useRef<HTMLHeadingElement>(null);
  useEffect(()=>{const frame=root.current?.closest('.demo-device');if(frame)frame.scrollTo({top:0,behavior:'instant'});else window.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});},[step,creating]);
  const draft=outside!==null&&connection!==null&&goal!==null?profileFromChoices(initialProfile,outside,connection,goal):null;

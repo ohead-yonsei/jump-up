@@ -65,6 +65,14 @@ export const looks:Look[]=[
 export type Reward={key:string;day:string;amount:number;kind:'welcome'|'step'|'practice'|'rest'|'return'};
 export type CharacterGame={version:1;character:Character|null;owned:string[];equipped:Partial<Record<Slot,string>>;rewards:Reward[]};
 export const emptyGame=():CharacterGame=>({version:1,character:null,owned:['sprout'],equipped:{head:'sprout'},rewards:[]});
+const nameMoods=['든든한','포근한','느긋한','말랑한','다정한','반짝이는','차분한','씩씩한','동글동글','살랑살랑','따스한','보송보송','꾸준한','산뜻한','수줍은','한가로운'];
+const nameFriends=['폴짝이','개굴이','연잎이','새싹이','봄비','이슬이','물방울','콩콩이','퐁당이','꼬물이','풀잎이','달빛이'];
+/** A nickname suggestion such as '든든한 폴짝이', different from the one shown now. */
+export function suggestName(current='',random=Math.random){
+ const pick=<T,>(list:T[])=>list[Math.floor(random()*list.length)%list.length];
+ let name=current;for(let i=0;i<8&&name===current;i++)name=`${pick(nameMoods)} ${pick(nameFriends)}`;
+ return name;
+}
 export function cleanCharacter(value:unknown):Character|null{
  if(!value||typeof value!=='object')return null;const c=value as Record<string,unknown>;
  if(typeof c.name!=='string'||!frogColors.some(p=>p.id===c.color))return null;

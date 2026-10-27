@@ -6,6 +6,10 @@ const source=await fs.readFile(new URL('../lib/character.ts',import.meta.url),'u
 await fs.writeFile(new URL('character.js',out),ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
 const c=await import(new URL('character.js',out));let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
 const day=new Date(2026,9,26,12),nextDay=new Date(2026,9,27,12);
+test('suggested nicknames are two gentle words, fit the 12-character field and change on refresh',()=>{
+ const seen=new Set();let name='';for(let i=0;i<60;i++){const next=c.suggestName(name);assert.notEqual(next,name);assert(next.length<=12);assert.match(next,/^\S+ \S+$/);assert(c.cleanCharacter({name:next,color:'leaf'}));seen.add(next);name=next;}
+ assert(seen.size>20);const fixed=()=>0;assert.equal(c.suggestName('',fixed),'든든한 폴짝이');assert.notEqual(c.suggestName('든든한 폴짝이',(()=>{let k=0;return()=>[0,0,.5,.5][k++%4];})()),'든든한 폴짝이');
+});
 const make=()=>c.createCharacter(c.emptyGame(),{name:'새봄',color:'leaf'},day);
 test('first friend gets 30 leaves and the free sprout once, including later edits',()=>{let g=make();assert.equal(c.balance(g),30);assert.deepEqual(g.owned,['sprout']);g=c.createCharacter(g,{name:'달봄',color:'mint'},nextDay);assert.equal(c.balance(g),30);assert.equal(g.character.name,'달봄');assert.equal(g.rewards.length,1)});
 test('unique mission and scenario per local day, with caps and rest credit',()=>{let g=make();for(let i=0;i<10;i++){g=c.earnActivity(g,'step','m'+i,day);g=c.earnActivity(g,'practice','p'+i,day);g=c.earnActivity(g,'rest','rest'+i,day)}assert.equal(c.balance(g),95);assert.equal(c.activityDays(g),1);assert.equal(c.earnActivity(g,'step','m0',day),g);assert.equal(c.earnActivity(g,'rest','different',day),g)});
