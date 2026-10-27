@@ -38,13 +38,11 @@ export function CharacterCloset({game,save,demo,onCharacter,onCollect,onLook,onR
   <button className="wardrobe-earn" onClick={onEarn}><span><Leaf size={21}/><span>오늘의 작은 시도 만나기<small>내 속도로, 할 수 있는 만큼만.</small></span></span><ArrowRight size={18}/></button>
   {!save&&!demo&&<div className="character-storage"><span>다음 방문에도 친구와 옷장을 만나려면<br/><strong>이 기기에 기록 저장을 켜주세요.</strong></span><button onClick={onSave}>저장 켜기<ArrowRight size={15}/></button></div>}{demo&&<p className="character-demo-note">발표용 가상 포인트와 아이템이에요. 개인 기록에는 반영되지 않아요.</p>}
   {(item||look)&&<div className="closet-action" role="region" aria-label="선택한 꾸미기" aria-live="polite">
-   <button className="closet-action-close" aria-label="선택 취소" onClick={()=>{setSelected(null);setLookId(null)}}><X size={17}/></button>
-   {item?<><span className="item-tag">{slotLabel[item.slot]} · {item.tag}</span><h3>{item.name}</h3><p>{item.description}</p>
-    <button className="primary full" disabled={!owned&&coins<item.price} onClick={()=>{if(wearing)onRemove(item.slot);else{onCollect(item.id);frog.current?.react('cheer');}setSelected(null)}}>{wearing?'벗어둘래요':owned?'이걸로 입을래요':item.price?`${item.price}잎으로 데려오기`:'무료로 입기'}{owned?<Check size={16}/>:<Leaf size={16}/>}</button>
-    {!owned&&coins<item.price&&<small>{item.price-coins}잎을 더 모으면 함께할 수 있어요.</small>}</>
-   :look&&<><span className="item-tag">코디 예시</span><h3>{look.title}</h3><p>{look.note}{cost?` · 새로 데려올 아이템 ${cost}잎`:' · 모두 내 옷장에 있어요'}</p>
-    <button className="primary full" disabled={coins<cost} onClick={()=>{onLook(look.id);frog.current?.react('cheer');setLookId(null)}}>{cost?`${cost}잎으로 코디 완성하기`:'이 코디 입기'}{cost?<Leaf size={16}/>:<Check size={16}/>}</button>
-    {coins<cost&&<small>{cost-coins}잎을 더 모으면 이 코디를 완성할 수 있어요.</small>}</>}
+   {item?<><div className="closet-action-text"><h3>{item.name}</h3><p className={!owned&&coins<item.price?'short':''}>{!owned&&coins<item.price?`${item.price-coins}잎 더 모으면 돼요`:`${slotLabel[item.slot]} · ${item.description}`}</p></div>
+    <button className="primary" disabled={!owned&&coins<item.price} onClick={()=>{if(wearing)onRemove(item.slot);else{onCollect(item.id);frog.current?.react('cheer');}setSelected(null)}}>{owned?<Check size={15}/>:<Leaf size={15}/>}{wearing?'벗기':owned?'입기':item.price?`${item.price}잎 데려오기`:'무료로 입기'}</button></>
+   :look&&<><div className="closet-action-text"><h3>{look.title}</h3><p className={coins<cost?'short':''}>{coins<cost?`${cost-coins}잎 더 모으면 돼요`:cost?`새로 데려올 아이템 ${cost}잎`:'모두 내 옷장에 있어요'}</p></div>
+    <button className="primary" disabled={coins<cost} onClick={()=>{onLook(look.id);frog.current?.react('cheer');setLookId(null)}}>{cost?<Leaf size={15}/>:<Check size={15}/>}{cost?`${cost}잎 완성하기`:'이 코디 입기'}</button></>}
+   <button className="closet-action-close" aria-label="선택 취소" onClick={()=>{setSelected(null);setLookId(null)}}><X size={16}/></button>
   </div>}
  </div>
 }

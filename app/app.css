@@ -115,6 +115,7 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .complete-frog .frog-still{width:116px;height:116px}
 /* closet */
 .closet-app{padding-bottom:10px}
+.closet-app:has(>.closet-action){padding-bottom:84px}
 .closet-stage{position:relative;margin:6px 0 0;border-radius:30px;overflow:hidden;background:radial-gradient(ellipse at 50% 100%,#d6ebbd 0,#e7f3d6 34%,transparent 60%),linear-gradient(180deg,#f2f8f5,#f5f8ea);box-shadow:inset 0 0 0 1px #e0e9d5;padding:16px 16px 14px}
 .closet-stage:before{content:'';position:absolute;left:50%;bottom:76px;width:230px;height:46px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#fffef6,#eef3dd);box-shadow:0 6px 0 #dfe8c9}
 .closet-stage-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -151,12 +152,14 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .item-price{display:flex!important;align-items:center;gap:3px;font-size:11.5px!important;margin-top:4px!important;color:#5d8a40!important;font-weight:650}
 .closet-color{margin-top:12px;padding:18px 16px;border-radius:22px;background:#fff;border:1px solid #edf0e5}
 .closet-color .character-editor{margin-top:0}
-.closet-action{position:fixed;z-index:45;left:max(10px,calc(50% - var(--app-w)/2 + 10px));right:max(10px,calc(50% - var(--app-w)/2 + 10px));bottom:calc(var(--tab-h) + 18px + env(safe-area-inset-bottom));padding:16px 16px 14px;border-radius:24px;background:#fff;box-shadow:0 18px 44px #2c48242e,0 0 0 1px #e6ecdc;text-align:center;animation:sheet-up .32s cubic-bezier(.2,.9,.25,1)}
-.closet-action h3{font-size:18px;letter-spacing:-.5px;margin-top:2px}
-.closet-action p{font-size:12px;color:#7f8f74;margin:4px 20px 0;line-height:1.6}
-.closet-action .primary{margin-top:12px;min-height:50px}
-.closet-action small{display:block;font-size:11px;color:#9a9874;margin-top:8px}
-.closet-action-close{position:absolute;right:8px;top:8px;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;color:#8a9a7d}
+.closet-action{position:fixed;z-index:45;left:max(10px,calc(50% - var(--app-w)/2 + 10px));right:max(10px,calc(50% - var(--app-w)/2 + 10px));bottom:calc(var(--tab-h) + 16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;padding:8px 6px 8px 14px;border-radius:20px;background:#fff;box-shadow:0 12px 32px #2c48242e,0 0 0 1px #e6ecdc;animation:sheet-up .32s cubic-bezier(.2,.9,.25,1)}
+.closet-action-text{flex:1;min-width:0}
+.closet-action h3{font-size:14.5px;letter-spacing:-.3px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closet-action p{font-size:11.5px;color:#7f8f74;line-height:1.4;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closet-action p.short{color:#9a7a3c}
+.closet-action .primary{flex-shrink:0;min-height:44px;padding:0 14px;font-size:13.5px;gap:5px}
+.closet-action .primary:disabled{opacity:1;background:#e6ecde!important;color:#5f7155!important}
+.closet-action-close{flex-shrink:0;width:36px;height:44px;display:grid;place-items:center;border-radius:12px;color:#8a9a7d}
 .closet-app .item-tag{font-size:11px;color:#6e9a4f;font-weight:650}
 .closet-app .earning-guide{margin-top:20px}
 .closet-app .earning-guide summary,.closet-app .earning-guide p,.closet-app .earning-guide small{font-size:12px}
