@@ -13,5 +13,5 @@ export const metadata: Metadata = {
  appleWebApp:{capable:true,statusBarStyle:'default',title:'폴짝'},
  icons:{icon:'/icons/favicon-64.png',apple:'/icons/icon-180.png'},
 };
-export const viewport: Viewport = {width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#f6f8fb'};
+export const viewport: Viewport = {width:'device-width',initialScale:1,viewportFit:'cover',themeColor:'#e9f9fd'};
 export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="ko"><body>{children}</body></html>}

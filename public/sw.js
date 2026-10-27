@@ -1,4 +1,4 @@
-const CACHE = 'one-step-shell-v5';
+const CACHE = 'one-step-shell-v6';
 // Only generic static assets. Never cache sign-in pages, API responses or user records.
 const ASSETS = ['/offline.html','/icons/icon-192.png','/icons/icon-512.png','/icons/icon-180.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(async cache => {
