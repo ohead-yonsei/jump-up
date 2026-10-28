@@ -1,6 +1,6 @@
 {
   "name": "poljjak-jump-up",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -12,7 +12,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "ios": "cap sync ios && cap open ios",
-    "test": "node tests/run.mjs && node tests/app-v2.mjs && node tests/journey.mjs && node tests/character.mjs && node tests/companion.mjs && node tests/support.mjs && node tests/request-origin.mjs"
+    "test": "node tests/run.mjs && node tests/app-v2.mjs && node tests/journey.mjs && node tests/character.mjs && node tests/companion.mjs && node tests/support.mjs && node tests/request-origin.mjs && node tests/places.mjs"
   },
   "dependencies": {
     "@capacitor/core": "8.5.3",

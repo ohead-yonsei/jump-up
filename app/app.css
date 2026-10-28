@@ -308,3 +308,78 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .pond-stage.is-night.has-scene .pond-stage-sky{background:var(--scene) 72% 100%/cover no-repeat,linear-gradient(180deg,#2d3358,#5d6c78)}
 .pond-stage.has-scene .sun,.pond-stage.has-scene .cloud,.pond-stage.has-scene .hill,.pond-stage.has-scene .water,.pond-stage.has-scene .stars{display:none}
 .pond-stage.has-scene:not(.is-night) .pond-stage-sky:before{content:'';position:absolute;inset:0 0 auto;height:40%;background:linear-gradient(180deg,#ffffff8c,transparent)}
+/* 0.21.0 · 3D tab icons, places to go, contact sheet, growing week garden */
+.tab-bar .tab-icon{width:52px;height:34px;border-radius:17px}
+.tab-bar .tab-icon img{width:30px;height:30px;object-fit:contain;pointer-events:none;-webkit-user-select:none;user-select:none;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.tab-bar button:not(.active) .tab-icon img{opacity:.9}
+.tab-bar button.active .tab-icon img{transform:translateY(-1px) scale(1.08)}
+.round-icon.leafy{background:var(--btn);color:var(--accent)}
+.help-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 16px;border-radius:18px;background:var(--soft)}
+.help-switch button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;border-radius:14px;font-size:13.5px;font-weight:700;color:#6b7684}
+.help-switch button[aria-current=page]{background:#fff;color:var(--brand-ink);box-shadow:0 2px 8px #2b344114}
+.help-switch button[aria-current=page] svg{color:var(--accent)}
+.place-finder{display:grid;gap:14px}
+.place-search{position:relative;overflow:hidden}
+.place-search h2{padding-right:92px}
+.place-nest{position:absolute;right:6px;top:16px;width:92px;height:auto;pointer-events:none}
+.place-kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+.place-kinds button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:66px;padding:0 2px;border-radius:16px;background:#fff;border:1px solid var(--hair);font-size:12.5px;font-weight:600;color:#556274}
+.place-kinds button svg{color:#8a95a3}
+.place-kinds button.selected{background:var(--btn);border-color:var(--accent);color:var(--brand-ink)}
+.place-kinds button.selected svg{color:var(--accent)}
+.place-kind-note{margin-top:10px;padding:11px 13px;border-radius:14px;background:#fff}
+.place-kind-note strong{display:block;font-size:14px;color:#303a47}
+.place-kind-note p{font-size:12.5px;line-height:1.65;color:#5f6b7b;margin-top:2px}
+.place-origin{display:grid;grid-template-columns:1.25fr 1fr;gap:6px;margin-top:12px}
+.place-origin .primary,.place-origin .secondary,.place-visit .primary,.place-visit .secondary,.support-actions .primary,.support-actions .secondary{min-height:46px!important;padding:8px 10px!important;font-size:13.5px!important;justify-content:center;gap:6px}
+.place-area{display:flex;gap:6px;margin-top:8px}
+.place-area input{flex:1;min-width:0;min-height:46px;padding:0 14px;border-radius:14px;border:1px solid var(--hair);background:#fff;font-size:16px;color:var(--ink)}
+.place-area .primary{min-height:46px!important;padding:0 18px!important}
+.place-privacy{display:flex;gap:5px;align-items:flex-start;margin-top:10px;font-size:11.5px!important;line-height:1.6;color:#7c8797!important}
+.place-privacy svg{flex-shrink:0;margin-top:3px}
+.place-status{display:flex;align-items:center;gap:8px;padding:13px 15px;border-radius:16px;background:var(--sky);font-size:13.5px;line-height:1.6;color:#3f4c5f}
+.place-status.is-error{background:#f5f4f1;color:#5c6675}
+.place-results .section-top{align-items:baseline}
+.place-results .section-top h2{font-size:16px!important}
+.place-list{display:grid;gap:8px;margin-top:10px}
+.place-card{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:13px 12px;border-radius:18px;background:#fff;border:1px solid #eae9e5}
+.place-art{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--sky);color:var(--accent)}
+.place-info{min-width:0}
+.place-info h3{font-size:15px!important;line-height:1.4;color:#303a47}
+.place-detail{font-size:12px!important;color:#7c8797!important}
+.place-walk{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:12.5px!important;font-weight:700;color:var(--brand-ink)!important}
+.place-address{margin-top:1px;font-size:11.5px!important;color:#8691a0!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.place-map{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:50px;height:50px;border-radius:15px;background:var(--btn);color:var(--accent);font-size:11.5px;font-weight:700}
+.place-credit{margin-top:10px;font-size:11px!important;line-height:1.6;color:#8691a0!important}
+.place-maps{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;margin-top:12px;padding:12px 14px;border-radius:16px;border:1px dashed var(--hair);background:#ffffffb3;font-size:12.5px;line-height:1.6;color:#5f6b7b}
+.place-finder>.place-maps{margin-top:0}
+.place-maps div{display:flex;gap:6px}
+.place-maps a{display:inline-flex;align-items:center;gap:3px;min-height:38px;padding:0 12px;border-radius:12px;background:#fff;border:1px solid var(--hair);font-size:12.5px;font-weight:700;color:#445265}
+.place-practice{width:100%;text-align:left}
+.place-visit{padding:18px 16px;border-radius:22px;background:#f5f4f1;border:1px solid #eae9e5}
+.place-visit h3{font-size:16px!important;color:#303a47}
+.place-visit>p{margin-top:4px;font-size:12.5px!important;line-height:1.7;color:#6b7684!important}
+.place-visit .button-row{display:grid;grid-template-columns:1.3fr 1fr;gap:6px;margin-top:12px}
+.place-visited{display:flex;align-items:center;gap:6px;margin-top:10px;font-weight:700;color:var(--accent)!important}
+.support-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:16px}
+.support-actions img{width:22px;height:22px}
+.contact-sheet h2{font-size:21px!important;letter-spacing:-.6px}
+.contact-sheet .dialog-content>p{margin-top:4px;font-size:13px;color:#6b7684}
+.contact-options{display:grid;gap:8px;margin:16px 0 14px}
+.contact-option{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;width:100%;min-height:64px;padding:10px 14px 10px 10px;border-radius:18px;border:1px solid #eae9e5;background:#fff;text-align:left;color:#9aa3af}
+.contact-option.is-plain{grid-template-columns:auto 1fr}
+.contact-ic{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--sky);color:var(--accent)}
+.contact-ic.phone{background:#fdeeee;color:#e06c6f}
+.contact-ic.kakao{background:#fee500;color:#3c1e1e}
+.contact-ic .talk{font-size:9.5px;font-weight:900;letter-spacing:-.3px}
+.contact-ic.visit{background:#f5f4f1;color:#6b7684}
+.contact-ic.frog{background:#fff}
+.contact-text{min-width:0}
+.contact-text strong{display:block;font-size:15px;color:#303a47}
+.contact-text small{display:block;margin-top:2px;font-size:12px;line-height:1.5;color:#7c8797}
+.contact-option.practice{background:var(--sky);border-color:var(--sky-2)}
+.contact-sheet .secondary.full{width:100%;min-height:50px}
+.week-days .grow-1>div{background:var(--sky);color:var(--accent)}
+.week-days .grow-3>div{color:#e28384}
+.empty-state .nest-art{display:block;width:150px;height:auto;margin:0 auto 12px}
+.place-finder .teaser{background:#fff;border-color:#eae9e5}
