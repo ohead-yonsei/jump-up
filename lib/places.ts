@@ -45,11 +45,12 @@ export function parsePlaceQuery(value: unknown): PlaceQuery | 'outside' | null {
 }
 const PROVINCE = /^(서울|부산|대구|인천|광주|대전|울산|세종|경기|강원|충북|충남|전북|전남|경북|경남|제주)\S*\s+/;
 // Keyword search also finds parking lots and kids' cafes; keep places a young adult can simply walk into.
+// Kakao's cafe group also holds board-game rooms, comic cafes and meeting rooms, and '커피랑도서관' is a paid study cafe.
 function fits(kind: PlaceKind, path: string[]) {
  if (path.some(s => s.includes('주차장'))) return false;
  if (kind === 'park') return path.some(s => s.endsWith('공원'));
- if (kind === 'library') return path.some(s => s.endsWith('도서관'));
- if (kind === 'cafe') return !path.some(s => /키즈카페|룸카페/.test(s));
+ if (kind === 'library') return path.includes('도서관');
+ if (kind === 'cafe') return path[0] === '음식점' && path[1] === '카페' && !path.some(s => /키즈카페|룸카페|라이브카페|사주카페|^다방$/.test(s));
  return true;
 }
 /** Kakao Local documents → at most eight places, nearest first. Unknown shapes are skipped, not trusted. */

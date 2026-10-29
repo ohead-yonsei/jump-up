@@ -27,8 +27,10 @@ await test('Kakao results become at most eight safe places, nearest first',()=>{
 await test('parks and libraries keep only places whose category says so',()=>{
  const park=[doc(1,100,{category_name:'여행 > 공원 > 도시근린공원'}),doc(2,90,{category_name:'교통,수송 > 교통시설 > 주차장 > 공영주차장',place_name:'공원 공영주차장'}),doc(3,80,{category_name:'음식점 > 한식',place_name:'공원식당'})];
  assert.deepEqual(p.toPlaces(park,'park').map(x=>x.id),['1']);
- const library=[doc(1,100,{category_name:'문화,예술 > 도서관 > 공공도서관'}),doc(2,90,{category_name:'교육,학습 > 독서실'}),doc(3,95,{category_name:'문화,예술 > 도서관'})];
- assert.deepEqual(p.toPlaces(library,'library').map(x=>x.id),['3','1']);
+ const library=[doc(1,100,{category_name:'문화,예술 > 도서관 > 공공도서관'}),doc(2,90,{category_name:'교육,학습 > 독서실'}),doc(3,95,{category_name:'문화,예술 > 도서관'}),doc(4,80,{category_name:'교육,학문 > 학습시설 > 도서관 > 작은도서관'}),doc(5,70,{category_name:'음식점 > 카페 > 테마카페 > 북카페 > 커피랑도서관'})];
+ assert.deepEqual(p.toPlaces(library,'library').map(x=>x.id),['4','3','1']);
+ const cafe=[doc(1,100),doc(2,90,{category_name:'가정,생활 > 여가시설 > 보드카페'}),doc(3,80,{category_name:'가정,생활 > 여가시설 > 만화방 > 만화카페 > 벌툰'}),doc(4,70,{category_name:'음식점 > 카페 > 테마카페 > 라이브카페'}),doc(5,60,{category_name:'음식점 > 카페 > 다방'}),doc(6,50,{category_name:'서비스,산업 > 전문대행 > 공간대여 > 모임공간'}),doc(7,40,{category_name:'음식점 > 카페 > 테마카페 > 디저트카페 > 설빙'}),doc(8,30,{category_name:'음식점 > 카페'})];
+ assert.deepEqual(p.toPlaces(cafe,'cafe').map(x=>x.id),['8','7','1']);
 });
 await test('walking time is a slow walk and short distances read in metres',()=>{
  assert.equal(p.walkMinutes(10),1);assert.equal(p.walkMinutes(670),10);assert.equal(p.formatDistance(420),'420m');assert.equal(p.formatDistance(1250),'1.3km');
