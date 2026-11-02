@@ -30,7 +30,7 @@ export function AppNote({shared=false,onSave,onHelp}:{shared?:boolean;onSave:(no
  </section>
 }
 /** Lets field-study staff set the code that appears in exported records. */
-export function ParticipantCode({value,onChange}:{value:string;onChange:(code:string)=>void}){
+export function ParticipantCode({value,shared=false,onChange}:{value:string;shared?:boolean;onChange:(code:string)=>void}){
  const [draft,setDraft]=useState(value);const ok=validParticipant(draft);
- return <div className="participant-code"><label htmlFor="participant">실증 참여 코드<small>담당자가 알려준 코드가 있다면 적어주세요. 내보낸 기록에만 들어가요.</small></label><div><input id="participant" value={draft} maxLength={16} autoComplete="off" placeholder="예: P07" onChange={e=>setDraft(e.target.value.replace(/\s/g,''))}/><button className="secondary" disabled={!ok||draft===value} onClick={()=>onChange(draft)}>저장</button></div>{draft&&!ok&&<small className="error">영문·숫자·하이픈으로 16자까지 적을 수 있어요.</small>}</div>
+ return <div className="participant-code"><label htmlFor="participant">실증 참여 코드<small>담당자가 알려준 코드가 있다면 적어주세요. {shared?'기수 운영진에게는 이름 대신 이 코드로 보여요.':'내보낸 기록에만 들어가요.'}</small></label><div><input id="participant" value={draft} maxLength={16} autoComplete="off" placeholder="예: P07" onChange={e=>setDraft(e.target.value.replace(/\s/g,''))}/><button className="secondary" disabled={!ok||draft===value} onClick={()=>onChange(draft)}>저장</button></div>{draft&&!ok&&<small className="error">영문·숫자·하이픈으로 16자까지 적을 수 있어요.</small>}</div>
 }

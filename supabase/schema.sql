@@ -21,7 +21,9 @@ create table if not exists participants (
   code text not null check (char_length(code) between 1 and 16),
   token_hash text not null unique,
   joined_at timestamptz not null default now(),
-  last_sync_at timestamptz
+  last_sync_at timestamptz,
+  -- 한 기수 안에서 참여 코드가 겹치면 운영자 표와 CSV에서 두 사람이 섞여 보여요.
+  unique (cohort_id, code)
 );
 create index if not exists participants_cohort_id on participants (cohort_id);
 

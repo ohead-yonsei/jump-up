@@ -1,6 +1,7 @@
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 import { CODE_ALPHABET, JOIN_CODE_LENGTH, OPERATOR_CODE_LENGTH } from './cohort';
 import { isSameOrigin } from './request-origin';
+import type { CohortStore } from './cohort-store';
 
 export const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 export const randomCode = (length: number) => Array.from({ length }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join('');
@@ -14,7 +15,8 @@ export const sameSecret = (a: string, b: string) => timingSafeEqual(createHash('
 
 export const OPS_COOKIE = 'poljjak_ops';
 export const OPS_SESSION_SECONDS = 12 * 60 * 60;
-export type OpsSession = { role: 'admin' } | { role: 'operator'; cohortId: string };
+/** An operator session carries the hash of the code it signed in with, so issuing a new code ends it on the next request. */
+export type OpsSession = { role: 'admin' } | { role: 'operator'; cohortId: string; op: string };
 /** The team's admin key also signs operator sessions. Without one, or with a short one, the operator pages stay closed. */
 export function opsKey(env: Record<string, string | undefined>) {
   const key = env.OPS_ADMIN_KEY?.trim();
@@ -32,11 +34,15 @@ export function readSession(value: string | undefined, key: string, now = Date.n
     const s = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
     if (typeof s.exp !== 'number' || s.exp < now) return null;
     if (s.role === 'admin') return { role: 'admin' };
-    if (s.role === 'operator' && typeof s.cohortId === 'string') return { role: 'operator', cohortId: s.cohortId };
+    if (s.role === 'operator' && typeof s.cohortId === 'string' && typeof s.op === 'string' && /^[0-9a-f]{64}$/.test(s.op)) return { role: 'operator', cohortId: s.cohortId, op: s.op };
   } catch {}
   return null;
 }
 export const canSee = (session: OpsSession, cohortId: string) => session.role === 'admin' || session.cohortId === cohortId;
+/** An operator's code must still be the cohort's current one. */
+export async function stillValid(store: Pick<CohortStore, 'cohortByOperatorHash'>, session: OpsSession) {
+  return session.role === 'admin' || (await store.cohortByOperatorHash(session.op))?.id === session.cohortId;
+}
 
 export const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 export const secureRequest = (request: Request) => (request.headers.get('x-forwarded-proto') ?? new URL(request.url).protocol.slice(0, -1)) === 'https';
@@ -48,7 +54,7 @@ export async function readJson(request: Request, limit: number): Promise<{ value
   if (text.length > limit) return { error: json({ error: '한 번에 보내기에는 너무 많아요.' }, 413) };
   try { return { value: JSON.parse(text) }; } catch { return { error: json({ error: '입력을 확인해 주세요.' }, 400) }; }
 }
-export const clientAddress = (request: Request) => request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ?? 'instance';
+export const clientAddress = (request: Request) => (request.headers.get('x-vercel-forwarded-for') ?? request.headers.get('x-forwarded-for'))?.split(',')[0]?.trim() || 'instance';
 /** Best-effort per-instance limit, enough to slow down guessing codes. */
 export function rateLimiter(max: number, windowMs = 60000) {
   const seen = new Map<string, { count: number; start: number }>();

@@ -2,8 +2,8 @@ import type {Metadata} from 'next';
 import {cookies,headers} from 'next/headers';
 import {storeFromEnv,type Cohort} from '@/lib/cohort-store';
 import {participantSummary,cohortStage,formatCode,seoulDay,type ParticipantRecords} from '@/lib/cohort';
-import {opsKey,readSession,OPS_COOKIE} from '@/lib/cohort-server';
-import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,CopyButton} from '@/components/ops-forms';
+import {opsKey,readSession,stillValid,OPS_COOKIE} from '@/lib/cohort-server';
+import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,ChangeEndDate,CopyButton} from '@/components/ops-forms';
 import './ops.css';
 export const dynamic='force-dynamic';
 export const metadata:Metadata={title:'폴짝 운영',robots:{index:false,follow:false}};
@@ -30,6 +30,7 @@ function CohortView({cohort,people,link,admin}:{cohort:Cohort;people:Participant
   <section className="ops-people"><div className="ops-section-top"><h2>함께하는 사람 {people.length}명</h2>{people.length>0&&<a className="secondary" href={`/api/ops/cohorts?id=${cohort.id}`}>CSV 내려받기</a>}</div>
    <People people={people}/>
    <p className="ops-note">참여자는 가명인 참여 코드로만 보여요. 실제 참여자와 참여 코드는 기관에서 따로 이어서 관리해 주세요. 기수에서 나간 사람의 기록은 바로 지워져요. 날짜는 한국 시간 기준이에요.</p></section>
+  <section className="ops-people"><h2>기간</h2><p className="ops-note">한 달 해보고 더 하고 싶은 사람이 많다면 연장해요. 마치는 날이 지나면 새로 들어올 수 없고, 이미 함께하는 사람은 계속 기록을 보내요.</p><ChangeEndDate id={cohort.id} startsOn={cohort.startsOn} endsOn={cohort.endsOn}/></section>
   {admin&&<section className="ops-people"><h2>운영자 코드</h2><p className="ops-note">기관 담당자는 운영자 코드로 이 기수만 볼 수 있어요. 코드를 잃어버렸다면 새로 만들어 주세요.</p><RotateOperatorCode id={cohort.id}/></section>}
  </>;
 }
@@ -41,6 +42,7 @@ export default async function OpsPage({searchParams}:{searchParams:Promise<{coho
  if(!session)return <Shell><OpsLogin/></Shell>;
  const admin=session.role==='admin';const selected=admin?(await searchParams).cohort:session.cohortId;
  try{
+  if(!await stillValid(store,session))return <Shell><OpsLogin notice="운영자 코드가 새로 바뀌었어요. 새 코드로 다시 들어와 주세요."/></Shell>;
   if(selected){const cohort=await store.cohort(selected);const people=cohort?await store.cohortRecords(cohort.id):[];const link=cohort?`${await origin()}/?join=${cohort.joinCode}`:'';
    return <Shell role={admin?'폴짝 팀':'기관 담당자'}>{cohort?<CohortView cohort={cohort} people={people} link={link} admin={admin}/>:<section className="ops-head"><h1>기수를 찾지 못했어요</h1><p>{admin?<a href="/ops">모든 기수 보기</a>:'기수가 정리되었을 수 있어요. 폴짝 팀에 물어봐 주세요.'}</p></section>}</Shell>;}
   const cohorts=await store.listCohorts();const today=seoulDay();
