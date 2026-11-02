@@ -33,4 +33,25 @@ test('wearing a look buys only missing items, replaces the outfit and refuses wh
 test('coming back after three quiet days earns one welcome-back gift that survives saving',()=>{const g=c.earnActivity(make(),'step','a',day);const later=new Date(2026,9,30,12),tooSoon=new Date(2026,9,28,12);assert.equal(c.returnGift(g,tooSoon),null);assert.deepEqual(c.returnGift(g,later),{away:4});const w=c.claimReturn(g,later);assert.equal(c.balance(w),c.balance(g)+10);assert.equal(c.returnGift(w,later),null);assert.equal(c.claimReturn(w,later),w);assert.deepEqual(c.validGame(JSON.parse(JSON.stringify(w))),w)});
 test('a forged welcome-back gift without a real gap is dropped on load',()=>{const g=c.earnActivity(make(),'step','a',day);const forged={...g,rewards:[...g.rewards,{key:'2026-10-27:return',day:'2026-10-27',amount:10,kind:'return'}]};assert.equal(c.balance(c.validGame(forged)),c.balance(g));assert.equal(c.returnGift(c.emptyGame(),new Date(2026,10,30)),null)});
 test('expressions are free to wear from the first day',()=>{const faces=c.wardrobeItems.filter(i=>i.slot==='face');assert(faces.length>=4);assert(faces.every(i=>i.price===0));let g=make();for(const f of faces)g=c.collectItem(g,f.id);assert.equal(c.balance(g),30)});
+const daysLater=(g,n,kind='step')=>{for(let i=1;i<=n;i++)g=c.earnActivity(g,kind,'grow'+i,new Date(2026,9,26+i,12));return g;};
+test('a new friend hatches from an egg and grows with days together, resting days included',()=>{
+ const g=make();assert.equal(g.firstStage,'egg');assert.equal(c.growthOf(g).id,'egg');assert.deepEqual(c.nextGrowth(g),{stage:c.growthStages[1],days:1});
+ const seen=[0,1,2,3,6,7,13,14,30].map(n=>c.growthOf(daysLater(make(),n,'rest')).id);
+ assert.deepEqual(seen,['egg','tadpole','tadpole','froglet','froglet','frog','frog','grown','grown']);
+ assert.equal(c.nextGrowth(daysLater(make(),14)),null);assert.equal(c.nextGrowth(daysLater(make(),4)).days,3);
+ let same=c.earnActivity(make(),'step','a',day);same=c.earnActivity(same,'practice','b',day);same=c.earnActivity(same,'rest','r',day);assert.equal(c.growthOf(same).id,'tadpole');
+});
+test('friends saved before growth existed stay frogs, and renaming never restarts the egg',()=>{
+ const old={...make()};delete old.firstStage;const restored=c.validGame(JSON.parse(JSON.stringify(old)));assert.equal(restored.firstStage,'frog');assert.equal(c.growthOf(restored).id,'frog');
+ assert.equal(c.growthOf(daysLater(restored,14)).id,'grown');assert.equal(c.validGame({...old,firstStage:'dragon'}).firstStage,'frog');
+ assert.equal(c.createCharacter(restored,{name:'달봄',color:'mint'}).firstStage,'frog');const young=daysLater(make(),1);assert.equal(c.createCharacter(young,{name:'달봄',color:'mint'}).firstStage,'egg');
+ assert.deepEqual(c.validGame(JSON.parse(JSON.stringify(young))),young);assert.equal('firstStage' in c.validGame(undefined),false);
+ assert(c.grewFrom('egg','tadpole'));assert(!c.grewFrom('frog','frog'));assert(!c.grewFrom('grown','egg'));
+});
+test('each stage shows only what fits it, and says when the rest will',()=>{
+ assert.deepEqual(c.slots.filter(s=>c.canWear('egg',s)),[]);assert.deepEqual(c.slots.filter(s=>c.canWear('tadpole',s)),['head','eyes','face']);
+ for(const g of ['froglet','frog','grown'])assert.deepEqual(c.slots.filter(s=>c.canWear(g,s)),c.slots);
+ assert.equal(c.wearsFrom('head').name,'올챙이');assert.equal(c.wearsFrom('outfit').name,'아기 개구리');assert.equal(c.wearsFrom('hand').id,'froglet');assert.equal(c.wearsFrom('head','hand').id,'froglet');assert.equal(c.wearsFrom().id,'egg');
+ assert(c.growthStages.slice(1).every(s=>s.hello.length>0));assert.deepEqual(c.growthStages.map(s=>s.days),[0,1,3,7,14]);
+});
 console.log(`${n} character and reward checks passed.`);

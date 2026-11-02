@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {RoundedBoxGeometry} from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import {frogColors,type FrogColor,type CharacterGame} from './character';
+import {frogColors,type FrogColor,type CharacterGame,type Growth} from './character';
 
-export type FrogLook={color:FrogColor;equipped:CharacterGame['equipped']};
+export type FrogLook={color:FrogColor;equipped:CharacterGame['equipped'];growth?:Growth};
 export type Reaction='jump'|'pat'|'hug'|'spin'|'cheer';
 export type Framing='full'|'portrait'|'face'|'stage';
 type V3=[number,number,number];
@@ -51,18 +51,25 @@ const bodyShape=()=>cached('body',()=>blob(bodySdf,[0,0,0],80,60));
 function paint(base:THREE.BufferGeometry,key:string,color:(p:THREE.Vector3,c:THREE.Color)=>void){
  return cached(key,()=>{const g=base.clone();const pos=g.attributes.position;const arr=new Float32Array(pos.count*3);const p=new THREE.Vector3(),c=new THREE.Color();for(let i=0;i<pos.count;i++){color(p.fromBufferAttribute(pos,i),c);arr.set([c.r,c.g,c.b],i*3);}g.setAttribute('color',new THREE.BufferAttribute(arr,3));return g;});
 }
-function headGeometry(pal:Palette){
- const main=new THREE.Color(pal.main),light=new THREE.Color(pal.light),face=new THREE.Color(pal.face),blush=new THREE.Color('#f59a98');
- return paint(headShape(),'head-'+pal.id,(p,c)=>{
+/** Soft round freckles on the back of the head and body, only on the grown frog. Directions point from each shape's centre. */
+const FRECKLES={head:[[-.42,.8,-.42,.12],[.46,.78,-.4,.1],[.04,.62,-.78,.13],[-.74,.32,-.58,.08],[.7,.36,-.6,.09]],body:[[-.28,.45,-.85,.12],[.3,.2,-.93,.14],[-.08,-.25,-.96,.09],[.62,-.3,-.72,.08]]} as const;
+/** Three tiny freckles on each cheek, in the blush. */
+const CHEEK=[-1,1].flatMap(s=>[[s*.44,-.06],[s*.53,-.07],[s*.485,-.14]]);
+function freckles(f:Sdf,list:readonly(readonly number[])[]){return list.map(([x,y,z,r])=>({p:surface(f,[0,0,0],[x,y,z]).p,r}));}
+function speckle(p:THREE.Vector3,c:THREE.Color,spots:{p:THREE.Vector3;r:number}[],dark:THREE.Color,k=.42){for(const s of spots)c.lerp(dark,(1-ss(s.r*.55,s.r,p.distanceTo(s.p)))*k);}
+function headGeometry(pal:Palette,spotted=false){
+ const main=new THREE.Color(pal.main),light=new THREE.Color(pal.light),face=new THREE.Color(pal.face),blush=new THREE.Color('#f59a98'),dark=new THREE.Color(pal.dark),cocoa=new THREE.Color('#c27a6c');
+ const spots=spotted?freckles(headSdf,FRECKLES.head):[],cheek=spotted?CHEEK.map(([x,y])=>({p:onHead(x,y).p,r:.03})):[];
+ return paint(headShape(),'head-'+pal.id+(spotted?'-spots':''),(p,c)=>{
   c.copy(main).lerp(light,ss(.2,.75,p.y)*.35);
   const u=p.x/.84,v=(p.y+.16)/.48;c.lerp(face,(1-ss(.48,1.02,Math.sqrt(u*u+v*v)))*ss(-.1,.42,p.z));
   for(const s of [-1,1])c.lerp(blush,(1-ss(.1,.165,Math.hypot(p.x-s*.49,(p.y+.1)*1.1)))*ss(.15,.35,p.z)*.85);
-  c.multiplyScalar(1-.2*ss(-.3,-.58,p.y));
+  speckle(p,c,spots,dark);speckle(p,c,cheek,cocoa,.8);c.multiplyScalar(1-.2*ss(-.3,-.58,p.y));
  });
 }
-function bodyGeometry(pal:Palette){
- const main=new THREE.Color(pal.main),face=new THREE.Color(pal.face);
- return paint(bodyShape(),'body-'+pal.id,(p,c)=>{const u=p.x/.32,v=(p.y+.02)/.44;c.copy(main).lerp(face,(1-ss(.55,1,Math.sqrt(u*u+v*v)))*ss(.05,.35,p.z));c.multiplyScalar(1-.22*ss(.22,.48,p.y));});
+function bodyGeometry(pal:Palette,spotted=false){
+ const main=new THREE.Color(pal.main),face=new THREE.Color(pal.face),dark=new THREE.Color(pal.dark);const spots=spotted?freckles(bodySdf,FRECKLES.body):[];
+ return paint(bodyShape(),'body-'+pal.id+(spotted?'-spots':''),(p,c)=>{const u=p.x/.32,v=(p.y+.02)/.44;c.copy(main).lerp(face,(1-ss(.55,1,Math.sqrt(u*u+v*v)))*ss(.05,.35,p.z));speckle(p,c,spots,dark);c.multiplyScalar(1-.22*ss(.22,.48,p.y));});
 }
 function noiseNormal(size:number,strength:number,seed:number){
  let s=seed;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647;};
@@ -165,12 +172,46 @@ const builders:Record<string,(pal:Palette)=>Parts>={
  teddy:()=>{const fur=fluffy('#c99b6c',{normalScale:new THREE.Vector2(.35,.35)}),pale=clay('#f1dfc2'),ink=glossy('#2b2420');const g=group(part(ball(.19,24,16),fur,[0,-.12,0]),part(ball(.15,24,16),fur,[0,.12,0]),part(ball(.065,16,12),pale,[0,.09,.12],[1,.85,.7]),part(ball(.022,10,8),ink,[0,.11,.17]));for(const s of [-1,1])g.add(part(ball(.055,14,10),fur,[s*.1,.24,-.01]),part(ball(.016,10,8),ink,[s*.055,.16,.13]),part(ball(.06,14,10),fur,[s*.13,-.25,.08]));g.position.set(0,.55,.66);return {body:g,pose:{l:[-.23,.5,.6],r:[.23,.5,.6]}};},
 };
 
+/* ---------- growth: egg, tadpole, froglet, frog and grown share one rig ---------- */
+/** How each stage reshapes the rig. The tadpole is the frog's head with a tail, so hats and glasses still fit it. */
+type Shape={size:number;head:number;neck:number;limbs:boolean;eyes:number;tall?:number;shadow:[number,number];frames?:Partial<Record<Framing,{target:V3;dist:number}>>};
+const SHAPES:Record<Growth,Shape>={
+ egg:{size:1,head:.5,neck:.44,limbs:false,eyes:1,shadow:[.68,1],frames:{face:{target:[0,.9,0],dist:4.4},portrait:{target:[0,.9,0],dist:4.8}}},
+ tadpole:{size:1,head:.8,neck:.52,limbs:false,eyes:1.18,shadow:[.6,.55],frames:{face:{target:[.18,1,0],dist:4.6},portrait:{target:[.18,1,0],dist:4.9}}},
+ froglet:{size:.8,head:1.12,neck:.86,limbs:true,eyes:1.14,shadow:[.78,1],frames:{face:{target:[0,1.1,0],dist:3.6},portrait:{target:[0,.9,0],dist:4.4}}},
+ frog:{size:1,head:1,neck:.88,limbs:true,eyes:1,shadow:[1,1]},
+ grown:{size:1.08,head:.9,neck:.9,limbs:true,eyes:.96,tall:1.14,shadow:[1.12,1],frames:{full:{target:[0,1.12,0],dist:6.9},face:{target:[0,1.52,0],dist:4.3},portrait:{target:[0,1.26,0],dist:5.8}}},
+};
+/** A flat, tapered tail with a see-through fin, as on a tadpole. Built in head space from the back of the head. */
+function tadpoleTail(m:THREE.Material,fin:THREE.Material){
+ const path:V3[]=[[0,0,0],[.34,-.2,-.24],[.76,-.26,-.3],[1.1,-.08,-.22],[1.26,.24,-.12]];
+ const core=group(taperTube(path,.26,.3,m),part(ball(.078,16,12),m,path[path.length-1]));core.scale.z=.55;
+ const edge=group(taperTube(path,.36,.5,fin),part(ball(.18,20,14),fin,path[path.length-1]));edge.scale.z=.24;
+ const g=group(core,edge);g.position.set(.12,-.28,-.42);return g;
+}
+/** The froglet keeps a shrinking tadpole tail for a while, peeking out behind. */
+function tailNub(m:THREE.Material,fin:THREE.Material){const g=tadpoleTail(m,fin);g.scale.setScalar(.62);g.position.set(.2,.42,-.3);return g;}
+/** Round feet with three bean toes for the grown frog. */
+function feet(m:THREE.Material){
+ const g=new THREE.Group();
+ for(const s of [-1,1]){const foot=group(part(ball(1,24,16),m,[0,0,0],[.2,.065,.22]));for(const x of [-.11,0,.11])foot.add(part(ball(.06,14,10),m,[x,.012,.2-Math.abs(x)*.35],[1,.8,1]));foot.position.set(s*.4,.04,.36);foot.rotation.y=s*.32;g.add(foot);}
+ return g;
+}
+/** A clear jelly egg with a soft glint; the sleeping baby inside is the rig's own head. */
+function jelly(m:THREE.Material){
+ const shine=new THREE.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.8,depthWrite:false});const R=.82;
+ const g=group(part(ball(R,64,48),m,[0,0,0],[1,1.02,1]));
+ for(const [x,y,z,w,h] of [[-.42,.5,.75,.16,.08],[-.6,.2,.78,.045,.045]] as const){const n=new THREE.Vector3(x,y,z).normalize();g.add(at(part(ball(1,20,12),shine,[0,0,0],[w,h,.012]),n.clone().multiplyScalar(R*1.005),n));}
+ g.position.y=.86;return g;
+}
+
 /* ---------- the character rig ---------- */
 const REST:Pose={l:[-.3,.29,.46],r:[.3,.29,.46]};
 const ARMS_UP:Pose={l:[-.72,1.1,.4],r:[.72,1.1,.4]},ARMS_OPEN:Pose={l:[-.86,.7,.36],r:[.86,.7,.36]};
 const REACH=.6;
 class Frog{
- root=new THREE.Group();squash=new THREE.Group();neck=new THREE.Group();head=new THREE.Group();
+ root=new THREE.Group();grow=new THREE.Group();squash=new THREE.Group();neck=new THREE.Group();head=new THREE.Group();
+ growth:Growth='frog';tail:THREE.Group;nub:THREE.Group;feet:THREE.Group;jelly:THREE.Group;fin:THREE.MeshPhysicalMaterial;gel:THREE.MeshPhysicalMaterial;
  arms:THREE.Group[]=[];sleeves:THREE.Mesh[]=[];hands:THREE.Mesh[]=[];skin:THREE.MeshPhysicalMaterial;tinted:THREE.MeshPhysicalMaterial;
  headMesh:THREE.Mesh;bodyMesh:THREE.Mesh;itemGroups:THREE.Object3D[]=[];
  eyes:THREE.Object3D[]=[];happyEyes:THREE.Object3D;sleepyEyes:THREE.Object3D;winkEye:THREE.Object3D;smile:THREE.Object3D;openMouth:THREE.Object3D;oMouth:THREE.Object3D;
@@ -178,7 +219,7 @@ class Frog{
  constructor(look:FrogLook){
   const pal=palette(look.color);this.skin=clay('#ffffff',{vertexColors:true});this.tinted=clay(pal.main);
   this.bodyMesh=part(bodyGeometry(pal),this.skin,[0,.5,0]);this.headMesh=part(headGeometry(pal),this.skin);
-  this.root.add(this.squash);this.squash.add(this.bodyMesh,this.neck);this.neck.position.set(0,.88,0);this.neck.add(this.head);this.head.position.set(0,.42,.03);this.head.add(this.headMesh);
+  this.root.add(this.grow);this.grow.add(this.squash);this.squash.add(this.bodyMesh,this.neck);this.neck.position.set(0,.88,0);this.neck.add(this.head);this.head.position.set(0,.42,.03);this.head.add(this.headMesh);
   for(const s of [-1,1]){const arm=new THREE.Group();arm.position.set(s*.27,.86,.27);const sleeve=part(cached('arm',()=>new THREE.CapsuleGeometry(.1,.3,6,16)),this.tinted,[0,-.3,0]);const hand=part(cached('hand',()=>ball(.145,28,20)),this.tinted,[0,-.6,0],[1,.92,1.05]);arm.add(sleeve,hand);this.sleeves.push(sleeve);this.hands.push(hand);this.arms.push(arm);this.squash.add(arm);}
   const ink=glossy('#1f211c',{roughness:.12,clearcoat:1,clearcoatRoughness:.05}),line=new THREE.MeshStandardMaterial({color:'#2f2a22',roughness:.6}),sparkle=new THREE.MeshBasicMaterial({color:'#ffffff'});
   for(const s of [-1,1]){const {p,n}=onHead(s*EYE_X,EYE_Y);const eye=at(group(part(cached('eye',()=>ball(.062,24,16)),ink,[0,0,0],[1,1.1,.55]),part(cached('glint',()=>ball(.017,10,8)),sparkle,[.022,.026,.03])),p,n,.006);this.eyes.push(eye);this.head.add(eye);
@@ -190,19 +231,27 @@ class Frog{
   const {p:mp,n:mn}=onHead(0,-.095);this.openMouth=at(group(part(new THREE.SphereGeometry(1,24,12,0,Math.PI*2,Math.PI/2,Math.PI/2),clay('#6d3a33',{normalMap:null,sheen:0}),[0,0,0],[.085,.07,.04]),part(ball(),clay('#f08f8a',{normalMap:null}),[0,-.04,.012],[.045,.022,.02])),mp,mn,-.004);
   const {p:op,n:on}=onHead(0,-.11);this.oMouth=at(part(new THREE.TorusGeometry(.03,.013,8,20),line),op,on,.004);
   this.head.add(this.happyEyes,this.sleepyEyes,this.winkEye,this.smile,this.openMouth,this.oMouth);
+  this.fin=clay(pal.light,{transparent:true,opacity:.55,depthWrite:false,roughness:.3,clearcoat:.6});this.gel=new THREE.MeshPhysicalMaterial({color:pal.light,transparent:true,opacity:.36,roughness:.06,clearcoat:1,clearcoatRoughness:.04,depthWrite:false});
+  this.tail=tadpoleTail(this.tinted,this.fin);this.nub=tailNub(this.tinted,this.fin);this.feet=feet(this.tinted);this.jelly=jelly(this.gel);this.head.add(this.tail);this.squash.add(this.nub,this.feet,this.jelly);
   this.setLook(look);
  }
  setLook(look:FrogLook){
-  const pal=palette(look.color);this.bodyMesh.geometry=bodyGeometry(pal);this.headMesh.geometry=headGeometry(pal);this.tinted.color.set(pal.main);
+  const pal=palette(look.color),growth=look.growth??'frog',shape=SHAPES[growth],spotted=growth==='grown';this.growth=growth;
+  this.bodyMesh.geometry=bodyGeometry(pal,spotted);this.headMesh.geometry=headGeometry(pal,spotted);this.tinted.color.set(pal.main);this.fin.color.set(pal.light);this.gel.color.set(pal.light);
+  // the grown frog is taller, not wider: stretch the rig and keep the head, hands and feet round
+  const tall=shape.tall??1;this.grow.scale.set(shape.size,shape.size*tall,shape.size);this.neck.position.y=shape.neck;this.head.scale.set(shape.head,shape.head/tall,shape.head);
+  for(const h of this.hands)h.scale.set(1,.92/tall,1.05);this.feet.scale.y=1/tall;
+  this.bodyMesh.visible=shape.limbs;for(const a of this.arms)a.visible=shape.limbs;this.tail.visible=!shape.limbs;this.nub.visible=growth==='froglet';this.feet.visible=growth==='grown';this.jelly.visible=growth==='egg';
   for(const g of this.itemGroups){g.parent?.remove(g);release(g);}this.itemGroups=[];this.pose=REST;let sleeve:THREE.Material=this.tinted;
-  for(const id of Object.values(look.equipped)){const build=id&&builders[id];if(!build)continue;const parts=build(pal);
-   if(parts.head){this.head.add(parts.head);this.itemGroups.push(parts.head);}if(parts.body){this.squash.add(parts.body);this.itemGroups.push(parts.body);}if(parts.pose)this.pose=parts.pose;if(parts.sleeves)sleeve=parts.sleeves;}
+  // the egg wears nothing yet; the tadpole has no body, so it keeps only what sits on its head
+  for(const id of growth==='egg'?[]:Object.values(look.equipped)){const build=id&&builders[id];if(!build)continue;const parts=build(pal);
+   if(parts.head){this.head.add(parts.head);this.itemGroups.push(parts.head);}if(!shape.limbs)continue;if(parts.body){this.squash.add(parts.body);this.itemGroups.push(parts.body);}if(parts.pose)this.pose=parts.pose;if(parts.sleeves)sleeve=parts.sleeves;}
   for(const s of this.sleeves)s.material=sleeve;
-  this.expression=look.equipped.face??'smile';this.express(this.expression);
+  this.expression=growth==='egg'?'sleepy':look.equipped.face??'smile';this.express(this.expression);
  }
  express(kind:string,blink=false){
   const open=['smile','surprise'].includes(kind)||kind==='wink';
-  this.eyes.forEach((e,i)=>{e.visible=open&&!(kind==='wink'&&i===0);e.scale.set(kind==='surprise'?1.3:1,blink?.12:kind==='surprise'?1.3:1,1);});
+  this.eyes.forEach((e,i)=>{e.visible=open&&!(kind==='wink'&&i===0);const k=SHAPES[this.growth].eyes;e.scale.set((kind==='surprise'?1.3:1)*k,(blink?.12:kind==='surprise'?1.3:1)*k,1);});
   this.happyEyes.visible=kind==='happy'||kind==='joy';this.sleepyEyes.visible=kind==='sleepy';this.winkEye.visible=kind==='wink';
   this.smile.visible=['smile','wink','sleepy','happy'].includes(kind);this.openMouth.visible=kind==='joy';this.oMouth.visible=kind==='surprise';
  }
@@ -226,7 +275,7 @@ function makeScene(renderer:THREE.WebGLRenderer){
  const shadow=part(new THREE.PlaneGeometry(2.6,1.5),new THREE.MeshBasicMaterial({map:shadowTexture(),transparent:true,depthWrite:false}),[0,.003,.12],1,[-Math.PI/2,0,0]);scene.add(shadow);
  return {scene,shadow};
 }
-function frame(camera:THREE.PerspectiveCamera,framing:Framing,aspect:number){const f=FRAMES[framing];camera.aspect=aspect;camera.fov=30;const fit=aspect<.9?.9/aspect:1;camera.position.set(f.target[0],f.target[1]+.18,f.dist*fit);camera.lookAt(...f.target);camera.updateProjectionMatrix();}
+function frame(camera:THREE.PerspectiveCamera,framing:Framing,aspect:number,growth:Growth='frog'){const f=SHAPES[growth].frames?.[framing]??FRAMES[framing];camera.aspect=aspect;camera.fov=30;const fit=aspect<.9?.9/aspect:1;camera.position.set(f.target[0],f.target[1]+.18,f.dist*fit);camera.lookAt(...f.target);camera.updateProjectionMatrix();}
 const ease=(t:number)=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 const spring=(t:number)=>1-Math.exp(-6*t)*Math.cos(12*t);
 
@@ -238,7 +287,7 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
  let frog=new Frog(opts.look);scene.add(frog.root);
  const motion=opts.reducedMotion?.25:1;const clock=new THREE.Clock();let raf=0,visible=true,running=false;
  const st={turn:0,vel:0,dragging:false,idleAt:0,action:null as null|{kind:Reaction;t:number},blinkAt:2,look:new THREE.Vector2(),aim:new THREE.Vector2(),handL:new THREE.Vector3(...REST.l),handR:new THREE.Vector3(...REST.r)};
- function resize(){const w=canvas.clientWidth||1,h=canvas.clientHeight||1;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);frame(camera,framing,w/h);}
+ function resize(){const w=canvas.clientWidth||1,h=canvas.clientHeight||1;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(w,h,false);frame(camera,framing,w/h,frog.growth);}
  function react(kind:Reaction){st.action={kind,t:0};if(kind==='spin')st.turn=st.turn%(Math.PI*2);}
  function tick(){
   raf=requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
@@ -252,6 +301,12 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
    else if(a.kind==='hug'){if(T>1.7)st.action=null;else{expr='happy';const q=(T<.3?ease(T/.3):T>1.35?1-ease((T-1.35)/.35):1)*(free?1:0);const mix=(a:V3,b:V3):V3=>[a[0]+(b[0]-a[0])*q,a[1]+(b[1]-a[1])*q,a[2]+(b[2]-a[2])*q];poseL=mix(poseL,ARMS_OPEN.l);poseR=mix(poseR,ARMS_OPEN.r);headZ+=Math.sin(T*6)*.06*q;}}
    else if(a.kind==='spin'){if(T>1.1)st.action=null;else{expr='joy';spin=ease(Math.min(1,T/1))*Math.PI*2;jumpY=Math.sin(Math.min(1,T)*Math.PI)*.18*motion;}}
   }
+  // the egg rocks a little, the tadpole floats and swishes its tail, the froglet wags what is left of it
+  const kind=frog.growth,busy=a?1:0;let float=0,rock=0;
+  if(kind==='egg'){rock=Math.sin(t*1.3)*.035*motion+(a?Math.sin(a.t*14)*.06*Math.max(0,1-a.t)*motion:0);if(expr==='joy')expr='happy';}
+  if(kind==='tadpole'){float=Math.sin(t*1.7)*.06*motion;frog.tail.rotation.set(0,Math.sin(t*(4+busy*7))*(.2+busy*.12)*motion,Math.sin(t*(4+busy*7)+.8)*.08*motion);}
+  if(kind==='egg')frog.tail.rotation.set(0,Math.sin(t*.9)*.08*motion,0);
+  if(kind==='froglet')frog.nub.rotation.y=Math.sin(t*(3+busy*6))*.18*motion;
   if(!a&&t>st.blinkAt){st.blinkAt=t+2.4+Math.random()*3;}
   const blink=!a&&t>st.blinkAt-.13&&['smile','wink','surprise'].includes(expr);
   frog.express(expr,blink);
@@ -259,9 +314,9 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
   frog.reach(0,st.handL);frog.reach(1,st.handR);
   if(!st.dragging){st.turn+=st.vel;st.vel*=.92;if(performance.now()-st.idleAt>2200){const home=Math.round(st.turn/(Math.PI*2))*Math.PI*2;st.turn+=(home-st.turn)*.06;}}
   st.look.lerp(st.aim,.08);
-  frog.root.rotation.y=st.turn+spin;frog.root.position.y=jumpY;frog.squash.scale.set(sxz,sy,sxz);
+  frog.root.rotation.set(0,st.turn+spin,rock);frog.root.position.y=jumpY+float;frog.squash.scale.set(sxz,sy,sxz);
   frog.neck.rotation.set(-st.look.y*.18+headX,st.look.x*.4,headZ);
-  shadow.scale.setScalar(1-jumpY*.6);(shadow.material as THREE.MeshBasicMaterial).opacity=1-jumpY;
+  const [shade,dim]=SHAPES[kind].shadow;shadow.scale.setScalar(shade*(1-jumpY*.6-float*.8));(shadow.material as THREE.MeshBasicMaterial).opacity=dim*(1-jumpY);
   renderer.render(scene,camera);
  }
  function start(){if(running||!visible||document.hidden)return;running=true;clock.getDelta();raf=requestAnimationFrame(tick);}
@@ -277,13 +332,13 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
   if(!down.moved&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(e.clientY-down.y)){down.moved=true;st.dragging=true;canvas.setPointerCapture(e.pointerId);clearTimeout(down.timer);}
   if(down.moved){const step=(e.clientX-down.last)*.012;st.turn+=step;st.vel=step;st.idleAt=performance.now();}down.last=e.clientX;}
  function pointerUp(e:PointerEvent){if(!down||e.pointerId!==down.id)return;clearTimeout(down.timer);
-  if(!down.moved&&!down.long&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<10){ndc.copy(local(e));ray.setFromCamera(ndc,camera);const kind:Reaction=ray.intersectObject(frog.headMesh,false).length?'pat':'jump';react(kind);opts.onReact?.(kind,e.clientX,e.clientY);}
+  if(!down.moved&&!down.long&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<10){ndc.copy(local(e));ray.setFromCamera(ndc,camera);const kind:Reaction=ray.intersectObject(frog.growth==='egg'?frog.jelly:frog.headMesh,true).length?'pat':'jump';react(kind);opts.onReact?.(kind,e.clientX,e.clientY);}
   st.dragging=false;st.idleAt=performance.now();down=null;}
  const leave=()=>st.aim.set(0,0);
  if(opts.interactive!==false){canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);canvas.addEventListener('pointerleave',leave);}
  resize();start();
  return {
-  setLook(look){frog.setLook(look);},react,
+  setLook(look){const was=frog.growth;frog.setLook(look);if(frog.growth!==was)resize();},react,
   turn(delta){st.turn+=delta;st.idleAt=performance.now();},
   setFraming(f){framing=f;resize();},
   dispose(){stop();ro.disconnect();io.disconnect();document.removeEventListener('visibilitychange',onVisibility);canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);canvas.removeEventListener('pointerleave',leave);
@@ -293,14 +348,14 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
 
 /* ---------- still renders for thumbnails, shared by every list on the page ---------- */
 type StillOptions={framing?:Framing;size?:number;angle?:number};
-let still:null|{renderer:THREE.WebGLRenderer;scene:THREE.Scene;camera:THREE.PerspectiveCamera;frog:Frog}=null;
+let still:null|{renderer:THREE.WebGLRenderer;scene:THREE.Scene;shadow:THREE.Mesh;camera:THREE.PerspectiveCamera;frog:Frog}=null;
 const stills=new Map<string,string>();
-const stillKey=(look:FrogLook,{framing='full',size=256,angle=-.32}:StillOptions)=>JSON.stringify([look.color,look.equipped,framing,size,angle]);
+const stillKey=(look:FrogLook,{framing='full',size=256,angle=-.32}:StillOptions)=>JSON.stringify([look.color,look.equipped,look.growth??'frog',framing,size,angle]);
 export function renderStill(look:FrogLook,opts:StillOptions={}){
  const {framing='full',size=256,angle=-.32}=opts;const key=stillKey(look,opts);const hit=stills.get(key);if(hit)return hit;
- if(!still){const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true,canvas:document.createElement('canvas')});const {scene}=makeScene(renderer);const frog=new Frog(look);scene.add(frog.root);still={renderer,scene,camera:new THREE.PerspectiveCamera(30,1,.1,40),frog};}
- const {renderer,scene,camera,frog}=still;renderer.setPixelRatio(1);renderer.setSize(size,size,false);frame(camera,framing,1);
- frog.setLook(look);frog.root.rotation.y=angle;frog.reach(0,new THREE.Vector3(...frog.pose.l));frog.reach(1,new THREE.Vector3(...frog.pose.r));
+ if(!still){const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true,canvas:document.createElement('canvas')});const {scene,shadow}=makeScene(renderer);const frog=new Frog(look);scene.add(frog.root);still={renderer,scene,shadow,camera:new THREE.PerspectiveCamera(30,1,.1,40),frog};}
+ const {renderer,scene,shadow,camera,frog}=still;renderer.setPixelRatio(1);renderer.setSize(size,size,false);
+ frog.setLook(look);frame(camera,framing,1,frog.growth);frog.root.rotation.set(0,angle,0);const [shade,dim]=SHAPES[frog.growth].shadow;shadow.scale.setScalar(shade);(shadow.material as THREE.MeshBasicMaterial).opacity=dim;frog.reach(0,new THREE.Vector3(...frog.pose.l));frog.reach(1,new THREE.Vector3(...frog.pose.r));
  renderer.render(scene,camera);const url=renderer.domElement.toDataURL('image/png');stills.set(key,url);return url;
 }
 /** Renders thumbnails one at a time between frames so a long list never blocks touch input. */
