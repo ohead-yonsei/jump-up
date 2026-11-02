@@ -6,7 +6,7 @@ import {goals,springStages,recommendSpring,missionPages,markSpringComplete,canJu
 import type {Mission} from '@/lib/content';
 import type {Entry} from '@/lib/records';
 import {FrogMark} from './frog-mark';
-import {Frog3D,FrogStill,type Frog3DHandle} from './frog-3d';
+import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
 import {balance,activityDays,returnGift,RETURN_GIFT,type CharacterGame} from '@/lib/character';
 import {missionCheer,restLines,moodFor,greeting,isNight,nightMissions} from '@/lib/companion';
 import {seasons,seasonOf} from '@/lib/season';
@@ -31,8 +31,8 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  useEffect(()=>{setMission(null);setCompleted('');setConfirmJump(false);setJumped(false);setOffset(0);setRating(null);setRated(false);},[demoScene]);
  useEffect(()=>{if(mission||completed)detailRef.current?.scrollIntoView({behavior:'smooth',block:'nearest'});},[mission,completed]);
  function chooseEnergy(e:Energy){onEnergy(e);const line=moodFor(e,game.equipped).line;frog.current?.react(e===1?'hug':e>=4?'jump':'pat',line);setOffset(0);setMission(null);setCompleted('');setConfirmJump(false);setRating(null);setRated(false);setNotice('');}
- function finish(rest=false){if(!rest&&!mission)return;const title=rest?'내 연못에서 쉬어가기':mission!.title;onRecord(rest?'rest':'step',title,{missionId:rest?undefined:mission!.id,goal:profile?.goal,springStage:profile?.stage});if(!rest&&profile&&mission)onProfile(markSpringComplete(profile,mission.id));const line=rest?restLines[Date.now()%restLines.length]:missionCheer(mission);setCheer(line);setCompleted(title);setIsRest(rest);setMission(null);setRating(null);setRated(false);frog.current?.react(rest?'hug':'cheer',line);}
- function finishCare(m:Mission){onRecord('step',m.title,{missionId:m.id,goal:profile?.goal,springStage:profile?.stage});setCareDone(m.title);frog.current?.react('hug',missionCheer(m));}
+ function finish(rest=false){if(!rest&&!mission)return;const title=rest?'내 연못에서 쉬어가기':mission!.title;onRecord(rest?'rest':'step',title,{missionId:rest?undefined:mission!.id,goal:profile?.goal,springStage:profile?.stage});if(!rest&&profile&&mission)onProfile(markSpringComplete(profile,mission.id));const line=rest?restLines[Date.now()%restLines.length]:missionCheer(mission);setCheer(line);setCompleted(title);setIsRest(rest);setMission(null);setRating(null);setRated(false);haptic(rest?[10,40,10]:[12,60,18]);frog.current?.react(rest?'hug':'cheer',line);}
+ function finishCare(m:Mission){onRecord('step',m.title,{missionId:m.id,goal:profile?.goal,springStage:profile?.stage});setCareDone(m.title);haptic([10,40,10]);frog.current?.react('hug',missionCheer(m));}
  function advance(){if(!profile||!canJump(profile))return;onProfile(jump(profile));setCompleted('');setMission(null);setOffset(0);setConfirmJump(false);setJumped(true);setNotice('다음 징검다리로 폴짝! 오늘의 에너지에 맞춰 천천히 시작해요.');}
  return <div className="poljjak-home">
  {game.character?<section className={'pond-stage has-scene'+(night?' is-night':'')} style={{'--scene':`url(/scenes/pond-${night?'night':'day'}.webp)`} as React.CSSProperties} aria-label="나의 캐릭터와 연못"><div className="pond-stage-sky" aria-hidden="true"><span className="sun"/>{night&&<span className="stars"/>}<span className="cloud cloud-a"/><span className="cloud cloud-b"/><span className="hill hill-a"/><span className="hill hill-b"/><span className="water"/><span className="pad"/></div>
