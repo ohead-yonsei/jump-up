@@ -1,0 +1,50 @@
+/* Operator pages: a plain working screen for institution staff and the team, readable on a laptop or a phone. */
+.ops{min-height:100dvh;background:#f5f4f1;color:#35404f}
+.ops-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px max(16px,calc((100% - 1100px)/2));background:#fff;border-bottom:1px solid var(--line)}
+.ops-brand{font-size:16px;font-weight:750;letter-spacing:-.4px}
+.ops-role{font-size:12px;color:#5f6b7b;background:#eae9e5;border-radius:99px;padding:3px 10px}
+.ops-logout{margin-left:auto}
+.ops-main{max-width:1100px;margin:0 auto;padding:28px 16px 64px}
+.ops-main h1{font-size:28px;line-height:1.35;letter-spacing:-.8px}
+.ops-main h2{font-size:18px;line-height:1.5;letter-spacing:-.4px}
+.ops-head{margin-bottom:20px}
+.ops-head p{color:#5f6b7b;font-size:14px;margin-top:4px}
+.ops-head a,.ops-table a{text-decoration:underline;text-underline-offset:3px}
+.ops-stage{display:inline-block;font-size:12px;font-weight:650;color:#3a4657;background:#e5f9fd;border-radius:99px;padding:2px 10px;margin-bottom:8px}
+.ops-back{display:inline-block;font-size:13px;color:#5f6b7b;margin-bottom:14px}
+.ops-login{max-width:380px;margin:9vh auto 0;padding:28px 22px;background:#fff;border:1px solid var(--line);border-radius:20px;display:grid;gap:10px}
+.ops-login p{font-size:13.5px;color:#5f6b7b;margin-bottom:6px}
+.ops-login label,.ops-fields label{display:grid;gap:5px;font-size:13px;font-weight:600;color:#3a4657}
+.ops input{width:100%;min-width:0;border:1.5px solid #dcdad3;border-radius:11px;padding:10px 12px;font-size:16px;background:#fff;color:#35404f}
+.ops .primary,.ops .secondary{border-radius:12px;min-height:44px;padding:10px 18px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:14px;font-weight:600}
+.ops-error{color:#c0574d;font-size:13px}
+.ops-create,.ops-created,.ops-people,.ops-invite{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:18px}
+.ops-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0 8px}
+.ops-hint,.ops-note{font-size:12.5px;color:#6c798a;margin:6px 0 12px;line-height:1.7}
+.ops-created{background:#e5f9fd;border-color:transparent}
+.ops-created h3{font-size:16px;margin-bottom:10px}
+.ops-created dl{display:grid;gap:4px;margin:0 0 10px}
+.ops-created dt{font-size:12px;color:#5f6b7b}
+.ops-created dd{margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ops-created strong,.ops-invite strong{font-size:22px;letter-spacing:2px;font-variant-numeric:tabular-nums}
+.ops-created p{font-size:13px;color:#4f5b6a;margin-bottom:12px}
+.ops-copy{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#4f5864;background:#eae9e5;border-radius:8px;padding:5px 10px;min-height:32px}
+.ops-invite{display:grid;gap:12px}
+.ops-invite>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.ops-invite span{font-size:12px;color:#5f6b7b;width:64px;flex-shrink:0}
+.ops-invite code{font-size:13px;background:#f5f4f1;border-radius:8px;padding:5px 9px;overflow-wrap:anywhere;min-width:0}
+.ops-invite p{font-size:12.5px;color:#6c798a;line-height:1.7}
+.ops-section-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ops-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border:1px solid var(--line);border-radius:14px}
+.ops-people .ops-table-wrap{border-radius:12px}
+.ops-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.ops-table th,.ops-table td{padding:10px 12px;text-align:left;border-bottom:1px solid #eeede8;font-variant-numeric:tabular-nums}
+.ops-table thead th{font-size:12px;font-weight:600;color:#6c798a;background:#faf9f7}
+.ops-table tbody tr:last-child>*{border-bottom:0}
+.ops-table tbody th{font-weight:650}
+.ops-mind{color:#4f5b6a}
+.ops-empty{font-size:14px;color:#6c798a;padding:18px 0}
+.ops-setup{font-size:14px;line-height:2;color:#4f5b6a;padding-left:20px}
+.ops-setup code{background:#fff;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+.ops-period{display:grid;gap:10px;max-width:520px}
+.ops-period label{display:grid;gap:5px;font-size:13px;font-weight:600;color:#3a4657;max-width:220px}

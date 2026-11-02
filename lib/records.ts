@@ -46,16 +46,17 @@ export function validVisits(value: unknown): string[] {
   const days = value.filter((v): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v)));
   return [...new Set(days)].sort().slice(-MAX_VISITS);
 }
-/** One line per person for the study sheet: over how many days, how often, how much, and contacts tried. */
-export function usageSummary(entries: Entry[], visits: string[]) {
-  const days = [...new Set([...visits, ...entries.map(e => localDay(e.at))])].sort();
+/** One line per person for the study sheet: over how many days, how often, how much, and contacts tried.
+ * `dayOf` turns a record time into a day; the server passes Korea's calendar day so it matches the device. */
+export function usageSummary(entries: Entry[], visits: string[], dayOf: (at: string) => string = localDay) {
+  const days = [...new Set([...visits, ...entries.map(e => dayOf(e.at))])].sort();
   const firstDay = days[0] ?? '', lastDay = days.at(-1) ?? '';
   const activity = entries.filter(e => e.type === 'step' || e.type === 'rest' || e.type === 'practice');
   return {
     firstDay, lastDay,
     spanDays: firstDay ? Math.round((Date.parse(lastDay) - Date.parse(firstDay)) / 864e5) + 1 : 0,
     visitDays: days.length,
-    activeDays: new Set(activity.map(e => localDay(e.at))).size,
+    activeDays: new Set(activity.map(e => dayOf(e.at))).size,
     contactTaps: entries.filter(e => e.type === 'contact').length,
   };
 }
@@ -84,23 +85,29 @@ export function validEntries(value: unknown): Entry[] {
     && (e.channel === undefined || ['phone', 'text', 'web'].includes(e.channel)));
   return keepEntries(kept);
 }
-/** One row per record, a summary row first and a row per day the app was opened. Columns added later go at the end. */
-export function recordsCsv(entries: Entry[], participant = 'session-only', visits: string[] = []) {
+export const recordsHeader = ['participant_code', 'record_id', 'date', 'type', 'title', 'energy', 'rating', 'confidence_before', 'confidence_after', 'practice_mode', 'mission_id', 'goal', 'spring_stage', 'calm', 'talk_comfort', 'outside_comfort', 'note',
+  'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps'];
+/** One person's rows: a summary row first, a row per record and a row per day the app was opened. Columns added later go at the end. */
+export function recordRows(entries: Entry[], participant = 'session-only', visits: string[] = [], dayOf: (at: string) => string = localDay): unknown[][] {
+  const u = usageSummary(entries, visits, dayOf);
+  const blank = (n: number) => Array<string>(n).fill('');
+  return [
+    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps],
+    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6)]),
+    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(20)]),
+  ];
+}
+export function toCsv(rows: unknown[][]) {
   // Spreadsheet applications may execute formula-like text even inside quotes.
   const escape = (v: unknown) => {
     let s = String(v ?? '');
     if (/^[\s]*[=+@-]/.test(s)) s = "'" + s;
     return '"' + s.replaceAll('"', '""') + '"';
   };
-  const u = usageSummary(entries, visits);
-  const blank = (n: number) => Array<string>(n).fill('');
-  return '\uFEFF' + [
-    ['participant_code', 'record_id', 'date', 'type', 'title', 'energy', 'rating', 'confidence_before', 'confidence_after', 'practice_mode', 'mission_id', 'goal', 'spring_stage', 'calm', 'talk_comfort', 'outside_comfort', 'note',
-      'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps'],
-    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps],
-    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6)]),
-    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(20)]),
-  ].map(row => row.map(escape).join(',')).join('\r\n');
+  return '\uFEFF' + rows.map(row => row.map(escape).join(',')).join('\r\n');
+}
+export function recordsCsv(entries: Entry[], participant = 'session-only', visits: string[] = []) {
+  return toCsv([recordsHeader, ...recordRows(entries, participant, visits)]);
 }
 export function demoEntries(now = new Date()): Entry[] {
   const at = (days: number) => { const d = new Date(now); d.setDate(d.getDate() - days); d.setHours(15, 0, 0, 0); return d.toISOString(); };
