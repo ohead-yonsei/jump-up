@@ -7,7 +7,7 @@ type Values={calm:number;talk:number;outside:number};
 const day=(at:string)=>new Date(at).toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
 function Dots({value,label}:{value?:number;label:string}){return <span className="mind-dots" aria-label={`${label} ${value??'-'} / 5`}>{[1,2,3,4,5].map(i=><i key={i} className={value&&i<=value?'on':''}/>)}</span>}
 /** Optional weekly self check-in. Shows how the person's own answers moved, never a score. */
-export function MindCheck({entries,onSave}:{entries:Entry[];onSave:(v:Values)=>void}){
+export function MindCheck({entries,shared=false,onSave}:{entries:Entry[];shared?:boolean;onSave:(v:Values)=>void}){
  const [open,setOpen]=useState(false);const [draft,setDraft]=useState<Partial<Values>>({});
  const checks=entries.filter(e=>e.type==='checkin');const first=checks[0];const last=lastCheckin(entries);const due=checkinDue(entries);
  const ready=checkinQuestions.every(q=>draft[q.key]);
@@ -17,14 +17,14 @@ export function MindCheck({entries,onSave}:{entries:Entry[];onSave:(v:Values)=>v
    <div className="button-row"><button className="primary" disabled={!ready} onClick={()=>{onSave(draft as Values);setOpen(false)}}>마음 남기기<Check size={16}/></button><button className="secondary" onClick={()=>setOpen(false)}>다음에 할래요</button></div><small>정답도 점수도 없어요. 지금 느낌 그대로 골라요.</small></div>
   :checks.length?<><div className="mind-rows">{checkinQuestions.map(q=><div key={q.key}><span>{q.short}</span><Dots value={first?.[q.key]} label="처음"/>{checks.length>1&&<><ArrowRight size={13}/><Dots value={last?.[q.key]} label="최근"/></>}</div>)}</div>
    <p className="mind-note">처음 {day(first!.at)}{checks.length>1&&` · 최근 ${day(last!.at)}`} · {checks.length}번 살펴봤어요. 달라지지 않아도 괜찮아요. 살펴본 시간 자체가 나를 돌본 시간이에요.</p></>
-  :<p className="mind-note">지금 마음을 남겨두면, 나중에 스스로 달라진 점을 살펴볼 수 있어요. 기록은 이 기기에만 남아요.</p>}
+  :<p className="mind-note">지금 마음을 남겨두면, 나중에 스스로 달라진 점을 살펴볼 수 있어요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'기록은 이 기기에만 남아요.'}</p>}
  </section>
 }
 /** A short note to the team; crisis language gets support instead of being filed away. */
-export function AppNote({onSave,onHelp}:{onSave:(note:string)=>void;onHelp:()=>void}){
+export function AppNote({shared=false,onSave,onHelp}:{shared?:boolean;onSave:(note:string)=>void;onHelp:()=>void}){
  const [text,setText]=useState('');const [support,setSupport]=useState(false);const [sent,setSent]=useState(false);
  function submit(){const note=text.trim();if(!note)return;if(needsSupport(note)){setSupport(true);return;}onSave(note);setText('');setSent(true);}
- return <section className="app-note" aria-label="폴짝에게 한마디"><h2><MessageCircleHeart size={19}/>폴짝에게 한마디</h2><p>써보니 어땠나요? 불편했던 점, 더 있었으면 하는 것도 좋아요. 이 기기에만 남고, 내보내기를 해야 팀에 전달돼요.</p>
+ return <section className="app-note" aria-label="폴짝에게 한마디"><h2><MessageCircleHeart size={19}/>폴짝에게 한마디</h2><p>써보니 어땠나요? 불편했던 점, 더 있었으면 하는 것도 좋아요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'이 기기에만 남고, 내보내기를 해야 팀에 전달돼요.'}</p>
   {support?<div className="support-response"><p>{supportiveText}</p><div className="button-row"><a className="primary" href="tel:109"><Phone size={17}/>109 상담전화</a><button className="secondary" onClick={onHelp}>긴급 도움 보기</button></div><button className="text-button" onClick={()=>{setSupport(false);setText('')}}>돌아가기</button></div>
   :<><label className="sr-only" htmlFor="app-note">폴짝에게 남길 말</label><textarea id="app-note" rows={3} maxLength={300} value={text} placeholder="예: 미션 글씨가 조금 작아요." onChange={e=>{setText(e.target.value);setSent(false)}}/><div className="app-note-foot"><span>{sent?'고마워요. 잘 남겨두었어요.':`${text.length}/300`}</span><button className="secondary" disabled={!text.trim()} onClick={submit}>남기기</button></div></>}
  </section>
