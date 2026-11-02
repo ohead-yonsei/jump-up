@@ -79,10 +79,19 @@ npm run ios
 
 TestFlight에 올리는 순서예요.
 
-1. Xcode › Settings › Accounts에 Apple ID로 로그인하고, App 타깃의 **Signing & Capabilities**에서 팀을 고릅니다. 번들 ID `io.github.oheadyonsei.poljjak`은 임시값이라 처음 등록하기 전에 바꿔도 돼요(바꾸면 `capacitor.config.ts`의 `appId`도 같이 바꿔 주세요).
-2. App Store Connect에서 같은 번들 ID로 새 앱을 만듭니다.
+1. Xcode › Settings › Accounts에 Apple ID로 로그인하고, App 타깃의 **Signing & Capabilities**에서 팀 `DAEHO LEE` (`DW98Q732AD`)를 고릅니다. 등록된 번들 ID는 `io.github.oheadyonsei.poljjak`이며, `capacitor.config.ts`의 `appId`와 같아야 해요.
+2. App Store Connect의 기존 앱 **폴짝 - 나만의 속도**(앱 ID `6827560889`)를 사용합니다. iPhone 홈 화면 이름은 **폴짝**이에요.
 3. 실행 대상을 **Any iOS Device**로 두고 **Product › Archive** → **Distribute App** → **App Store Connect**로 올립니다. 다시 올릴 때는 빌드 번호(`CURRENT_PROJECT_VERSION`)를 하나 올려요.
 4. TestFlight 탭에서 테스트 정보(베타 앱 설명, 피드백 이메일, 연락처)를 채우고 외부 테스트 그룹에 빌드를 넣어 베타 심사를 받습니다. 통과하면 이메일이나 공개 링크로 친구를 초대해요.
+
+### 첫 배포 현황 (2026-10-28 갱신)
+
+- 앱: **폴짝 - 나만의 속도**, 버전 **0.19.1**, 빌드 **1**. Xcode Archive 생성과 App Store Connect 업로드를 완료했어요.
+- 외부 그룹: **친구 테스트**. 2026-10-27 심사 제출 후 2026-10-28에 **승인됨** 상태를 확인했어요.
+- [TestFlight 심사 상태 확인](https://appstoreconnect.apple.com/teams/63b38a13-4bd4-433d-9f93-47354be1a2ff/apps/6827560889/testflight/groups/27a2f7bc-5a10-4626-82b4-df3c4cbeb2b5/builds)
+- [폴짝 TestFlight 참여 링크](https://testflight.apple.com/join/kgZCWKSe)를 생성하고 공개 참여 페이지가 열리는 것을 확인했어요. 친구는 iPhone에 TestFlight를 설치하고 이 링크에서 초대를 수락한 뒤 앱을 설치하면 돼요.
+- 공개 링크를 가진 사람은 참여할 수 있어요. 이메일 초대나 App Store Connect 계정 권한 추가 없이 공유할 수 있습니다. 승인 확인 자동화는 링크 생성 완료 후 일시정지했어요.
+- 업로드 전 `npm test`(69개 검사)와 `npm run typecheck`를 통과했어요. 정식 App Store 출시는 별도로 준비해야 해요.
 
 앱 아이콘(1024px)은 `public/icons/icon-512.png`를 키워 만든 것이라, 정식 출시 전에는 원본 그림에서 다시 뽑는 게 좋아요.
 
