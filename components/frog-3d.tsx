@@ -1,23 +1,28 @@
 'use client';
 import {useEffect,useImperativeHandle,useRef,useState,type Ref} from 'react';
-import type {Character,CharacterGame} from '@/lib/character';
+import type {Character,CharacterGame,Growth} from '@/lib/character';
 import type {FrogStage,Framing,Reaction} from '@/lib/frog-scene';
 import {FrogAvatar} from './frog-avatar';
 export type Frog3DHandle={react:(kind:Reaction,line?:string)=>void};
-type Props={character:Character;equipped?:CharacterGame['equipped'];framing?:Framing;interactive?:boolean;lines?:string[];className?:string;ref?:Ref<Frog3DHandle>;onReact?:(kind:Reaction)=>void};
+type Props={character:Character;equipped?:CharacterGame['equipped'];growth?:Growth;framing?:Framing;interactive?:boolean;lines?:string[];className?:string;ref?:Ref<Frog3DHandle>;onReact?:(kind:Reaction)=>void};
 type Burst={id:number;x:number;y:number;kind:Reaction};
 const defaultLines:Record<Reaction,string[]>={jump:['폴짝!','하나, 둘, 폴짝!','오늘도 폴짝'],pat:['헤헤, 간지러워','쓰담쓰담 좋아','고마워!'],hug:['꼭 안아줄게','여기 있어줘서 고마워','포옥'],spin:['어때, 잘 어울려?','짜잔!'],cheer:['잘했어, 정말로!','작은 폴짝도 대단해!']};
+/** The egg and the tadpole cannot hop or hug yet, so they answer in their own way. */
+const youngLines:Partial<Record<Growth,Record<Reaction,string[]>>>={
+ egg:{jump:['꼼지락','통!'],pat:['새근새근… 헤헤','따뜻해'],hug:['포근해…','쿨쿨'],spin:['데굴데굴'],cheer:['곧 만나요!','꿈틀꿈틀!']},
+ tadpole:{jump:['퐁당!','살랑살랑'],pat:['간질간질','헤헤, 좋아'],hug:['꼬리 흔들흔들','포옥'],spin:['빙글빙글 헤엄'],cheer:['꼬리 파닥파닥!','잘했어, 퐁당!']},
+};
 /** Light vibration on Android; skipped until the person has touched the page, as browsers require. */
 export function haptic(pattern:number|number[]=8){try{if((navigator as Navigator&{userActivation?:{isActive:boolean}}).userActivation?.isActive===false)return;navigator.vibrate?.(pattern)}catch{}}
 /** Interactive 3D frog. Tap to jump, tap the head to pat, hold to hug, drag sideways to turn. */
-export function Frog3D({character,equipped={},framing='full',interactive=true,lines,className='',ref,onReact}:Props){
+export function Frog3D({character,equipped={},growth='frog',framing='full',interactive=true,lines,className='',ref,onReact}:Props){
  const canvas=useRef<HTMLCanvasElement>(null);const box=useRef<HTMLDivElement>(null);const stage=useRef<FrogStage|null>(null);
  const [state,setState]=useState<'loading'|'ready'|'fallback'>('loading');const [bursts,setBursts]=useState<Burst[]>([]);const [bubble,setBubble]=useState<{text:string;id:number}|null>(null);
- const look={color:character.color,equipped};const lookKey=JSON.stringify(look);const latest=useRef({lines,onReact,look});latest.current={lines,onReact,look};
+ const look={color:character.color,equipped,growth};const lookKey=JSON.stringify(look);const latest=useRef({lines,onReact,look});latest.current={lines,onReact,look};
  function celebrate(kind:Reaction,x?:number,y?:number,line?:string,touched=false){
   const r=box.current?.getBoundingClientRect();if(!r)return;const id=Date.now()+Math.random();
   setBursts(b=>[...b.slice(-4),{id,kind,x:x===undefined?r.width/2:x-r.left,y:y===undefined?r.height*.35:y-r.top}]);setTimeout(()=>setBursts(b=>b.filter(i=>i.id!==id)),1300);
-  const pool=latest.current.lines??defaultLines[kind];setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),1900);
+  const pool=latest.current.lines??(youngLines[latest.current.look.growth]??defaultLines)[kind];setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),1900);
   if(touched)haptic(kind==='hug'?[10,40,10]:8);latest.current.onReact?.(kind);
  }
  useImperativeHandle(ref,()=>({react(kind,line){stage.current?.react(kind);celebrate(kind,undefined,undefined,line);}}),[]);
@@ -40,9 +45,9 @@ export function Frog3D({character,equipped={},framing='full',interactive=true,li
  </div>
 }
 /** Still 3D render for lists and thumbnails; all thumbnails share one offscreen renderer. */
-export function FrogStill({character,equipped={},framing='full',angle,className='',alt=''}:{character:Character;equipped?:CharacterGame['equipped'];framing?:Framing;angle?:number;className?:string;alt?:string}){
- const [src,setSrc]=useState('');const key=JSON.stringify([character.color,equipped,framing,angle]);
- useEffect(()=>{let alive=true;import('@/lib/frog-scene').then(({requestStill})=>requestStill({color:character.color,equipped},{framing,angle,size:framing==='face'?220:280})).then(url=>alive&&setSrc(url),()=>alive&&setSrc('fallback'));return ()=>{alive=false;};
+export function FrogStill({character,equipped={},growth='frog',framing='full',angle,className='',alt=''}:{character:Character;equipped?:CharacterGame['equipped'];growth?:Growth;framing?:Framing;angle?:number;className?:string;alt?:string}){
+ const [src,setSrc]=useState('');const key=JSON.stringify([character.color,equipped,growth,framing,angle]);
+ useEffect(()=>{let alive=true;import('@/lib/frog-scene').then(({requestStill})=>requestStill({color:character.color,equipped,growth},{framing,angle,size:framing==='face'?220:280})).then(url=>alive&&setSrc(url),()=>alive&&setSrc('fallback'));return ()=>{alive=false;};
   // eslint-disable-next-line react-hooks/exhaustive-deps
  },[key]);
  if(src==='fallback')return <span className={'frog-still '+className}><FrogAvatar character={character} equipped={equipped}/></span>;

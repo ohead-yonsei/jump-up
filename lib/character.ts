@@ -10,6 +10,20 @@ export const frogColors = [
 ] as const;
 export type FrogColor=typeof frogColors[number]['id'];
 export type Character={name:string;color:FrogColor};
+/**
+ * Five looks of the same friend, from a sleeping egg to a fully grown frog. 'frog' is the friend as it has always looked.
+ * The friend grows with the days you did anything at all, rest included (`days`), and never shrinks back.
+ * `wears` lists the slots that stage can show: the egg wears nothing yet, the tadpole has a head and no body.
+ */
+export const growthStages=[
+ {id:'egg',name:'알',days:0,wears:[],note:'말랑한 알 속에서 새근새근 꿈꾸는 중',hello:''},
+ {id:'tadpole',name:'올챙이',days:1,wears:['head','eyes','face'],note:'동그란 몸에 꼬리 하나, 살랑살랑 헤엄쳐요',hello:'알에서 깨어났어! 이제 올챙이야'},
+ {id:'froglet',name:'아기 개구리',days:3,wears:['head','eyes','outfit','hand','face'],note:'팔다리가 나오고 꼬리가 조금 남았어요',hello:'다리가 생겼어! 아기 개구리야'},
+ {id:'frog',name:'어른 개구리',days:7,wears:['head','eyes','outfit','hand','face'],note:'지금의 폴짝이, 내 속도로 폴짝',hello:'꼬리 안녕! 이제 어른 개구리야'},
+ {id:'grown',name:'다 자란 개구리',days:14,wears:['head','eyes','outfit','hand','face'],note:'한 뼘 더 자라 두 발로 든든하게 서요',hello:'한 뼘 더 자랐어! 함께해줘서 고마워'},
+] as const satisfies readonly {id:string;name:string;days:number;wears:readonly string[];note:string;hello:string}[];
+export type Growth=typeof growthStages[number]['id'];
+export type GrowthStage=typeof growthStages[number];
 export type Slot='head'|'eyes'|'outfit'|'hand'|'face';
 export const slots:Slot[]=['head','eyes','outfit','hand','face'];
 export type WardrobeItem={id:string;name:string;slot:Slot;price:number;description:string;tag:string};
@@ -63,7 +77,8 @@ export const looks:Look[]=[
  {id:'bedtime',title:'곰돌이와 잘 자',note:'수면 모자 · 곰돌이 · 활짝 웃음',image:'/looks/bedtime.webp',equipped:{head:'nightcap',hand:'teddy',face:'happy'}},
 ];
 export type Reward={key:string;day:string;amount:number;kind:'welcome'|'step'|'practice'|'rest'|'return'};
-export type CharacterGame={version:1;character:Character|null;owned:string[];equipped:Partial<Record<Slot,string>>;rewards:Reward[]};
+/** `firstStage` is where the friend started growing: 'egg' for friends made from 0.24.0, 'frog' for older friends so none of them shrinks. */
+export type CharacterGame={version:1;character:Character|null;owned:string[];equipped:Partial<Record<Slot,string>>;rewards:Reward[];firstStage?:Growth};
 export const emptyGame=():CharacterGame=>({version:1,character:null,owned:['sprout'],equipped:{head:'sprout'},rewards:[]});
 const nameMoods=['든든한','포근한','느긋한','말랑한','다정한','반짝이는','차분한','씩씩한','동글동글','살랑살랑','따스한','보송보송','꾸준한','산뜻한','수줍은','한가로운'];
 const nameFriends=['폴짝이','개굴이','연잎이','새싹이','봄비','이슬이','물방울','콩콩이','퐁당이','꼬물이','풀잎이','달빛이'];
@@ -81,10 +96,23 @@ export function cleanCharacter(value:unknown):Character|null{
 export function dayKey(date=new Date()){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
 export function createCharacter(game:CharacterGame,character:Character,date=new Date()):CharacterGame{
  const checked=cleanCharacter(character);if(!checked)return game;
- return {...game,character:checked,rewards:game.rewards.some(r=>r.key==='welcome')?game.rewards:[...game.rewards,{key:'welcome',day:dayKey(date),amount:30,kind:'welcome'}]};
+ return {...game,character:checked,firstStage:game.character?game.firstStage??'frog':'egg',rewards:game.rewards.some(r=>r.key==='welcome')?game.rewards:[...game.rewards,{key:'welcome',day:dayKey(date),amount:30,kind:'welcome'}]};
 }
 export function balance(game:CharacterGame){return game.rewards.reduce((n,r)=>n+r.amount,0)-wardrobeItems.filter(i=>game.owned.includes(i.id)).reduce((n,i)=>n+i.price,0);}
 export function activityDays(game:CharacterGame){return new Set(game.rewards.filter(r=>r.kind!=='welcome').map(r=>r.day)).size;}
+const stageIndex=(id:Growth)=>growthStages.findIndex(s=>s.id===id);
+export const isGrowth=(value:unknown):value is Growth=>growthStages.some(s=>s.id===value);
+/** How far the friend has grown: by days together, but never below where it started. */
+export function growthOf(game:CharacterGame):GrowthStage{
+ const days=activityDays(game);let i=0;growthStages.forEach((s,k)=>{if(days>=s.days)i=k;});
+ return growthStages[Math.max(i,stageIndex(game.firstStage??'egg'))];
+}
+/** The next stage and how many more days together it takes, or null once fully grown. */
+export function nextGrowth(game:CharacterGame){const next=growthStages[stageIndex(growthOf(game).id)+1];return next?{stage:next,days:next.days-activityDays(game)}:null;}
+export const grewFrom=(a:Growth,b:Growth)=>stageIndex(b)>stageIndex(a);
+export const canWear=(growth:Growth,slot:Slot)=>(growthStages[stageIndex(growth)].wears as readonly string[]).includes(slot);
+/** The first stage that can show all of these slots, for '…가 되면 입을 수 있어요'. Every stage name ends in a vowel. */
+export const wearsFrom=(...need:Slot[])=>growthStages.find(s=>need.every(slot=>canWear(s.id,slot)))!;
 const daysBetween=(a:string,b:string)=>Math.round((Date.parse(b+'T12:00:00')-Date.parse(a+'T12:00:00'))/864e5);
 export const RETURN_GAP=3,RETURN_GIFT=10;
 /** Coming back after a quiet stretch is celebrated, never penalised. Returns how long the friend waited. */
@@ -131,7 +159,8 @@ export function validGame(raw:unknown):CharacterGame{
  let funds=rewards.reduce((n,r)=>n+r.amount,0);const owned=['sprout'];
  if(Array.isArray(g.owned))for(const id of g.owned){const item=wardrobeItems.find(i=>i.id===id);if(item&&!owned.includes(id)&&funds>=item.price){owned.push(id);funds-=item.price;}}
  const equipped:CharacterGame['equipped']={};if(g.equipped&&typeof g.equipped==='object')for(const slot of slots){const id=(g.equipped as Record<string,unknown>)[slot];if(typeof id==='string'&&owned.includes(id)&&wardrobeItems.some(i=>i.id===id&&i.slot===slot))equipped[slot]=id;}
- return {version:1,character,owned,equipped,rewards};
+ // a friend saved before growth existed has no first stage: it stays a frog rather than shrinking to an egg
+ return character?{version:1,character,owned,equipped,rewards,firstStage:isGrowth(g.firstStage)?g.firstStage:'frog'}:{version:1,character,owned,equipped,rewards};
 }
 export function demoGame():CharacterGame{
  let g=createCharacter(emptyGame(),{name:'새봄',color:'leaf'});
