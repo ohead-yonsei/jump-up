@@ -45,7 +45,27 @@ create table if not exists visits (
   primary key (participant_id, day)
 );
 
+-- 연잎 한 장(0.25.0): 기수 사람들과 나누기로 고른 사진 한 장. 사진 파일은 아래 비공개 버킷에 두고, 여기에는 목록만 남겨요.
+-- 누가 띄웠는지는 운영자 화면에서만 참여 코드로 보이고, 같은 기수 사람들에게는 사진과 날짜만 보여요.
+create table if not exists pads (
+  id uuid primary key,
+  cohort_id uuid not null references cohorts(id) on delete cascade,
+  participant_id uuid not null references participants(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  -- 운영자가 내린 연잎. 띄운 사람에게만 보여요.
+  hidden boolean not null default false
+);
+create index if not exists pads_cohort_created on pads (cohort_id, created_at desc);
+create index if not exists pads_participant on pads (participant_id);
+
 alter table cohorts enable row level security;
 alter table participants enable row level security;
 alter table entries enable row level security;
 alter table visits enable row level security;
+alter table pads enable row level security;
+
+-- 연잎 사진을 담는 비공개 버킷. 공개 주소가 없고 정책도 두지 않아서, 앱 서버만 비밀 키로 읽고 써요.
+-- 사진은 기기에서 800px 정사각형 JPEG로 다시 그려 위치 같은 사진 정보를 빼고, 서버에서 한 번 더 걸러 올려요.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('lily-pads', 'lily-pads', false, 1000000, array['image/jpeg'])
+on conflict (id) do nothing;

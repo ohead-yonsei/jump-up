@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['records','request-origin','cohort','cohort-server','cohort-store']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
+for(const name of ['records','request-origin','cohort','cohort-server','pond','cohort-store']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
 const j=await import(new URL('records.js',out));const c=await import(new URL('cohort.js',out));const srv=await import(new URL('cohort-server.js',out));const st=await import(new URL('cohort-store.js',out));
 let passed=0;const test=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const token='A'.repeat(43);const step=(id,at,extra={})=>({id,at,type:'step',title:'창밖 보기',energy:2,...extra});
