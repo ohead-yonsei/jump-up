@@ -48,3 +48,9 @@ export function RotateOperatorCode({id}:{id:string}){
  if(code)return <div className="ops-created" role="status"><dl><dt>새 운영자 코드</dt><dd><strong>{formatCode(code)}</strong><CopyButton text={formatCode(code)}/></dd></dl><p>지금 한 번만 보여요. 이전 코드로는 더 이상 들어올 수 없어요.</p></div>;
  return <div className="button-row">{asking?<><button className="secondary" disabled={busy} onClick={()=>setAsking(false)}>취소</button><button className="primary" disabled={busy} onClick={rotate}>{busy&&<LoaderCircle className="spin" size={16}/>}새로 만들고 이전 코드 막기</button></>:<button className="secondary" onClick={()=>setAsking(true)}>운영자 코드 새로 만들기</button>}{error&&<p className="ops-error" role="alert">{error}</p>}</div>;
 }
+/** Takes one lily pad down from the cohort's pond, or floats it again. Nothing is deleted; the person who floated it still sees it. */
+export function PadToggle({id,hidden}:{id:string;hidden:boolean}){
+ const router=useRouter();const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+ async function toggle(){setBusy(true);setError('');try{await send('/api/ops/pond',{id,hidden:!hidden});router.refresh();}catch(e){setError(failed(e));}finally{setBusy(false);}}
+ return <><button className="secondary" disabled={busy} onClick={toggle}>{busy&&<LoaderCircle className="spin" size={14}/>}{hidden?'다시 띄우기':'내려두기'}</button>{error&&<p className="ops-error" role="alert">{error}</p>}</>;
+}

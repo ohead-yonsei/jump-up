@@ -7,7 +7,7 @@ const period=(c:CohortInfo)=>`${md(c.startsOn)} ~ ${md(c.endsOn)}`;
 const when=(at:string)=>new Date(at).toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
 const failed=(e:unknown)=>e instanceof TypeError?'인터넷 연결을 확인해 주세요.':(e as Error).message;
 /** Joining a cohort is the one place records leave the device, so what is shared sits right next to the button. */
-export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave}:{membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>}){
+export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave,onPond}:{membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>;onPond:()=>void}){
  const [code,setCode]=useState(invite?formatCode(invite):'');const [consent,setConsent]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [leaving,setLeaving]=useState(false);
  const normalized=normalizeCode(code);
  async function join(){setBusy(true);setError('');
@@ -20,7 +20,8 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   <div className="cohort-head"><span className="cohort-icon"><Users size={20}/></span><div><span className="step-label">{membership.org||'함께하는 기수'}</span><h2>{membership.name}</h2></div></div>
   <p>{period(membership)} · {members&&members>1?`나를 포함해 ${members}명이 같은 시간을 지나고 있어요.`:'같은 기수의 사람들과 같은 시간을 지나고 있어요.'}</p>
   <p className="cohort-meta">참여 코드 {membership.code||participant} · {membership.lastSync?`마지막으로 보낸 때 ${when(membership.lastSync)}`:'아직 보낸 기록이 없어요'}</p>
-  {leaving?<div className="cohort-leave"><p>기수에서 나가면 운영진에게 보낸 기록도 지워요. 이 기기의 기록은 그대로 남아요.</p><div className="button-row"><button className="secondary" disabled={busy} onClick={()=>{setLeaving(false);setError('')}}>계속 함께하기</button><button className="primary" disabled={busy} onClick={leave}>{busy&&<LoaderCircle className="spin" size={16}/>}기수에서 나가기</button></div></div>
+  <button className="cohort-pond-link" onClick={onPond}><span><strong>연잎 한 장</strong><small>같은 기수 사람들과 사진 한 장씩 나누는 연못</small></span><ArrowRight size={17}/></button>
+  {leaving?<div className="cohort-leave"><p>기수에서 나가면 운영진에게 보낸 기록과 내가 띄운 연잎도 지워요. 이 기기의 기록은 그대로 남아요.</p><div className="button-row"><button className="secondary" disabled={busy} onClick={()=>{setLeaving(false);setError('')}}>계속 함께하기</button><button className="primary" disabled={busy} onClick={leave}>{busy&&<LoaderCircle className="spin" size={16}/>}기수에서 나가기</button></div></div>
   :<button className="text-button" onClick={()=>setLeaving(true)}>기수에서 나가기</button>}
   {error&&<p className="error" role="alert">{error}</p>}
  </section>;
