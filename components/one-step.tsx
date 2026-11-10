@@ -7,7 +7,7 @@ import {PoljjakJourney} from './poljjak-journey';
 import {PoljjakOnboarding} from './poljjak-onboarding';
 import {FrogMark,BrandLogo,Splash} from './frog-mark';
 import {CharacterCloset} from './character-closet';
-import {emptyGame,validGame,demoGame,createCharacter,earnActivity,balance,collectItem,removeItem,wearLook,looks,claimReturn,RETURN_GIFT,type Character,type CharacterGame} from '@/lib/character';
+import {emptyGame,validGame,demoGame,createCharacter,growthOf,earnActivity,balance,collectItem,removeItem,wearLook,looks,claimReturn,RETURN_GIFT,type Character,type CharacterGame} from '@/lib/character';
 import {validProfile,demoProfile,type JourneyProfile} from '@/lib/journey';
 import {useAppPlatform,InstallGuide,OfflineNotice} from './app-install';
 import {haptic} from './frog-3d';
@@ -111,7 +111,7 @@ export default function OneStep({demo=false,demoStep=0}:{demo?:boolean;demoStep?
  // The splash keeps the same tree position across loading, onboarding and the app so it plays once.
  const splash=demo?null:<Splash/>;
  if(!ready)return <>{splash}<div className="app-root onboard-root"><div className="onboarding-loading" role="status"><FrogMark size={48}/><span>나의 연못을 준비하고 있어요.</span></div></div></>;
- if(onboardingMode||(!demo&&!profile&&!onboardingSkipped))return <>{splash}<div ref={rootRef} className={'app-root onboard-root'+(demo?' demo-app':'')}><PoljjakOnboarding key={`${demo?demoStep:'app'}-${onboardingMode??'first'}`} initialCharacter={game.character} initialProfile={profile} initialEnergy={energy} initialSave={save} startAtQuestions={onboardingMode==='questions'} demo={demo} onComplete={completeOnboarding} onBrowse={()=>leaveOnboarding()} onHelp={()=>leaveOnboarding('resources')}/></div></>;
+ if(onboardingMode||(!demo&&!profile&&!onboardingSkipped))return <>{splash}<div ref={rootRef} className={'app-root onboard-root'+(demo?' demo-app':'')}><PoljjakOnboarding key={`${demo?demoStep:'app'}-${onboardingMode??'first'}`} initialCharacter={game.character} initialProfile={profile} initialEnergy={energy} initialSave={save} growth={game.character?growthOf(game).id:'egg'} startAtQuestions={onboardingMode==='questions'} demo={demo} onComplete={completeOnboarding} onBrowse={()=>leaveOnboarding()} onHelp={()=>leaveOnboarding('resources')}/></div></>;
  const navItems=[{id:'today',art:'pond',title:'연못'},{id:'closet',art:'closet',title:'꾸미기'},{id:'practice',art:'practice',title:'연습'},{id:'resources',art:'help',title:'도움'},{id:'journal',art:'journal',title:'기록'}] as const;
  const navTab=tab==='places'?'resources':tab==='pond'?'journal':tab;
  const helpSwitch=<nav className="help-switch" aria-label="도움 화면 고르기"><button aria-current={tab==='resources'?'page':undefined} onClick={()=>go('resources')}><Compass size={16}/>도움 받을 곳</button><button aria-current={tab==='places'?'page':undefined} onClick={()=>go('places')}><MapPin size={16}/>가볼 만한 곳</button></nav>;

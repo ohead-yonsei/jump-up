@@ -42,6 +42,8 @@ export interface CohortStore {
   removePad(pad: Pad): Promise<void>;
   /** An operator taking a pad down, or putting it back. */
   setPadHidden(id: string, hidden: boolean): Promise<void>;
+  /** One small read, so a quiet Supabase Free project is not paused for inactivity. */
+  ping(): Promise<void>;
 }
 
 /** Where lily pad photos live: a private Supabase Storage bucket, a folder during development, or memory in tests. */
@@ -132,6 +134,7 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
     padPhoto: pad => shelf.get(photoKey(pad)),
     async removePad(pad) { await shelf.remove([photoKey(pad)]); d.pads = d.pads.filter(p => p.id !== pad.id); await persist(d); },
     async setPadHidden(id, hidden) { const p = d.pads.find(x => x.id === id); if (p) { p.hidden = hidden; await persist(d); } },
+    async ping() {},
   };
 }
 let fileQueue: Promise<unknown> = Promise.resolve();
@@ -169,6 +172,7 @@ export function fileStore(file: string): CohortStore {
     padPhoto: pad => run(s => s.padPhoto(pad)),
     removePad: pad => run(s => s.removePad(pad)),
     setPadHidden: (id, hidden) => run(s => s.setPadHidden(id, hidden)),
+    ping: async () => {},
   };
 }
 
@@ -323,6 +327,7 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
     padPhoto: pad => shelf.get(photoKey(pad)),
     async removePad(pad) { await shelf.remove([photoKey(pad)]); await call('pads?id=' + eq(pad.id), { method: 'DELETE', prefer: 'return=minimal' }); },
     async setPadHidden(id, hidden) { if (uuid(id)) await call('pads?id=' + eq(id), { method: 'PATCH', prefer: 'return=minimal', body: { hidden } }); },
+    async ping() { await call('cohorts?select=id&limit=1'); },
   };
 }
 

@@ -107,6 +107,7 @@ await test('Supabase calls use the server key, never read hashes back, cap and a
  assert.equal(await store.cohort('not-a-uuid'),null);assert.deepEqual(await store.cohortRecords('not-a-uuid'),[]);assert.equal(await store.memberCount('not-a-uuid'),0);
  await store.setEndsOn(cid,'2026-12-31');const period=calls.at(-1);assert.equal(period.init.method,'PATCH');assert.deepEqual(JSON.parse(period.init.body),{ends_on:'2026-12-31'});
  await store.memberCount(cid);assert.match(decodeURIComponent(calls.at(-1).url),/cohorts\?select=participants\(count\)&id=eq\./);
+ await store.ping();assert.equal(calls.at(-1).url,'https://example.supabase.co/rest/v1/cohorts?select=id&limit=1','the keep-alive is one small read');assert.equal(calls.at(-1).init.method,'GET');await st.memoryStore().ping();
  assert(calls.every(c=>!/select=[^&]*(operator_hash|token_hash)/.test(decodeURIComponent(c.url))));
  const legacy=[];await st.supabaseStore('https://example.supabase.co','eyJhbGciOi.legacy',async(url,init)=>{legacy.push(init);return Response.json([])}).cohortByJoinCode('7K3QPW2M');assert.equal(legacy[0].headers.Authorization,'Bearer eyJhbGciOi.legacy');
  assert.equal(await st.storeFromEnv({NODE_ENV:'production'}),null);assert.equal(await st.storeFromEnv({NODE_ENV:'production',SUPABASE_URL:'http://insecure.example',SUPABASE_SECRET_KEY:'k'}),null);

@@ -7,3 +7,14 @@
 @container app (min-width:761px){.mirror-scene{height:300px}.mirror-scene .frog-avatar{width:310px;height:310px}.mirror-scene .mirror-island{bottom:15px}.closet-mirror h2{margin-top:15px}.mirror-sun{width:200px;height:200px;left:calc(50% - 100px);top:35px}.mirror-lily{bottom:27px}.lily-two{bottom:65px}}
 @container app (min-width:761px) and (max-width:1050px){.personal-pond-scene{width:235px;height:255px;right:13px;bottom:51px}.personal-pond-scene .mirror-island{width:215px;left:10px}.personal-pond-copy h1{font-size:30px}.personal-pond-copy h1 em{max-width:220px}}
 @container app (max-width:760px){.personal-pond{min-height:550px}.personal-pond-copy h1 br{display:block}.personal-pond-copy h1 em{padding-left:0;max-width:100%;font-size:27px}.personal-pond-copy h1{font-size:27px}.personal-pond-copy p{max-width:270px}.personal-pond-copy p br{display:block}.wardrobe-item strong{font-size:12px}.item-owned{font-size:9px}}
+.growth-page{max-width:1180px;margin:auto;padding:40px 24px 60px}.growth-page h1{margin:14px 0 6px;font-size:30px;letter-spacing:-1px}.growth-page>p{margin:0;color:#636e7e}
+.growth-controls{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;margin:22px 0 8px}.growth-controls>div{display:flex;flex-wrap:wrap;gap:8px}
+.growth-controls button:not(.chip){width:28px;height:28px;border-radius:50%;box-shadow:inset 0 0 0 1px #0000001a}.growth-controls button.on:not(.chip){box-shadow:0 0 0 2px #fff,0 0 0 4px #5f6b7a}
+.growth-controls .chip{height:32px;padding:0 13px;border-radius:16px;border:1px solid var(--line);background:#fff;font-size:13px;color:#4c5766}.growth-controls .chip.on{background:#33404f;border-color:#33404f;color:#fff}
+.growth-row{list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.growth-row li{border-radius:24px;background:linear-gradient(180deg,#f7f7f4,#ecebe6);padding:0 12px 16px;text-align:center}
+.growth-frog{height:260px;margin:0 -12px}.growth-row strong{display:flex;align-items:center;justify-content:center;gap:7px;font-size:16px;color:#303a47}
+.growth-row strong span{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#33404f;color:#fff;font-size:11px}
+.growth-row p{margin:4px 0 0;font-size:12px;line-height:1.5;color:#717e90}
+@media(max-width:900px){.growth-row{grid-template-columns:repeat(2,1fr)}.growth-row li:last-child{grid-column:span 2}}
+@media(max-width:600px){.growth-page{padding:24px 16px 40px}.growth-page h1{font-size:25px}.growth-frog{height:200px}}
