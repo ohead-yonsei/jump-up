@@ -20,8 +20,8 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   <div className="cohort-head"><span className="cohort-icon"><Users size={20}/></span><div><span className="step-label">{membership.org||'함께하는 기수'}</span><h2>{membership.name}</h2></div></div>
   <p>{period(membership)} · {members&&members>1?`나를 포함해 ${members}명이 같은 시간을 지나고 있어요.`:'같은 기수의 사람들과 같은 시간을 지나고 있어요.'}</p>
   <p className="cohort-meta">참여 코드 {membership.code||participant} · {membership.lastSync?`마지막으로 보낸 때 ${when(membership.lastSync)}`:'아직 보낸 기록이 없어요'}</p>
-  <button className="cohort-pond-link" onClick={onPond}><span><strong>연잎 한 장</strong><small>같은 기수 사람들과 사진 한 장씩 나누는 연못</small></span><ArrowRight size={17}/></button>
-  {leaving?<div className="cohort-leave"><p>기수에서 나가면 운영진에게 보낸 기록과 내가 띄운 연잎도 지워요. 이 기기의 기록은 그대로 남아요.</p><div className="button-row"><button className="secondary" disabled={busy} onClick={()=>{setLeaving(false);setError('')}}>계속 함께하기</button><button className="primary" disabled={busy} onClick={leave}>{busy&&<LoaderCircle className="spin" size={16}/>}기수에서 나가기</button></div></div>
+  <button className="cohort-pond-link" onClick={onPond}><span><strong>연못 마을</strong><small>오늘 다녀간 개구리들과 연잎을 둘러보는 곳</small></span><ArrowRight size={17}/></button>
+  {leaving?<div className="cohort-leave"><p>기수에서 나가면 운영진에게 보낸 기록, 내가 띄운 연잎, 연못 마을의 내 개구리와 응원도 지워요. 이 기기의 기록은 그대로 남아요.</p><div className="button-row"><button className="secondary" disabled={busy} onClick={()=>{setLeaving(false);setError('')}}>계속 함께하기</button><button className="primary" disabled={busy} onClick={leave}>{busy&&<LoaderCircle className="spin" size={16}/>}기수에서 나가기</button></div></div>
   :<button className="text-button" onClick={()=>setLeaving(true)}>기수에서 나가기</button>}
   {error&&<p className="error" role="alert">{error}</p>}
  </section>;

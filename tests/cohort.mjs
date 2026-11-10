@@ -42,6 +42,7 @@ await test('a device sends only what it recorded after joining, each record once
  const after=c.afterSync(m,entries,visits,p.entries.slice(0,1),p.visits,'P08',now);p=c.pendingSync(entries,visits,after);assert.deepEqual(p.entries.map(e=>e.id),['n2']);assert.equal(p.visits.length,0);assert.equal(after.code,'P08');assert(after.lastSync);
  assert.deepEqual(c.afterSync(after,entries.slice(1),visits,[],[],'P08',now).sent,['n1'],'ids of records no longer on the device are dropped');
  for(const bad of [{...m,token:'short'},{...m,joinedAt:'yesterday'},{...m,name:''},{...m,sent:undefined},{...m,sentVisits:['2026-02-30']},null])assert.equal(c.validMembership(bad),null);
+ assert.equal(c.validMembership({...m,showFrog:true}).showFrog,true);assert.equal(c.validMembership({...m,showFrog:false}).showFrog,false);assert(!('showFrog' in c.validMembership({...m,showFrog:'yes'})),'not asked yet stays not asked');
  const loose=c.validMembership({...m,code:'has space',lastSync:'never'});assert.equal(loose.code,'');assert.equal(loose.lastSync,'');
 });
 await test('what a device sends is capped, rebuilt from known fields, and invalid records are dropped',()=>{

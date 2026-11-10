@@ -3,8 +3,8 @@ import {cookies,headers} from 'next/headers';
 import {storeFromEnv,type Cohort} from '@/lib/cohort-store';
 import {participantSummary,cohortStage,formatCode,seoulDay,type ParticipantRecords} from '@/lib/cohort';
 import {opsKey,readSession,stillValid,OPS_COOKIE} from '@/lib/cohort-server';
-import type {Pad} from '@/lib/pond';
-import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,ChangeEndDate,CopyButton,PadToggle} from '@/components/ops-forms';
+import type {Pad,VillageFrog} from '@/lib/pond';
+import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,ChangeEndDate,CopyButton,PadToggle,FrogToggle} from '@/components/ops-forms';
 import './ops.css';
 export const dynamic='force-dynamic';
 export const metadata:Metadata={title:'폴짝 운영',robots:{index:false,follow:false}};
@@ -23,10 +23,16 @@ function People({people}:{people:ParticipantRecords[]}){
 function Pads({pads,people}:{pads:Pad[];people:ParticipantRecords[]}){
  if(!pads.length)return <p className="ops-empty">아직 띄운 연잎이 없어요.</p>;
  const code=new Map(people.map(p=>[p.id,p.code]));
- return <ul className="ops-pads">{pads.map(p=><li key={p.id} className={p.hidden?'is-hidden':undefined}><img src={`/api/ops/pond?id=${p.id}`} alt={`${code.get(p.participantId)??'참여자'}가 띄운 연잎`} loading="lazy" width={150} height={150}/>
+ return <ul className="ops-pads">{pads.map(p=><li key={p.id} className={p.hidden?'is-hidden':undefined}>{p.kind==='text'?<p className="ops-pad-text">{p.text}</p>:<img src={`/api/ops/pond?id=${p.id}`} alt={`${code.get(p.participantId)??'참여자'}가 띄운 연잎`} loading="lazy" width={150} height={150}/>}
   <div><strong>{code.get(p.participantId)??'-'}</strong><span>{when(p.at)}</span></div>{p.hidden&&<span className="ops-pad-state">내려둠 · 띄운 사람만 봐요</span>}<PadToggle id={p.id} hidden={p.hidden}/></li>)}</ul>;
 }
-function CohortView({cohort,people,pads,link,admin}:{cohort:Cohort;people:ParticipantRecords[];pads:Pad[];link:string;admin:boolean}){
+function Frogs({frogs,people,cohort}:{frogs:VillageFrog[];people:ParticipantRecords[];cohort:string}){
+ const shown=frogs.filter(f=>f.card);
+ if(!shown.length)return <p className="ops-empty">아직 연못 마을에 모습을 보이기로 한 개구리가 없어요.</p>;
+ const code=new Map(people.map(p=>[p.id,p.code]));
+ return <ul className="ops-frogs">{shown.map(f=><li key={f.participantId} className={f.hidden?'is-hidden':undefined}><div><strong>{f.card!.name}</strong><span>{code.get(f.participantId)??'-'} · {f.seenOn} 다녀감</span></div>{f.hidden&&<span className="ops-pad-state">내려둠 · 본인만 봐요</span>}<FrogToggle id={f.participantId} cohort={cohort} hidden={f.hidden}/></li>)}</ul>;
+}
+function CohortView({cohort,people,pads,frogs,link,admin}:{cohort:Cohort;people:ParticipantRecords[];pads:Pad[];frogs:VillageFrog[];link:string;admin:boolean}){
  return <>
   {admin&&<a className="ops-back" href="/ops">← 모든 기수</a>}
   <section className="ops-head"><span className="ops-stage">{cohortStage(cohort)}</span><h1>{cohort.name}</h1><p>{cohort.org||'기관 미정'} · {md(cohort.startsOn)} ~ {md(cohort.endsOn)}</p></section>
@@ -38,8 +44,10 @@ function CohortView({cohort,people,pads,link,admin}:{cohort:Cohort;people:Partic
   <section className="ops-people"><div className="ops-section-top"><h2>함께하는 사람 {people.length}명</h2>{people.length>0&&<a className="secondary" href={`/api/ops/cohorts?id=${cohort.id}`}>CSV 내려받기</a>}</div>
    <People people={people}/>
    <p className="ops-note">참여자는 가명인 참여 코드로만 보여요. 실제 참여자와 참여 코드는 기관에서 따로 이어서 관리해 주세요. 기수에서 나간 사람의 기록은 바로 지워져요. 날짜는 한국 시간 기준이에요.</p></section>
-  <section className="ops-people"><h2>연잎 한 장</h2><p className="ops-note">참여자가 기수 연못에 띄우기로 고른 사진이에요. 다른 참여자에게는 사진과 날짜만 보이고, 누가 띄웠는지는 이 화면에서만 보여요. 연못에 맞지 않는 사진은 ‘내려두기’로 숨겨요. 띄운 사람에게는 ‘운영진이 잠시 내려두었어요’로 보이고, 다시 띄울 수도 있어요. 걱정되는 사진이라면 기관의 방식으로 그 참여자에게 먼저 안부를 물어봐 주세요.</p>
+  <section className="ops-people"><h2>연못 마을의 연잎</h2><p className="ops-note">참여자가 기수 연못에 띄우기로 고른 사진과 한 줄 글이에요. 다른 참여자에게는 연잎과 날짜만 보이고, 누가 띄웠는지는 이 화면에서만 보여요. 연못에 맞지 않는 연잎은 ‘내려두기’로 숨겨요. 띄운 사람에게는 ‘운영진이 잠시 내려두었어요’로 보이고, 다시 띄울 수도 있어요. 걱정되는 연잎이라면 기관의 방식으로 그 참여자에게 먼저 안부를 물어봐 주세요.</p>
    <Pads pads={pads} people={people}/></section>
+  <section className="ops-people"><h2>연못 마을의 개구리</h2><p className="ops-note">모습을 보이기로 고른 참여자의 개구리 이름이에요. 같은 기수 사람들에게는 다녀간 날에만 개구리와 이름이 보여요. 이름이 연못에 맞지 않으면 ‘내려두기’로 숨겨요. 본인에게는 ‘운영진이 잠시 내려두었어요’로 보여요. 주고받은 응원은 이 화면에도 보이지 않아요.</p>
+   <Frogs frogs={frogs} people={people} cohort={cohort.id}/></section>
   <section className="ops-people"><h2>기간</h2><p className="ops-note">한 달 해보고 더 하고 싶은 사람이 많다면 연장해요. 마치는 날이 지나면 새로 들어올 수 없고, 이미 함께하는 사람은 계속 기록을 보내요.</p><ChangeEndDate id={cohort.id} startsOn={cohort.startsOn} endsOn={cohort.endsOn}/></section>
   {admin&&<section className="ops-people"><h2>운영자 코드</h2><p className="ops-note">기관 담당자는 운영자 코드로 이 기수만 볼 수 있어요. 코드를 잃어버렸다면 새로 만들어 주세요.</p><RotateOperatorCode id={cohort.id}/></section>}
  </>;
@@ -53,8 +61,8 @@ export default async function OpsPage({searchParams}:{searchParams:Promise<{coho
  const admin=session.role==='admin';const selected=admin?(await searchParams).cohort:session.cohortId;
  try{
   if(!await stillValid(store,session))return <Shell><OpsLogin notice="운영자 코드가 새로 바뀌었어요. 새 코드로 다시 들어와 주세요."/></Shell>;
-  if(selected){const cohort=await store.cohort(selected);const people=cohort?await store.cohortRecords(cohort.id):[];const pads=cohort?await store.cohortPads(cohort.id):[];const link=cohort?`${await origin()}/?join=${cohort.joinCode}`:'';
-   return <Shell role={admin?'폴짝 팀':'기관 담당자'}>{cohort?<CohortView cohort={cohort} people={people} pads={pads} link={link} admin={admin}/>:<section className="ops-head"><h1>기수를 찾지 못했어요</h1><p>{admin?<a href="/ops">모든 기수 보기</a>:'기수가 정리되었을 수 있어요. 폴짝 팀에 물어봐 주세요.'}</p></section>}</Shell>;}
+  if(selected){const cohort=await store.cohort(selected);const people=cohort?await store.cohortRecords(cohort.id):[];const pads=cohort?await store.cohortPads(cohort.id):[];const frogs=cohort?await store.cohortFrogs(cohort.id):[];const link=cohort?`${await origin()}/?join=${cohort.joinCode}`:'';
+   return <Shell role={admin?'폴짝 팀':'기관 담당자'}>{cohort?<CohortView cohort={cohort} people={people} pads={pads} frogs={frogs} link={link} admin={admin}/>:<section className="ops-head"><h1>기수를 찾지 못했어요</h1><p>{admin?<a href="/ops">모든 기수 보기</a>:'기수가 정리되었을 수 있어요. 폴짝 팀에 물어봐 주세요.'}</p></section>}</Shell>;}
   const cohorts=await store.listCohorts();const today=seoulDay();
   return <Shell role="폴짝 팀"><section className="ops-head"><h1>기수</h1><p>{store.kind==='file'?'로컬 개발용 파일(.data/cohorts.json)에 저장 중이에요.':'Supabase에 저장 중이에요.'}</p></section>
    <CreateCohort today={today}/>
