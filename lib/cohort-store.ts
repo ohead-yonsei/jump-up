@@ -29,6 +29,8 @@ export interface CohortStore {
   /** Removes the person and everything they sent. */
   removeParticipant(id: string): Promise<void>;
   cohortRecords(cohortId: string): Promise<ParticipantRecords[]>;
+  /** One small read, so a quiet Supabase Free project is not paused for inactivity. */
+  ping(): Promise<void>;
 }
 
 type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]> };
@@ -79,6 +81,7 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
     async cohortRecords(cohortId) {
       return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [] }));
     },
+    async ping() {},
   };
 }
 let fileQueue: Promise<unknown> = Promise.resolve();
@@ -108,6 +111,7 @@ export function fileStore(file: string): CohortStore {
     saveRecords: (id, code, entries, visits) => run(s => s.saveRecords(id, code, entries, visits)),
     removeParticipant: id => run(s => s.removeParticipant(id)),
     cohortRecords: cohortId => run(s => s.cohortRecords(cohortId)),
+    ping: async () => {},
   };
 }
 
@@ -205,6 +209,7 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       ]);
       return people.map(p => ({ ...toParticipant(p), entries: entries.filter(e => e.participant_id === p.id).map(e => e.data), visits: visits.filter(v => v.participant_id === p.id).map(v => v.day) }));
     },
+    async ping() { await call('cohorts?select=id&limit=1'); },
   };
 }
 
