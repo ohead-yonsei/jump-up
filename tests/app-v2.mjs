@@ -47,6 +47,11 @@ await test('CSV neutralizes spreadsheet formula cells',()=>{
  const csv=r.recordsCsv([{...entry,title:'=SUM(A1:A3)'}],'@untrusted');
  assert(csv.includes('"\'=SUM(A1:A3)"'));assert(csv.includes('"\'@untrusted"'));
 });
+await test('a mission answer is kept on load, is not in the CSV, and a broken one drops its record',()=>{
+ const kept=r.validEntries([{...entry,answer:'잔잔함'},{...entry,id:'e',answer:'🌱'},{...entry,id:'x',answer:''},{...entry,id:'y',answer:7},{...entry,id:'z',answer:'가'.repeat(r.MAX_ANSWER+1)},{...entry,id:'ok',answer:'가'.repeat(r.MAX_ANSWER)}]);
+ assert.deepEqual(kept.map(e=>e.id),[entry.id,'e','ok']);assert.equal(kept[0].answer,'잔잔함');
+ const csv=r.recordsCsv([{...entry,answer:'아무도모르는단어'}],'P07');assert(!csv.includes('아무도모르는단어'));assert(!r.recordsHeader.includes('answer'));
+});
 await test('demo fixtures are separate fresh records and visibly export as demo',()=>{
  const first=r.demoEntries(new Date('2026-10-24T15:00:00+09:00'));
  const second=r.demoEntries(new Date('2026-10-24T15:00:00+09:00'));

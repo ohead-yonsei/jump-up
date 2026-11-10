@@ -63,6 +63,7 @@ export function afterSync(m: Membership, entries: Entry[], visits: string[], bat
   return { ...m, code, lastSync: now.toISOString(), sent: entries.map(e => e.id).filter(id => ids.has(id)), sentVisits: visits.filter(d => days.has(d)) };
 }
 
+/** `answer` (a mission's word, emoji or line) is left out on purpose: it stays on the person's device. */
 const ENTRY_KEYS = ['id', 'at', 'type', 'title', 'energy', 'energyLevel', 'missionId', 'goal', 'springStage', 'rating', 'before', 'after', 'mode', 'calm', 'talk', 'outside', 'note', 'supportId', 'channel'] as const;
 /** Rebuilds a record from known fields only, so the server never stores anything else a client adds. */
 export function storedEntry(e: Entry): Entry {

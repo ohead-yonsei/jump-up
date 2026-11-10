@@ -50,6 +50,8 @@ await test('what a device sends is capped, rebuilt from known fields, and invali
  assert.deepEqual(Object.keys(ok.entries[0]).sort(),['at','energy','id','title','type']);
  const levels=c.validSync({participant:'P07',entries:[step('n1','2026-11-10T04:00:00.000Z',{energy:null,energyLevel:3}),step('n2','2026-11-10T04:00:00.000Z',{energy:null,energyLevel:5}),step('o1','2026-11-01T04:00:00.000Z',{energy:5})],visits:[]});
  assert.deepEqual(levels.entries.map(e=>[e.id,e.energy,e.energyLevel]),[['n1',null,3],['o1',5,undefined]]);assert.match(ok.entries[1].at,/^\d{4}-\d{2}-\d{2}T.*Z$/);
+ // A mission's answer (answers.ts) stays on the device: it is cut before sending and the server would not store it either.
+ const priv=step('a1','2026-11-10T04:00:00.000Z',{energy:null,energyLevel:2,answer:'잔잔함'});assert.equal('answer' in c.storedEntry(priv),false);assert.equal('answer' in c.validSync({participant:'P07',entries:[priv],visits:[]}).entries[0],false);
  assert.equal(c.validSync({participant:'<b>',entries:[],visits:[]}).participant,'');
  for(const bad of [{entries:Array(501).fill({}),visits:[]},{entries:'x',visits:[]},{entries:[],visits:Array(731).fill('2026-11-02')},null])assert.equal(c.validSync(bad),null);
 });
