@@ -12,6 +12,24 @@ await test('persisted record validation rejects broken dates, scores and modes',
  assert.equal(r.validEntries([entry,{...entry,at:'invalid'},{...entry,energy:8},{...entry,after:'5'},{...entry,mode:'fake'}]).length,1);
  assert.equal(r.validEntries([{...entry,energy:null}]).length,1);
 });
+await test('old 5-level energy maps onto the 3 levels and old records still load',()=>{
+ assert.deepEqual([1,2,3,4,5].map(r.fromFiveLevels),[1,1,2,3,3]);
+ const old=[1,2,3,4,5].map(v=>({...entry,id:'old'+v,energy:v}));const kept=r.validEntries(old);
+ assert.equal(kept.length,5);assert.deepEqual(kept.map(e=>e.energy),[1,2,3,4,5]);assert.deepEqual(kept.map(r.entryEnergy),[1,1,2,3,3]);
+ const fresh={...entry,id:'new',energy:null,energyLevel:3};
+ assert.equal(r.entryEnergy(fresh),3);assert.equal(r.entryEnergy({...entry,energy:null}),null);
+ assert.equal(r.validEntries([fresh,{...fresh,id:'bad1',energyLevel:4},{...fresh,id:'bad2',energyLevel:0},{...fresh,id:'bad3',energyLevel:'2'}]).length,1);
+ assert(r.demoEntries().every(e=>e.energy===null&&[1,2,3].includes(e.energyLevel)));
+});
+await test('CSV keeps the old energy column as it was and adds energy_level (1-3) for every record',()=>{
+ const rows=r.recordsCsv([{...entry,id:'old',energy:4},{...entry,id:'new',energy:null,energyLevel:2},{...entry,id:'none',energy:null}],'P07',['2026-10-24']).slice(1).split('\r\n').map(row=>row.slice(1,-1).split('","'));
+ const col=name=>rows[0].indexOf(name);assert.equal(col('energy'),5);assert.equal(col('energy_level'),rows[0].length-1);
+ const byId=id=>rows.find(row=>row[1]===id);
+ assert.equal(byId('old')[col('energy')],'4');assert.equal(byId('old')[col('energy_level')],'3');
+ assert.equal(byId('new')[col('energy')],'');assert.equal(byId('new')[col('energy_level')],'2');
+ assert.equal(byId('none')[col('energy')],'');assert.equal(byId('none')[col('energy_level')],'');
+ assert(rows.every(row=>row.length===rows[0].length));assert.equal(byId('summary')[col('energy_level')],'');
+});
 await test('CSV preserves Korean, quotes, newlines and missing energy',()=>{
  const csv=r.recordsCsv([{...entry,title:'말 "한 줄"\n연습',energy:null}]);
  assert(csv.startsWith('\uFEFF'));assert(csv.includes('"말 ""한 줄""\n연습"'));assert(csv.includes('"session-only"'));assert(!csv.includes('undefined'));
@@ -64,13 +82,13 @@ await test('CSV starts with a usage summary and lists each day the app was opene
  const u=r.usageSummary(entries,['2026-10-01','2026-10-02','2026-10-09']);
  assert.deepEqual(u,{firstDay:'2026-10-01',lastDay:'2026-10-09',spanDays:9,visitDays:5,activeDays:2,contactTaps:1});
  const csv=r.recordsCsv(entries,'P07',['2026-10-01','2026-10-02','2026-10-09']);const rows=csv.slice(1).split('\r\n');
- assert(rows[0].endsWith('"support_id","contact_channel","first_day","last_day","span_days","visit_days","active_days","contact_taps"'));
- assert(rows[1].startsWith('"P07","summary"'));assert(rows[1].endsWith('"2026-10-01","2026-10-09","9","5","2","1"'));
+ assert(rows[0].endsWith('"support_id","contact_channel","first_day","last_day","span_days","visit_days","active_days","contact_taps","energy_level"'));
+ assert(rows[1].startsWith('"P07","summary"'));assert(rows[1].endsWith('"2026-10-01","2026-10-09","9","5","2","1",""'));
  assert(rows.some(row=>row.includes('"youth-future-center","phone"')));
  assert.equal(rows.filter(row=>row.includes('"visit"')).length,3);
  const columns=row=>row.split('","').length;assert(rows.every(row=>columns(row)===columns(rows[0])));
  assert(!csv.includes('undefined'));
- assert(r.recordsCsv([],'P07').split('\r\n')[1].endsWith('"","","0","0","0","0"'));
+ assert(r.recordsCsv([],'P07').split('\r\n')[1].endsWith('"","","0","0","0","0",""'));
 });
 await test('app manifest provides standalone install assets and internal shortcuts',async()=>{
  const m=JSON.parse(await fs.readFile(new URL('../public/manifest.webmanifest',import.meta.url),'utf8'));

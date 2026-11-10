@@ -24,7 +24,7 @@ body{background:#ffffff;min-height:100dvh;overscroll-behavior-y:none}
 .screen{animation:screen-in .42s cubic-bezier(.2,.8,.2,1) backwards}
 @keyframes screen-in{from{opacity:0;transform:translateY(12px)}}
 /* floating tab bar */
-.mobile-nav.tab-bar{display:grid!important;grid-template-columns:repeat(5,1fr)!important;position:fixed;left:max(10px,calc(50% - var(--app-w)/2 + 10px));right:max(10px,calc(50% - var(--app-w)/2 + 10px));bottom:calc(10px + env(safe-area-inset-bottom));height:var(--tab-h);padding:7px 6px;border-radius:26px;border:1px solid #dddcd6;background:#ffffffeb;backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:0 14px 34px #2b34411f,0 2px 6px #2b344110;z-index:50}
+.mobile-nav.tab-bar{display:grid!important;grid-template-columns:repeat(3,1fr)!important;position:fixed;left:max(10px,calc(50% - var(--app-w)/2 + 10px));right:max(10px,calc(50% - var(--app-w)/2 + 10px));bottom:calc(10px + env(safe-area-inset-bottom));height:var(--tab-h);padding:7px 6px;border-radius:26px;border:1px solid #dddcd6;background:#ffffffeb;backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:0 14px 34px #2b34411f,0 2px 6px #2b344110;z-index:50}
 .tab-bar button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:0;padding:0;font-size:10.5px!important;font-weight:600;color:#7e8999;letter-spacing:-.2px;border-radius:19px;transition:color .2s}
 .tab-bar button:before{display:none!important}
 .tab-bar .tab-icon{display:grid;place-items:center;width:46px;height:30px;border-radius:15px;transition:background .25s,transform .25s cubic-bezier(.3,1.6,.5,1)}
@@ -86,11 +86,11 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 /* home: care cards (rest rhythm, bedtime) and the welcome-back gift */
 .care-card{margin-top:16px;border-radius:24px;padding:20px 18px;background:linear-gradient(160deg,var(--sky),#f4f1fb 60%,#f5f4f1);border:1px solid #e3e5f1}
 .night-card{background:linear-gradient(160deg,#2f3557,#43406b 60%,#5a4f78);border-color:#4b4a72}.night-card h2,.night-card .wave-list strong,.night-card .wave-detail h3{color:#f4f1ff!important}.night-card>p,.night-card .step-label{color:#c9c6e6!important}.night-card .wave-icon{background:#ffffff1f;color:#ffe7a3}.night-card .wave-list>button{background:#ffffff14;border-color:#ffffff22;color:#e6e2ff}.night-card .wave-list small{color:#b9b6da}.night-card .wave-detail{background:#ffffff14}.night-card .wave-detail ol{color:#ddd9fb}.night-card .wave-done{background:#ffffff14;color:#cfe8c8}.night-card .wave-done strong{color:#fff}.night-card .close{color:#ddd9fb}
-.return-card{display:grid;grid-template-columns:auto 1fr;gap:12px;margin-top:16px;padding:18px;border-radius:24px;background:linear-gradient(150deg,var(--sky),var(--sky));border:1px solid var(--sky-2)}
-.return-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:#fff;color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 12%,transparent)}
-.return-card h2{font-size:17px!important;line-height:1.45;letter-spacing:-.5px;color:#333d4c}
-.return-card p{font-size:12.5px;line-height:1.7;color:#616c7c;margin-top:4px}
-.return-card .primary{grid-column:1/-1;width:100%}
+
+
+
+
+
 .frog-says{display:flex;align-items:center;gap:8px;margin:12px auto 0;padding:10px 14px;max-width:320px;border-radius:16px;background:#fff;color:#3f4c5f!important;font-size:13.5px!important;line-height:1.6;text-align:left;box-shadow:0 4px 14px #35404f14}
 .pond-stage.is-night{background:linear-gradient(180deg,#2d3358 0,#454472 46%,#5d6c78 100%);box-shadow:inset 0 0 0 1px #3b3f68}
 .is-night .pond-stage-copy>span,.is-night .pond-stage-copy h1{color:#f3f0ff}.is-night .pond-stage-copy h1 em{color:#c8e89a}
@@ -268,11 +268,11 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 /* readability: nothing a person needs to read is smaller than 11px on a phone */
 .app-root .step-label,.app-root .eyebrow,.app-root .onboarding-eyebrow{font-size:11px!important;letter-spacing:.6px!important}
 .app-root .onboarding-world-copy>span{font-size:10px!important}
-.app-root .mission-meta>span:last-child,.app-root .mission-card .category,.app-root .checked-date,.app-root .speaker,.app-root .composer-foot,.app-root .goal-line>span:last-child,.app-root .journey-path,.app-root .onboarding-footnote,.app-root .onboarding-bottom-note,.app-root .onboarding-demo{font-size:11.5px!important}
-.app-root .entry p,.app-root .chat-head span,.app-root .scale-labels,.app-root .hint-label,.app-root .practice-finish small,.app-root .journal-summary>p,.app-root .storage-caption,.app-root .entry-detail,.app-root .check-note,.app-root .route-note,.app-root .energy-note,.app-root .mission-reason,.app-root .spring-footer p,.app-root .onboarding-intro-path,.app-root .onboarding-reassurance p,.app-root .onboarding-progress-title,.app-root .onboarding-review-list span,.app-root .lily-stop,.app-root .mode-badge,.app-root .feedback-inline>.subtle{font-size:12px!important}
-.app-root .mission-card .mission-cta,.app-root .text-button,.app-root .onboarding-skip,.app-root .energy-short{font-size:12.5px!important}
-.app-root .mission-card p,.app-root .scenario-card p,.app-root .teaser p,.app-root .resource-card p,.app-root .page-heading>p,.app-root .small-note p{font-size:13px!important;line-height:1.75!important}
-.app-root .mission-card h3{font-size:17px!important}
+.app-root .checked-date,.app-root .speaker,.app-root .composer-foot,.app-root .goal-line>span:last-child,.app-root .journey-path,.app-root .onboarding-footnote,.app-root .onboarding-bottom-note,.app-root .onboarding-demo{font-size:11.5px!important}
+.app-root .entry p,.app-root .chat-head span,.app-root .scale-labels,.app-root .hint-label,.app-root .practice-finish small,.app-root .journal-summary>p,.app-root .storage-caption,.app-root .entry-detail,.app-root .check-note,.app-root .route-note,.app-root .onboarding-intro-path,.app-root .onboarding-reassurance p,.app-root .onboarding-progress-title,.app-root .onboarding-review-list span,.app-root .lily-stop,.app-root .mode-badge,.app-root .feedback-inline>.subtle{font-size:12px!important}
+.app-root .text-button,.app-root .onboarding-skip{font-size:12.5px!important}
+.app-root .scenario-card p,.app-root .teaser p,.app-root .resource-card p,.app-root .page-heading>p,.app-root .small-note p{font-size:13px!important;line-height:1.75!important}
+
 .app-root .message p{font-size:14px!important}
 .app-root .hints button{font-size:13px!important}
 .app-root .rest-link{font-size:13px!important}

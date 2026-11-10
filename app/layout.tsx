@@ -5,6 +5,7 @@ import './onboarding.css';
 import './character.css';
 import './frog.css';
 import './app.css';
+import './home.css';
 export const metadata: Metadata = {
  title:'폴짝 | 저마다의 봄, 나만의 속도.',
  description:'우리에게도 저마다의 봄이 와요. 지금의 상태와 목표에 맞는 미션으로, 준비되면 다음으로 폴짝.',
