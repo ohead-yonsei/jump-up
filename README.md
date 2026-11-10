@@ -78,6 +78,7 @@ Funnel로 연 주소는 인터넷 어디서나 닿기 때문에, 토큰을 확�
 | `SUPABASE_URL` | Supabase 프로젝트 주소(`https://….supabase.co`). |
 | `SUPABASE_SECRET_KEY` | Supabase의 서버 전용 비밀 키(`sb_secret_…`, 예전 `service_role` 키도 돼요). `NEXT_PUBLIC_`을 붙이지 말고 서버에만 둬요. `SUPABASE_SERVICE_ROLE_KEY` 이름으로 넣어도 돼요. |
 | `OPS_ADMIN_KEY` | 팀 관리자 키(12자 이상, 길고 무작위로). `/ops` 로그인과 운영자 세션 서명에 쓰여요. 바꾸면 모든 운영자가 다시 로그인해요. |
+| `CRON_SECRET` | 선택. 넣으면 `/api/keepalive`가 Vercel Cron의 호출만 받아요(없으면 누구나 부를 수 있지만 주소마다 1분에 6번까지). |
 
 1. [Supabase](https://supabase.com)에서 프로젝트를 만들고(서울 리전 권장), SQL Editor에서 [`supabase/schema.sql`](supabase/schema.sql)을 한 번 실행합니다. 모든 표에 행 수준 보안이 켜지고, 비밀 키로만 읽고 쓸 수 있어요.
 2. Vercel 프로젝트의 **Settings → Environment Variables**에 위 세 값을 넣고 다시 배포합니다.
@@ -90,6 +91,7 @@ Funnel로 연 주소는 인터넷 어디서나 닿기 때문에, 토큰을 확�
 - 참여자 화면에는 ‘나를 포함해 N명’처럼 함께하는 사람 수만 보여요. 다른 사람의 기록이나 참여 코드는 보이지 않아요.
 - 참여자가 ‘기수에서 나가기’나 ‘모두 지우기’를 누르면 서버의 그 사람 기록이 바로 지워져요. 마친 기수에는 새로 들어올 수 없지만, 이미 함께한 사람의 기록은 계속 받아요.
 - 운영자 코드를 잃어버리면 팀이 기수 화면에서 새로 만들어요. 이전 코드는 바로 막히고, 이전 코드로 들어와 있던 화면도 다음 요청부터 다시 로그인해야 해요.
+- Supabase 무료 플랜은 7일 동안 데이터베이스 요청이 적으면 프로젝트를 일시중지해요. 그래서 Vercel Cron이 매일 한 번(UTC 0시, 한국 오전 9시 무렵) `/api/keepalive`를 불러 기수 표를 한 줄 읽어요(`vercel.json`). Vercel 프로젝트의 **Settings → Cron Jobs**에서 실행 기록을 볼 수 있고, 응답이 502면 Supabase가 멈췄거나 닿지 않는 거예요. 그래도 일시중지 안내 메일이 오면 Supabase 대시보드에서 프로젝트를 한 번 열어 주세요. 멈춘 프로젝트는 1년 안에 **Resume project**로 그대로 되살릴 수 있어요.
 - 로컬에서는 Supabase 없이 `.data/cohorts.json`(git 제외)에 저장돼요. `.env.local`에 `OPS_ADMIN_KEY`만 넣고 `npm run dev`로 확인할 수 있어요.
 
 ## iOS 앱(TestFlight)
