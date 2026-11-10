@@ -1,7 +1,9 @@
+import type { Energy } from './content';
 export type Entry = {
   id: string; at: string; type: 'step' | 'rest' | 'practice' | 'feedback' | 'checkin' | 'contact';
   missionId?: string; goal?: string; springStage?: number;
-  title: string; energy: number | null; rating?: number; before?: number; after?: number; mode?: string;
+  /** `energy` is the old 5-level value and is only set on records made before 0.26.0. Newer records leave it null and set `energyLevel` (1-3). */
+  title: string; energy: number | null; energyLevel?: Energy; rating?: number; before?: number; after?: number; mode?: string;
   /** Optional self check-in for the field study: comfort of mind, of short talks, of going out (1-5). */
   calm?: number; talk?: number; outside?: number;
   /** A short free-text note the person chose to leave about the app. */
@@ -21,6 +23,12 @@ export function lastCheckin(entries: Entry[]) { return [...entries].reverse().fi
 export function checkinDue(entries: Entry[], now = new Date()) {
   const last = lastCheckin(entries);
   return !last || now.getTime() - Date.parse(last.at) >= CHECKIN_EVERY_DAYS * 864e5;
+}
+/** The old five levels on today's three: 1-2 → 쉬어갈래요, 3 → 작은 것 하나, 4-5 → 조금 더 해볼래요. */
+export const fromFiveLevels = (energy: number): Energy => energy <= 2 ? 1 : energy === 3 ? 2 : 3;
+/** A record's energy on the 3-level scale, whichever version of the app made it. */
+export function entryEnergy(e: Pick<Entry, 'energy' | 'energyLevel'>): Energy | null {
+  return e.energyLevel ?? (e.energy === null ? null : fromFiveLevels(e.energy));
 }
 export const validParticipant = (code: string) => /^[A-Za-z0-9-]{1,16}$/.test(code);
 export const STORAGE_KEY = 'one-step-ai-v1';
@@ -75,6 +83,7 @@ export function validEntries(value: unknown): Entry[] {
     && ['step', 'rest', 'practice', 'feedback', 'checkin', 'contact'].includes(e.type)
     && typeof e.title === 'string' && e.title.length <= 200
     && (e.energy === null || (Number.isInteger(e.energy) && e.energy >= 1 && e.energy <= 5))
+    && (e.energyLevel === undefined || [1, 2, 3].includes(e.energyLevel))
     && (e.missionId === undefined || (typeof e.missionId === 'string' && e.missionId.length <= 100))
     && (e.goal === undefined || ['rhythm','outside','connect'].includes(e.goal))
     && (e.springStage === undefined || (Number.isInteger(e.springStage) && e.springStage >= 0 && e.springStage <= 3))
@@ -86,15 +95,16 @@ export function validEntries(value: unknown): Entry[] {
   return keepEntries(kept);
 }
 export const recordsHeader = ['participant_code', 'record_id', 'date', 'type', 'title', 'energy', 'rating', 'confidence_before', 'confidence_after', 'practice_mode', 'mission_id', 'goal', 'spring_stage', 'calm', 'talk_comfort', 'outside_comfort', 'note',
-  'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps'];
-/** One person's rows: a summary row first, a row per record and a row per day the app was opened. Columns added later go at the end. */
+  'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps', 'energy_level'];
+/** One person's rows: a summary row first, a row per record and a row per day the app was opened. Columns added later go at the end.
+ * `energy` keeps the 5-level value of records made before 0.26.0 and is empty after; `energy_level` is 1-3 for every record (old values converted). */
 export function recordRows(entries: Entry[], participant = 'session-only', visits: string[] = [], dayOf: (at: string) => string = localDay): unknown[][] {
   const u = usageSummary(entries, visits, dayOf);
   const blank = (n: number) => Array<string>(n).fill('');
   return [
-    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps],
-    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6)]),
-    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(20)]),
+    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps, ''],
+    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6), entryEnergy(e)]),
+    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(21)]),
   ];
 }
 export function toCsv(rows: unknown[][]) {
@@ -112,9 +122,9 @@ export function recordsCsv(entries: Entry[], participant = 'session-only', visit
 export function demoEntries(now = new Date()): Entry[] {
   const at = (days: number) => { const d = new Date(now); d.setDate(d.getDate() - days); d.setHours(15, 0, 0, 0); return d.toISOString(); };
   return [
-    { id: 'demo-1', at: at(4), type: 'step', title: '창밖의 색 하나 찾기', energy: 1 },
-    { id: 'demo-2', at: at(2), type: 'rest', title: '내 속도로 쉬어가기', energy: 2 },
-    { id: 'demo-3', at: at(1), type: 'practice', title: '카페에서 주문하기', energy: 3, before: 2, after: 3, mode: 'example' },
+    { id: 'demo-1', at: at(4), type: 'step', title: '창밖의 색 하나 찾기', energy: null, energyLevel: 1 },
+    { id: 'demo-2', at: at(2), type: 'rest', title: '내 속도로 쉬어가기', energy: null, energyLevel: 1 },
+    { id: 'demo-3', at: at(1), type: 'practice', title: '카페에서 주문하기', energy: null, energyLevel: 2, before: 2, after: 3, mode: 'example' },
   ];
 }
 export function weekMoments(entries: Entry[], now = new Date()) {

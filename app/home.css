@@ -1,0 +1,132 @@
+/* Home (연못) on one phone screen, loaded after app.css.
+   The pond takes whatever height the rest of the screen leaves it; today's energy, one mission and the cohort slot keep fixed heights,
+   so nothing below the pond moves while the person looks around. Opening a mission or its result may lengthen the screen. */
+.home-fit .workspace{display:flex;flex-direction:column;min-height:var(--app-h,100dvh)}
+/* inside the /demo phone frame one screen is the frame's height (--app-h), not the browser's */
+.demo-app.app-root{min-height:var(--app-h,100dvh)}
+.home-fit .workspace>main{flex:1;display:flex;flex-direction:column;width:100%;padding-bottom:calc(var(--tab-h) + 18px + env(safe-area-inset-bottom))!important}
+.home-fit .screen{flex:1;display:flex;flex-direction:column;min-height:0}
+.poljjak-home{flex:1;display:flex;flex-direction:column;gap:10px;padding-bottom:0}
+.poljjak-home>.create-companion,.poljjak-home>.begin-card{margin:0}
+
+/* The pond. The friend's size and the lily pad follow the pond's own height (container units), in two layouts:
+   tall = greeting on top, friend in the middle, bar at the bottom; short (under 350px) = greeting on the left, friend on the right.
+   --hc canvas height, --wc canvas width, --fs the friend's scale (the 3D camera pulls back on canvases narrower than 0.9),
+   --lift how far the feet sit above the canvas bottom, --feet how far above the pond's bottom edge. */
+.pond-stage{container:stage/size;flex:1 1 188px;min-height:188px;max-height:560px;margin-top:2px}
+/* a chip or the welcome-back gift on the pond needs a little more room under the greeting */
+.pond-stage:has(.pond-stage-care),.pond-stage:has(.is-return){min-height:220px}
+.pond-stage.is-held{flex:none}
+.pond-stage-frog,.pond-stage-sky{--wc:100cqw;--hc:min(430px,84cqh);--fs:min(var(--hc),calc(var(--wc)/.9));--lift:calc(var(--hc)*.5 - var(--fs)*.298);--feet:max(calc(8px + var(--lift)),calc(62px + var(--fs)*.0655))}
+.pond-stage-frog{top:auto;bottom:calc(var(--feet) - var(--lift));height:var(--hc)}
+.pond-stage-sky .pad{bottom:calc(var(--feet) - var(--fs)*.0655);width:calc(var(--fs)*.54);height:calc(var(--fs)*.131)}
+/* a long name gets smaller letters so it stays beside the friend, not over it */
+.pond-stage-copy h1 em.name-xs{font-size:22px}
+.pond-stage-care{position:absolute;z-index:2;right:12px;top:14px;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.care-chip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 12px;border-radius:17px;background:#ffffffe6;color:#4a5670;font-size:12.5px;font-weight:700;box-shadow:0 2px 8px #35404f14;white-space:nowrap}
+.care-chip.night{background:#3b3f68;color:#f1eeff}
+.care-chip:active{transform:scale(.96)}
+.poljjak-home>.pond-stage-care{position:static;flex-direction:row;justify-content:flex-start}
+.pond-stage-bottom{z-index:2}
+.pond-stage-bottom.is-return{gap:10px;padding:7px 7px 7px 12px}
+.pond-stage-bottom.is-return>span{gap:8px;min-width:0;color:var(--accent)}
+.pond-stage-bottom.is-return>span>span{display:grid;min-width:0}
+.pond-stage-bottom.is-return strong{font-size:12px;line-height:1.4;color:#333d4c;font-weight:700}
+.pond-stage-bottom.is-return small{font-size:11px;line-height:1.4;color:#6b7684;font-weight:500}
+.pond-stage-bottom>button{white-space:nowrap;flex-shrink:0}
+.is-night .pond-stage-bottom.is-return{background:#ffffffe6}
+.is-night .pond-stage-copy>span,.is-night .pond-stage-copy h1{text-shadow:0 1px 8px #23284f99}
+@container stage (max-height:349px){
+ .pond-stage-frog,.pond-stage-sky{--wc:76cqw;--hc:min(84.4cqw,calc((100cqh - 64px)/.525));--feet:38px}
+ .pond-stage-frog{left:30%;right:-6%}
+ .pond-stage-sky .pad{left:68%}
+ /* a short pond shows more sky behind the greeting and keeps the water under the lily pad */
+ .pond-stage.has-scene .pond-stage-sky{background-position:72% 42%,0 0}
+ .pond-stage-frog .frog3d-bubble{left:auto;right:10%;top:max(calc(100% - var(--lift) - var(--fs)*.525 - 54px),calc(8px + var(--hc) - 100cqh + var(--feet) - var(--lift)));max-width:54cqw;white-space:normal;word-break:keep-all;text-align:center;line-height:1.45;animation-name:bubble-side}
+ .pond-stage-frog .frog3d-bubble:after{left:auto;right:28%}
+ .pond-stage-copy{padding:14px 16px 0}
+ .pond-stage-copy h1{font-size:21px;margin-top:3px}
+ .pond-stage-copy h1 em.name-s{font-size:17px;line-height:1.67}
+ .pond-stage-copy h1 em.name-xs{font-size:14.5px;line-height:1.95}
+ .pond-stage-hint{display:none}
+ .pond-stage-care{left:12px;right:auto;top:auto;bottom:88px;align-items:flex-start}
+ .pond-stage-bottom{left:12px;right:auto;flex-direction:column;align-items:flex-start;gap:6px;padding:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+ .pond-stage-bottom>span{padding:3px 9px;border-radius:10px;background:#ffffffc2;font-size:11.5px}
+ .is-night .pond-stage-bottom{background:none}
+ .is-night .pond-stage-bottom>span{background:#ffffff26}
+ .pond-stage-bottom.is-return{flex-direction:column;align-items:stretch;gap:7px;width:51cqw;padding:9px 10px 10px;border-radius:17px;background:#ffffffe6}
+ .pond-stage-bottom.is-return strong{font-size:11.5px}
+ .pond-stage-bottom.is-return>span{padding:0;background:none}
+ .pond-stage-bottom.is-return>span>svg{display:none}
+ .pond-stage-bottom.is-return>button{justify-content:center;padding:8px 10px}
+ .pond-stage:has(.is-return) .pond-stage-care{display:none}
+}
+@keyframes bubble-side{0%{opacity:0;transform:translateY(8px) scale(.85)}12%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+
+/* Today's energy: three choices in one row, with the way into 나의 봄 여정 beside the question. */
+.home-energy-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:28px}
+.home-energy h2{font-size:15px;line-height:1.4;letter-spacing:-.4px;font-weight:750;color:#303a47}
+.journey-chip{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 4px 0 6px;margin-right:-4px;border-radius:14px;font-size:12.5px;font-weight:700;color:#4d5968;white-space:nowrap}
+.journey-chip>svg{color:#98a2b0}
+.journey-chip:active{background:var(--soft)}
+.energy-pick{display:flex;gap:6px;margin-top:6px}
+.energy-choice{flex:1 1 auto;min-width:0;height:44px;padding:0 8px;border-radius:15px;border:1.5px solid var(--hair);background:#fff;color:#4d5968;font-size:13.5px;font-weight:650;letter-spacing:-.3px;white-space:nowrap;transition:transform .12s,border-color .2s,background .2s}
+.energy-choice.selected{border-color:var(--accent);background:var(--btn);color:var(--brand-ink);font-weight:750}
+.energy-choice:active{transform:scale(.97)}
+
+/* One mission at a time. The card, the row under it and the prompt shown before an energy is chosen add up to the same height. */
+.home-mission{display:flex;flex-direction:column}
+.today-mission{display:flex;align-items:center;gap:12px;width:100%;height:100px;padding:0 12px 0 14px;border-radius:20px;border:1px solid var(--hair);background:#fff;box-shadow:0 4px 14px #35404f0a;text-align:left;transition:transform .12s}
+.today-mission:active{transform:scale(.985)}
+.today-mission .mission-icon{width:44px;height:44px;border-radius:15px;background:var(--sky);color:var(--accent);flex-shrink:0}
+.today-mission-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.today-mission .category{margin:0;font-size:11.5px;line-height:1.4;color:#778495}
+.today-mission strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:16.5px;line-height:1.35;letter-spacing:-.5px;font-weight:700;color:#2f3946;word-break:keep-all}
+.today-mission-note{font-size:12.5px;line-height:1.5;color:#6b7684;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.today-mission-go{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--btn);color:var(--accent);flex-shrink:0}
+.mission-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;height:36px;margin-top:2px;padding:0 2px}
+.mission-actions .rest-link,.mission-actions .text-button{margin:0;min-height:36px}
+.mission-actions .rest-link{font-size:12.5px!important}
+.home-mission .energy-prompt{height:138px;margin:0;padding:0 18px;border-radius:20px;border:1.5px dashed var(--sky-2);background:var(--sky)}
+.home-mission .energy-prompt p{font-size:13px;line-height:1.7}
+.home-mission .mission-detail{margin-top:0}
+/* when a mission or its result opens it scrolls into view clear of the tab bar */
+.home-mission .mission-detail,.home-mission .spring-complete{scroll-margin-bottom:calc(var(--tab-h) + 26px + env(safe-area-inset-bottom))}
+.mission-detail-note{margin-top:4px;font-size:13px;line-height:1.7;color:#6b7684}
+
+/* The cohort's one slot. Whatever fills it is one row: the cohort pond's invite (cohort-pond.css) is drawn smaller here,
+   and opens to its full size only when a photo mission was just done (.fresh), when the screen is already long. */
+.home-cohort:empty{display:none}
+.home-cohort .pond-invite{margin-top:0}
+.home-cohort .pond-invite:not(.fresh){height:48px;padding:0 12px 0 8px;gap:8px;border-radius:17px}
+.home-cohort .pond-invite:not(.fresh) .pond-invite-art{transform:scale(.62);margin:-10px -9px}
+.home-cohort .pond-invite:not(.fresh) small{display:none}
+.home-cohort .pond-invite:not(.fresh) strong{font-size:14px;line-height:1.35}
+.home-cohort .pond-invite:not(.fresh) .step-label{font-size:10.5px!important;letter-spacing:0!important;line-height:1.3}
+.home-entry{display:flex;align-items:center;gap:10px;width:100%;height:48px;padding:0 12px 0 8px;border-radius:17px;background:var(--sky);border:1px solid var(--sky-2);color:var(--accent);text-align:left}
+.home-entry:active{transform:scale(.985)}
+.home-entry-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:11px;background:#fff;flex-shrink:0}
+.home-entry-copy{flex:1;min-width:0;display:grid}
+.home-entry-copy .step-label{margin:0;font-size:10.5px!important;letter-spacing:0!important;line-height:1.3;color:#7b8796;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-entry-copy strong{font-size:14px;line-height:1.35;font-weight:700;color:#2f3946;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Sheets opened from the home: 나의 봄 여정, 잠들기 전 1분, 나만의 썰물. */
+.home-sheet .spring-route{margin:0;padding:0;border:0;background:none}
+.home-sheet .care-card{margin-top:28px}
+.route-next{display:grid;justify-items:start;gap:10px;margin-top:14px;padding:16px;border-radius:18px;background:var(--sky)}
+.route-next p{font-size:13px;line-height:1.7;color:#55606f}
+.route-next .primary{margin:0}
+.route-next-note{margin-top:12px;font-size:12px;line-height:1.7;color:#7b8796}
+.home-sheet .jump-confirm{max-width:none;margin-top:14px}
+
+/* 연습·도움: one tab, three screens. 꾸미기 is a screen under 연못. */
+.help-switch.hub-switch{grid-template-columns:repeat(3,1fr)}
+.help-switch.hub-switch button{gap:5px;font-size:13px;letter-spacing:-.3px;white-space:nowrap}
+.closet-back{margin-bottom:0}
+
+/* Before a starting point is chosen (둘러보기): the invitation sits where the energy and the mission will be. */
+.poljjak-home>.begin-card{padding:18px 20px}
+.poljjak-home>.begin-card h2{font-size:20px;margin:3px 0 6px}
+.poljjak-home>.begin-card p{line-height:1.7}
+.poljjak-home>.begin-card>.primary{margin:14px 0 8px}
+.poljjak-home>.pond-hero{flex:1 1 300px;min-height:300px}

@@ -98,29 +98,34 @@ const home:Record<Goal,Seed[][]>={
  ],
 };
 for(const g of goals)home[g.id].forEach((group,i)=>sets[g.id][i].push(...group));
-export const springMissions:SpringMission[]=goals.flatMap(g=>sets[g.id].flatMap((group,index)=>group.map(([id,title,description,minutes,steps])=>({id:`${g.id}-${id}`,title,description,minutes,steps,goal:g.id,springStage:index as SpringStage,category:g.title,min:1,max:5,icon:g.icon}))));
+export const springMissions:SpringMission[]=goals.flatMap(g=>sets[g.id].flatMap((group,index)=>group.map(([id,title,description,minutes,steps])=>({id:`${g.id}-${id}`,title,description,minutes,steps,goal:g.id,springStage:index as SpringStage,category:g.title,icon:g.icon}))));
 // 일상과 혼자의 시간을 오가는 사람을 위한 '나만의 썰물' 미션. 단계 이동에는 쓰지 않아요.
 export const waveMissions:Mission[]=[
  ['wave-signal','혼자 있고 싶은 신호 알아차리기','지금 내 마음이 보내는 신호를 이름 붙여봐요.','1분',['요즘 혼자 있고 싶어진 순간을 떠올려요.','피곤함, 북적임, 걱정 중 가까운 것을 골라요.','신호를 알아차린 것만으로도 충분해요.']],
  ['wave-plan','혼자만의 시간을 미리 정하기','숨는 대신, 쉬는 시간을 내가 정해요.','2분',['오늘이나 내일 쉬고 싶은 시간을 골라요.','그 시간엔 연락을 쉬어도 괜찮다고 정해요.','끝나는 시간도 함께 정해두면 돌아오기 쉬워요.']],
  ['wave-thread','한 사람에게 쉬는 중이라고 알리기','연결의 끈은 가늘게 남겨둬요.','2분',['편한 사람 한 명을 떠올려요.','“나 며칠 조용히 쉬고 올게” 정도로 짧게 적어요.','보낼지 말지는 내가 정해요.']],
  ['wave-anchor','하루 하나, 일상의 닻 지키기','쉬는 날에도 지킬 작은 습관 하나.','1분',['식사, 씻기, 창문 열기 중 하나를 골라요.','오늘 그 하나만 지켜봐요.','나머지는 쉬어가도 괜찮아요.']],
-].map(([id,title,description,minutes,steps])=>({id:id as string,title:title as string,description:description as string,minutes:minutes as string,steps:steps as string[],category:'나만의 썰물',min:1,max:5,icon:'leaf'}));
-export function energyCeiling(energy:Energy):SpringStage{return Math.min(3,energy-1) as SpringStage;}
+].map(([id,title,description,minutes,steps])=>({id:id as string,title:title as string,description:description as string,minutes:minutes as string,steps:steps as string[],category:'나만의 썰물',icon:'leaf'}));
+/** How big today's missions may be, relative to the person's own stage: 쉬어갈래요 → the smallest, 작은 것 하나 → up to one stage below mine, 조금 더 해볼래요 → up to my stage. */
+export function energyCeiling(energy:Energy,stage:SpringStage):SpringStage{return (energy===1?0:energy===2?Math.max(0,stage-1):stage) as SpringStage;}
 /** Same order all day, a fresh order the next day. */
 function dailyOrder<T>(items:T[],seed:string){
  let h=2166136261;for(const ch of seed)h=Math.imul(h^ch.charCodeAt(0),16777619);
  const rnd=()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);return ((h^=h>>>16)>>>0)/4294967296;};
  const out=[...items];for(let i=out.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[out[i],out[j]]=[out[j],out[i]];}return out;
 }
-/** Three missions per page. ‘다른 미션’ turns a whole page, so nothing repeats until the pool is used up. */
-export function recommendSpring(profile:JourneyProfile,energy:Energy,offset=0,date=new Date()):SpringMission[]{
- const ceiling=Math.min(profile.stage,energyCeiling(energy));const day=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
- const pool=[ceiling,...[0,1,2,3].filter(s=>s!==ceiling).reverse()].filter(s=>s<=ceiling).flatMap(stage=>dailyOrder(springMissions.filter(m=>m.goal===profile.goal&&m.springStage===stage),day+profile.goal+stage));
- const size=Math.min(3,pool.length);const pages=Math.ceil(pool.length/size);const start=((offset%pages)+pages)%pages*size;
- return Array.from({length:size},(_,n)=>pool[(start+n)%pool.length]);
+const minutesOf=(m:Mission)=>parseInt(m.minutes,10)||0;
+/** Today's missions for this energy, in the order the home shows them one at a time: the biggest allowed stage first, then smaller ones.
+ * ‘다른 미션’ walks this list, so nothing repeats until every mission has been shown. On a 쉬어갈래요 day the shortest come first. */
+export function missionPool(profile:JourneyProfile,energy:Energy,date=new Date()):SpringMission[]{
+ const ceiling=energyCeiling(energy,profile.stage);const day=`${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+ const pool=[3,2,1,0].filter(s=>s<=ceiling).flatMap(stage=>dailyOrder(springMissions.filter(m=>m.goal===profile.goal&&m.springStage===stage),day+profile.goal+stage));
+ return energy===1?pool.map((m,i)=>({m,i})).sort((a,b)=>minutesOf(a.m)-minutesOf(b.m)||a.i-b.i).map(x=>x.m):pool;
 }
-export function missionPages(profile:JourneyProfile,energy:Energy){const ceiling=Math.min(profile.stage,energyCeiling(energy));return Math.ceil(springMissions.filter(m=>m.goal===profile.goal&&m.springStage<=ceiling).length/3);}
+/** The mission shown after ‘다른 미션’ was pressed `offset` times. */
+export function pickMission(profile:JourneyProfile,energy:Energy,offset=0,date=new Date()):SpringMission{
+ const pool=missionPool(profile,energy,date);return pool[((offset%pool.length)+pool.length)%pool.length];
+}
 export function markSpringComplete(profile:JourneyProfile,missionId:string):JourneyProfile {
  const m=springMissions.find(m=>m.id===missionId);
  if(!m||m.goal!==profile.goal||m.springStage>profile.stage)return profile;

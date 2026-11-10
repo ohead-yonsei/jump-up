@@ -47,7 +47,9 @@ await test('a device sends only what it recorded after joining, each record once
 await test('what a device sends is capped, rebuilt from known fields, and invalid records are dropped',()=>{
  const ok=c.validSync({participant:'P07',entries:[step('a','2026-11-02T04:00:00.000Z',{extra:'x'.repeat(5000),nested:{a:1}}),step('b','not a date'),step('x'.repeat(65),'2026-11-02T04:00:00.000Z'),step('odd','1')],visits:['2026-11-02','bad','2026-02-30']});
  assert.equal(ok.participant,'P07');assert.deepEqual(ok.entries.map(e=>e.id),['a','odd']);assert.deepEqual(ok.visits,['2026-11-02']);
- assert.deepEqual(Object.keys(ok.entries[0]).sort(),['at','energy','id','title','type']);assert.match(ok.entries[1].at,/^\d{4}-\d{2}-\d{2}T.*Z$/);
+ assert.deepEqual(Object.keys(ok.entries[0]).sort(),['at','energy','id','title','type']);
+ const levels=c.validSync({participant:'P07',entries:[step('n1','2026-11-10T04:00:00.000Z',{energy:null,energyLevel:3}),step('n2','2026-11-10T04:00:00.000Z',{energy:null,energyLevel:5}),step('o1','2026-11-01T04:00:00.000Z',{energy:5})],visits:[]});
+ assert.deepEqual(levels.entries.map(e=>[e.id,e.energy,e.energyLevel]),[['n1',null,3],['o1',5,undefined]]);assert.match(ok.entries[1].at,/^\d{4}-\d{2}-\d{2}T.*Z$/);
  assert.equal(c.validSync({participant:'<b>',entries:[],visits:[]}).participant,'');
  for(const bad of [{entries:Array(501).fill({}),visits:[]},{entries:'x',visits:[]},{entries:[],visits:Array(731).fill('2026-11-02')},null])assert.equal(c.validSync(bad),null);
 });

@@ -107,9 +107,7 @@ export const restLines = ['쉬어가는 날도 나의 봄이야.', '오늘은 �
 const moods: Record<Energy, {equipped: Partial<Record<Slot, string>>; line: string}> = {
  1: {equipped: {face: 'sleepy', outfit: 'blanket'}, line: '오늘은 나도 느릿느릿. 담요 덮고 같이 쉬자.'},
  2: {equipped: {hand: 'mug'}, line: '따뜻한 거 한 모금 하면서 천천히 해보자.'},
- 3: {equipped: {face: 'happy'}, line: '좋아, 작은 기지개부터 같이 해볼까?'},
- 4: {equipped: {face: 'happy'}, line: '바깥이 궁금한 날이구나. 나도 두근두근!'},
- 5: {equipped: {face: 'surprise'}, line: '우와, 새로운 걸 해볼 기운이 있는 날이네!'},
+ 3: {equipped: {face: 'happy'}, line: '좋아, 오늘은 조금 더 해볼까? 나도 두근두근!'},
 };
 export function moodFor(energy: Energy | null, worn: CharacterGame['equipped'], night = false) {
  const base: Partial<Record<Slot, string>> = {...(energy ? moods[energy].equipped : {}), ...(night ? {face: 'sleepy', head: 'nightcap'} : {})};
@@ -131,4 +129,4 @@ export const nightMissions: Mission[] = [
  ['night-dim', '화면 밝기 낮추기', '눈부심을 줄이면 몸이 밤을 알아차려요.', '1분', ['화면 밝기를 편한 만큼 낮춰요.', '가능하면 방 불빛도 조금 줄여요.', '잠들지 않아도 괜찮아요.']],
  ['night-water', '물 한 모금 마시고 눕기', '누워 있는 것만으로도 쉬는 거예요.', '2분', ['물을 한 모금 마셔요.', '편한 자세로 누워요.', '잠이 오지 않으면 눈만 감고 있어도 괜찮아요.']],
  ['night-one', '내일 할 일 딱 하나 정하기', '나머지는 내일의 나에게 맡겨요.', '1분', ['내일 하고 싶은 일을 하나만 떠올려요.', '메모하거나 마음속으로 정해요.', '못 해도 괜찮은 약속이에요.']],
-].map(([id, title, description, minutes, steps]) => ({id: id as string, title: title as string, description: description as string, minutes: minutes as string, steps: steps as string[], category: '잠들기 전 1분', min: 1, max: 5, icon: 'leaf'}));
+].map(([id, title, description, minutes, steps]) => ({id: id as string, title: title as string, description: description as string, minutes: minutes as string, steps: steps as string[], category: '잠들기 전 1분', icon: 'leaf'}));
