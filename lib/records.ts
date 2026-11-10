@@ -8,6 +8,8 @@ export type Entry = {
   calm?: number; talk?: number; outside?: number;
   /** A short free-text note the person chose to leave about the app. */
   note?: string;
+  /** The word, emoji or line the person chose to leave with a mission (answers.ts). Kept on the device only. */
+  answer?: string;
   /** A contact button tapped in the help finder: which service and how. Whether the call or message happened is not known. */
   supportId?: string; channel?: 'phone' | 'text' | 'web';
 };
@@ -75,6 +77,8 @@ export function recordId() {
   else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
+/** The longest answer a mission can leave (the same as `ANSWER_MAX.line` in answers.ts). */
+export const MAX_ANSWER = 100;
 const score = (v: unknown) => v === undefined || (Number.isInteger(v) && Number(v) >= 1 && Number(v) <= 5);
 export function validEntries(value: unknown): Entry[] {
   if (!Array.isArray(value)) return [];
@@ -89,6 +93,7 @@ export function validEntries(value: unknown): Entry[] {
     && (e.springStage === undefined || (Number.isInteger(e.springStage) && e.springStage >= 0 && e.springStage <= 3))
     && score(e.rating) && score(e.before) && score(e.after) && score(e.calm) && score(e.talk) && score(e.outside)
     && (e.note === undefined || (typeof e.note === 'string' && e.note.length <= 300))
+    && (e.answer === undefined || (typeof e.answer === 'string' && e.answer.length > 0 && [...e.answer].length <= MAX_ANSWER))
     && (e.mode === undefined || ['example', 'live'].includes(e.mode))
     && (e.supportId === undefined || (typeof e.supportId === 'string' && /^[a-z0-9-]{1,60}$/.test(e.supportId)))
     && (e.channel === undefined || ['phone', 'text', 'web'].includes(e.channel)));
