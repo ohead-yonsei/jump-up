@@ -241,7 +241,7 @@ class Frog{
   // the grown frog is taller, not wider: stretch the rig and keep the head, hands and feet round
   const tall=shape.tall??1;this.grow.scale.set(shape.size,shape.size*tall,shape.size);this.neck.position.y=shape.neck;this.head.scale.set(shape.head,shape.head/tall,shape.head);
   for(const h of this.hands)h.scale.set(1,.92/tall,1.05);this.feet.scale.y=1/tall;
-  this.bodyMesh.visible=shape.limbs;for(const a of this.arms)a.visible=shape.limbs;this.tail.visible=!shape.limbs;this.nub.visible=growth==='froglet';this.feet.visible=growth==='grown';this.jelly.visible=growth==='egg';
+  this.bodyMesh.visible=shape.limbs;for(const a of this.arms)a.visible=shape.limbs;this.tail.visible=growth==='tadpole';this.nub.visible=growth==='froglet';this.feet.visible=growth==='grown';this.jelly.visible=growth==='egg';
   for(const g of this.itemGroups){g.parent?.remove(g);release(g);}this.itemGroups=[];this.pose=REST;let sleeve:THREE.Material=this.tinted;
   // the egg wears nothing yet; the tadpole has no body, so it keeps only what sits on its head
   for(const id of growth==='egg'?[]:Object.values(look.equipped)){const build=id&&builders[id];if(!build)continue;const parts=build(pal);
@@ -305,7 +305,6 @@ export function createFrogStage(canvas:HTMLCanvasElement,opts:StageOptions):Frog
   const kind=frog.growth,busy=a?1:0;let float=0,rock=0;
   if(kind==='egg'){rock=Math.sin(t*1.3)*.035*motion+(a?Math.sin(a.t*14)*.06*Math.max(0,1-a.t)*motion:0);if(expr==='joy')expr='happy';}
   if(kind==='tadpole'){float=Math.sin(t*1.7)*.06*motion;frog.tail.rotation.set(0,Math.sin(t*(4+busy*7))*(.2+busy*.12)*motion,Math.sin(t*(4+busy*7)+.8)*.08*motion);}
-  if(kind==='egg')frog.tail.rotation.set(0,Math.sin(t*.9)*.08*motion,0);
   if(kind==='froglet')frog.nub.rotation.y=Math.sin(t*(3+busy*6))*.18*motion;
   if(!a&&t>st.blinkAt){st.blinkAt=t+2.4+Math.random()*3;}
   const blink=!a&&t>st.blinkAt-.13&&['smile','wink','surprise'].includes(expr);
