@@ -1,5 +1,5 @@
 import {storeFromEnv,type CohortStore} from '@/lib/cohort-store';
-import {sha256,bearer,json,readJson,clientAddress,rateLimiter} from '@/lib/cohort-server';
+import {sha256,bearer,json,readJson,clientAddress,rateLimiter,liveFor} from '@/lib/cohort-server';
 import {isSameOrigin} from '@/lib/request-origin';
 import {seoulDay} from '@/lib/cohort';
 import {padsFor,frogsFor,cheersFor,cleanFrogCard,cheerTarget,isCheerKind,canOpenPad} from '@/lib/pond';
@@ -28,7 +28,7 @@ export async function POST(request:Request){
   const me=found.participant.id,cohortId=found.cohort.id,day=seoulDay();
   await store.arrive({cohortId,participantId:me,card,day});
   const [frogs,pads,cheers]=await Promise.all([store.cohortFrogs(cohortId),store.cohortPads(cohortId),store.cheersOf(me)]);
-  return json({day,frogs:frogsFor(frogs,me,day),pads:padsFor(pads,me),cheers:cheersFor(cheers,me),sent:cheers.filter(c=>c.fromId===me&&c.day===day).map(c=>c.target)});
+  return json({day,live:liveFor(cohortId),frogs:frogsFor(frogs,me,day),pads:padsFor(pads,me),cheers:cheersFor(cheers,me),sent:cheers.filter(c=>c.fromId===me&&c.day===day).map(c=>c.target)});
  }catch{return unavailable();}
 }
 /** Sends one of the set cheers to a frog that came by today or to a floating pad. The other person sees the phrase, not the sender. */

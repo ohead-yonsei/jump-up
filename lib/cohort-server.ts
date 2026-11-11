@@ -67,3 +67,16 @@ export function rateLimiter(max: number, windowMs = 60000) {
     return true;
   };
 }
+
+/** How members of one cohort reach each other while they move around the village map.
+ * 'realtime' is Supabase Realtime Broadcast: the browser connects with the publishable key, and the channel name is derived from the
+ * server's secret so only members (who get it from /api/village) know it. 'poll' is a small in-memory relay for local development.
+ * null means the map still works, with today's frogs strolling on their own. */
+export type LiveConfig = { kind: 'realtime'; url: string; key: string; topic: string } | { kind: 'poll' } | null;
+export function liveFor(cohortId: string, env: Record<string, string | undefined> = process.env): LiveConfig {
+  const url = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
+  const secret = env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = env.SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (url && secret && url.startsWith('https://')) return key ? { kind: 'realtime', url, key, topic: 'village-' + createHmac('sha256', secret).update('village:' + cohortId).digest('hex').slice(0, 40) } : null;
+  return env.NODE_ENV !== 'production' ? { kind: 'poll' } : null;
+}
