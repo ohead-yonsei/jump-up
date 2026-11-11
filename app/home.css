@@ -145,3 +145,20 @@
 .kept-float{display:inline-flex;align-items:center;gap:4px;margin:8px auto 0;font-size:12.5px}.kept-float small{font-size:11px;color:#8a94a1;font-weight:600}
 .kept-support{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:#fff6ea;text-align:left;font-size:13px}.kept-support p{margin:0 0 8px}
 .app-root .entry p.entry-answer{margin:3px 0 0;font-size:14px!important;line-height:1.5;color:#3a4657;overflow-wrap:anywhere}
+
+/* 연습·도움: the practice list as a compact app-style list. Scoped to .practice-pick / .hub-switch so other screens keep their cards. */
+.help-switch.hub-switch{height:44px;padding:3px;margin:0 0 12px;border-radius:15px}
+.help-switch.hub-switch button{min-height:0;height:38px;border-radius:12px}
+.practice-pick h2{margin:0 0 8px;font-size:22px;font-weight:700;letter-spacing:-.8px;line-height:1.35}
+.practice-pick .free-chat{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;margin:2px 0 10px;border-radius:20px;border:1px solid #E8E8E4;background:#fff;font-size:13.5px;font-weight:650;color:var(--brand-ink)}
+.practice-pick .free-chat svg{color:var(--accent)}
+.practice-pick .free-chat:active{background:var(--soft)}
+.practice-list{display:grid;gap:10px;margin-top:12px}.practice-pick .free-chat+.practice-list{margin-top:0}
+.practice-row{display:flex;align-items:center;gap:14px;width:100%;min-height:88px;padding:16px;border-radius:18px;border:1px solid #E8E8E4;background:#fff;text-align:left;transition:transform .15s,border-color .15s}
+.practice-row:hover{border-color:#c9cdd3}.practice-row:active{transform:scale(.985);background:#fbfbf9}
+.practice-row-icon{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--soft);color:#626d7c}
+.practice-row-text{flex:1;min-width:0;display:grid;gap:3px}
+.practice-row-text strong{font-size:16px;font-weight:600;letter-spacing:-.4px;line-height:1.35;color:var(--brand-ink)}
+.practice-row-text small{font-size:13.5px;line-height:1.4;color:#6d798a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.practice-row-arrow{flex:none;color:#a3abb6}
+.practice-pick+.small-note{margin:14px 2px 0}
