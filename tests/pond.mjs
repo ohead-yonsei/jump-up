@@ -65,14 +65,14 @@ await test('anything that is not a whole JPEG of a sensible size is refused',()=
 });
 await test('members see floating pads newest first and their own taken-down pads, never who floated the others',()=>{
  const pads=[
-  {id:'a',cohortId:'c1',participantId:'me',at:'2026-11-02T01:00:00.000Z',hidden:false},
-  {id:'b',cohortId:'c1',participantId:'friend',at:'2026-11-04T01:00:00.000Z',hidden:false},
-  {id:'c',cohortId:'c1',participantId:'friend',at:'2026-11-03T01:00:00.000Z',hidden:true},
-  {id:'d',cohortId:'c1',participantId:'me',at:'2026-11-03T05:00:00.000Z',hidden:true},
+  {id:'a',cohortId:'c1',participantId:'me',at:'2026-11-02T01:00:00.000Z',hidden:false,kind:'photo',text:''},
+  {id:'b',cohortId:'c1',participantId:'friend',at:'2026-11-04T01:00:00.000Z',hidden:false,kind:'text',text:'오늘은 창문을 열었어요'},
+  {id:'c',cohortId:'c1',participantId:'friend',at:'2026-11-03T01:00:00.000Z',hidden:true,kind:'photo',text:''},
+  {id:'d',cohortId:'c1',participantId:'me',at:'2026-11-03T05:00:00.000Z',hidden:true,kind:'photo',text:''},
  ];
- assert.deepEqual(pond.padsFor(pads,'me'),[{id:'b',at:'2026-11-04T01:00:00.000Z',mine:false,hidden:false},{id:'d',at:'2026-11-03T05:00:00.000Z',mine:true,hidden:true},{id:'a',at:'2026-11-02T01:00:00.000Z',mine:true,hidden:false}]);
+ assert.deepEqual(pond.padsFor(pads,'me'),[{id:'b',at:'2026-11-04T01:00:00.000Z',mine:false,hidden:false,kind:'text',text:'오늘은 창문을 열었어요'},{id:'d',at:'2026-11-03T05:00:00.000Z',mine:true,hidden:true,kind:'photo',text:''},{id:'a',at:'2026-11-02T01:00:00.000Z',mine:true,hidden:false,kind:'photo',text:''}]);
  assert.deepEqual(pond.padsFor(pads,'friend').map(p=>p.id),['b','c','a']);
- assert(pond.padsFor(pads,'someone').every(p=>Object.keys(p).join()==='id,at,mine,hidden'&&!p.mine&&!p.hidden));
+ assert(pond.padsFor(pads,'someone').every(p=>Object.keys(p).join()==='id,at,mine,hidden,kind,text'&&!p.mine&&!p.hidden));
  const [a,,c]=pads;
  assert(pond.canOpenPad(a,{id:'friend',cohortId:'c1'}));assert(!pond.canOpenPad(a,{id:'stranger',cohortId:'c2'}),'another cohort never sees it');
  assert(!pond.canOpenPad(c,{id:'me',cohortId:'c1'}));assert(pond.canOpenPad(c,{id:'friend',cohortId:'c1'}),'a taken-down pad stays with the person who floated it');
@@ -91,6 +91,63 @@ async function cohortWithTwo(store){
  const me=await store.addParticipant({cohortId:c1.id,code:'P01',tokenHash:'t1'});const friend=await store.addParticipant({cohortId:c1.id,code:'P02',tokenHash:'t2'});const other=await store.addParticipant({cohortId:c2.id,code:'P01',tokenHash:'t3'});
  return {c1,c2,me,friend,other};
 }
+await test('a text pad is one clean line, and a frog card keeps only a short name and known shapes',()=>{
+ assert.equal(pond.cleanPadText('  오늘은\n창문을   열었어요   '),'오늘은 창문을 열었어요');
+ assert.equal(pond.cleanPadText('가'.repeat(pond.MAX_PAD_TEXT)).length,pond.MAX_PAD_TEXT);assert.equal(pond.cleanPadText('🌿'.repeat(pond.MAX_PAD_TEXT)),'🌿'.repeat(pond.MAX_PAD_TEXT),'emoji count as one letter each');
+ for(const bad of ['', '   ', '\n\t', '가'.repeat(pond.MAX_PAD_TEXT+1), 'a'.repeat(pond.MAX_PAD_TEXT*4+1), null, 7, ['글']])assert.equal(pond.cleanPadText(bad),null);
+ assert.deepEqual(pond.cleanFrogCard({name:'  폴짝이\n ',color:'mint',growth:'frog',equipped:{head:'straw-hat',hand:'<script>',tail:'x',eyes:7},extra:'x'}),{name:'폴짝이',color:'mint',growth:'frog',equipped:{head:'straw-hat'}});
+ assert.equal(pond.cleanFrogCard({name:'가'.repeat(30),color:'mint',growth:'egg'}).name,'가'.repeat(12));
+ for(const bad of [null,'frog',{name:'',color:'mint',growth:'frog'},{name:'a',color:'MINT!',growth:'frog'},{name:'a',color:'mint'},{name:'a'.repeat(61),color:'mint',growth:'frog'},{name:7,color:'mint',growth:'frog'}])assert.equal(pond.cleanFrogCard(bad),null);
+});
+await test('the village shows the frogs that came by today and chose to be seen, and cheers never say who sent them',()=>{
+ const card=name=>({name,color:'mint',growth:'frog',equipped:{}});const id=n=>`8c0c58a2-5f0b-4f43-9a52-${String(n).padStart(12,'0')}`;
+ const frogs=[
+  {participantId:id(1),cohortId:'c1',card:card('하나'),seenOn:'2026-11-11',hidden:false},
+  {participantId:id(2),cohortId:'c1',card:card('둘'),seenOn:'2026-11-11',hidden:false},
+  {participantId:id(3),cohortId:'c1',card:null,seenOn:'2026-11-11',hidden:false},
+  {participantId:id(4),cohortId:'c1',card:card('넷'),seenOn:'2026-11-10',hidden:false},
+  {participantId:id(5),cohortId:'c1',card:card('다섯'),seenOn:'2026-11-11',hidden:true},
+ ];
+ const seen=pond.frogsFor(frogs,id(2),'2026-11-11');
+ assert.deepEqual(seen.map(f=>f.name).sort(),['둘','하나']);assert.equal(seen[0].name,'둘','my own frog comes first');assert(seen[0].mine&&!seen[1].mine);
+ assert.deepEqual(Object.keys(seen[1]).sort(),['color','equipped','growth','hidden','id','mine','name'],'no time and no cohort');
+ assert.deepEqual(pond.frogsFor(frogs,id(5),'2026-11-11').filter(f=>f.hidden).map(f=>f.name),['다섯'],'a taken-down frog is only seen by its owner');
+ assert.deepEqual(pond.frogsFor(frogs,id(3),'2026-11-11').map(f=>f.mine),[false,false],'someone looking around unseen has no frog of their own there');
+ assert.deepEqual(pond.frogsFor(frogs,id(1),'2026-11-12'),[],'a new day starts quiet');
+ assert.deepEqual(pond.cheerTarget('frog:'+id(1).toUpperCase()),{on:'frog',id:id(1)});assert.deepEqual(pond.cheerTarget('pad:'+id(2)),{on:'pad',id:id(2)});
+ for(const bad of ['frog:1','pond:'+id(1),'frog:'+id(1)+':x',id(1),null,7])assert.equal(pond.cheerTarget(bad),null);
+ assert(pond.isCheerKind('hello')&&pond.isCheerKind('rest'));for(const bad of ['love','',null,'hello '])assert(!pond.isCheerKind(bad));
+ assert(pond.CHEERS.every(c=>c.text.length<=12&&!/\d/.test(c.text)));
+ const cheers=[
+  {fromId:id(1),toId:id(2),cohortId:'c1',target:'frog:'+id(2),kind:'hello',day:'2026-11-10',at:'2026-11-10T01:00:00.000Z'},
+  {fromId:id(4),toId:id(2),cohortId:'c1',target:'pad:'+id(9),kind:'nice',day:'2026-11-11',at:'2026-11-11T01:00:00.000Z'},
+  {fromId:id(2),toId:id(1),cohortId:'c1',target:'frog:'+id(1),kind:'rest',day:'2026-11-11',at:'2026-11-11T02:00:00.000Z'},
+ ];
+ assert.deepEqual(pond.cheersFor(cheers,id(2)),[{kind:'nice',day:'2026-11-11',on:'pad'},{kind:'hello',day:'2026-11-10',on:'frog'}]);
+ assert.deepEqual(pond.cheersFor(cheers,id(3)),[]);
+ const many=Array.from({length:pond.MAX_CHEERS_SHOWN+5},(_,i)=>({...cheers[0],fromId:id(100+i),at:`2026-11-10T01:00:${String(i).padStart(2,'0')}.000Z`}));
+ assert.equal(pond.cheersFor(many,id(2)).length,pond.MAX_CHEERS_SHOWN);
+});
+await test('a cohort keeps text pads without a photo, one frog per person and one cheer per day, and forgets them all when someone leaves',async()=>{
+ const shelf=st.memoryShelf();const store=st.memoryStore(undefined,undefined,'memory',shelf);const {c1,c2,me,friend,other}=await cohortWithTwo(store);
+ const line=await store.addPad({cohortId:c1.id,participantId:me.id,text:'오늘은 창문을 열었어요'});
+ assert.equal(line.kind,'text');assert.equal(line.text,'오늘은 창문을 열었어요');assert.deepEqual(shelf.keys(),[]);assert.equal(await store.padPhoto(line),null);
+ const snap=await store.addPad({cohortId:c1.id,participantId:friend.id,photo});assert.equal(snap.kind,'photo');assert.equal(snap.text,'');
+ const card={name:'폴짝이',color:'mint',growth:'frog',equipped:{head:'straw-hat'}};
+ await store.arrive({cohortId:c1.id,participantId:me.id,card,day:'2026-11-10'});await store.arrive({cohortId:c1.id,participantId:friend.id,card:null,day:'2026-11-10'});await store.arrive({cohortId:c2.id,participantId:other.id,card,day:'2026-11-10'});
+ assert.deepEqual((await store.cohortFrogs(c1.id)).map(f=>[f.participantId,f.card?.name??null,f.seenOn,f.hidden]),[[me.id,'폴짝이','2026-11-10',false],[friend.id,null,'2026-11-10',false]]);
+ await store.setFrogHidden(me.id,true);await store.arrive({cohortId:c1.id,participantId:me.id,card:{...card,name:'새 이름'},day:'2026-11-11'});
+ const again=(await store.cohortFrogs(c1.id)).filter(f=>f.participantId===me.id);
+ assert.deepEqual(again.map(f=>[f.card.name,f.seenOn,f.hidden]),[['새 이름','2026-11-11',true]],'coming back keeps one row and never undoes an operator');
+ await store.setFrogHidden(me.id,false);
+ const cheer={cohortId:c1.id,fromId:friend.id,toId:me.id,target:'frog:'+me.id,kind:'hello',day:'2026-11-11'};
+ await store.addCheer(cheer);await store.addCheer({...cheer,kind:'rest'});await store.addCheer({...cheer,target:'pad:'+line.id,kind:'nice'});await store.addCheer({...cheer,day:'2026-11-12'});
+ assert.deepEqual((await store.cheersOf(me.id)).map(c=>[c.target.split(':')[0],c.kind,c.day]).sort(),[['frog','hello','2026-11-11'],['frog','hello','2026-11-12'],['pad','nice','2026-11-11']],'the second cheer of the day changes nothing');
+ assert.equal((await store.cheersOf(friend.id)).length,3,'the sender sees what they sent');assert.deepEqual(await store.cheersOf(other.id),[]);
+ await store.removePad(line);assert.deepEqual((await store.cheersOf(me.id)).map(c=>c.target.split(':')[0]),['frog','frog'],'a pad takes its cheers with it');
+ await store.removeParticipant(friend.id);assert.deepEqual(await store.cheersOf(me.id),[]);assert.deepEqual((await store.cohortFrogs(c1.id)).map(f=>f.participantId),[me.id]);assert.deepEqual(shelf.keys(),[]);
+ await store.removeParticipant(me.id);assert.deepEqual(await store.cohortFrogs(c1.id),[]);assert.equal((await store.cohortFrogs(c2.id)).length,1);
+});
 await test('a cohort keeps its pads apart, takes them down and back, and forgets a person\'s pads when they leave',async()=>{
  const shelf=st.memoryShelf();const store=st.memoryStore(undefined,undefined,'memory',shelf);const {c1,c2,me,friend,other}=await cohortWithTwo(store);
  const mine=await store.addPad({cohortId:c1.id,participantId:me.id,photo});const theirs=await store.addPad({cohortId:c1.id,participantId:friend.id,photo});const elsewhere=await store.addPad({cohortId:c2.id,participantId:other.id,photo});
@@ -122,8 +179,10 @@ await test('Supabase keeps photos in the private bucket with the server key, the
  const fake=async(url,init={})=>{const u=new URL(url);const method=init.method??'GET';calls.push({path:u.pathname,url:decodeURIComponent(url),method,init});
   if(u.pathname.startsWith('/storage/'))return method==='GET'?(u.pathname.includes(padId)?new Response(photo):Response.json({statusCode:'404',error:'not_found'},{status:400})):Response.json([]);
   if(method==='GET'&&init.headers?.Prefer==='count=exact')return new Response('[]',{headers:{'content-range':`0-0/${padCount}`}});
-  if(u.pathname.endsWith('/pads')&&method==='POST'){if(rowFails)return Response.json({},{status:500});const b=JSON.parse(init.body);return Response.json([{...b,created_at:'2026-11-04T01:00:00Z',hidden:false}],{status:201});}
-  if(u.pathname.endsWith('/pads')&&method==='GET')return Response.json(u.searchParams.get('offset')==='0'||u.searchParams.get('limit')==='1'?[{id:padId,cohort_id:cid,participant_id:pid,created_at:'2026-11-04T01:00:00Z',hidden:false}]:[]);
+  if(u.pathname.endsWith('/pads')&&method==='POST'){if(rowFails)return Response.json({},{status:500});const b=JSON.parse(init.body);return Response.json([{text:'',...b,created_at:'2026-11-04T01:00:00Z',hidden:false}],{status:201});}
+  if(u.pathname.endsWith('/frogs')&&method==='GET')return Response.json(u.searchParams.get('offset')==='0'?[{participant_id:pid,cohort_id:cid,card:{name:'폴짝이',color:'mint',growth:'frog',equipped:{}},seen_on:'2026-11-11',hidden:false}]:[]);
+  if(u.pathname.endsWith('/cheers')&&method==='GET')return Response.json(u.searchParams.get('offset')==='0'?[{from_id:padId,to_id:pid,cohort_id:cid,target:'frog:'+pid,kind:'hello',day:'2026-11-11',created_at:'2026-11-11T01:00:00Z'}]:[]);
+  if(u.pathname.endsWith('/pads')&&method==='GET')return Response.json(u.searchParams.get('offset')==='0'||u.searchParams.get('limit')==='1'?[{id:padId,cohort_id:cid,participant_id:pid,created_at:'2026-11-04T01:00:00Z',hidden:false,kind:'photo',text:''}]:[]);
   return new Response(null,{status:204});};
  const store=st.supabaseStore('https://example.supabase.co/','sb_secret_test',fake);
  const pad=await store.addPad({cohortId:cid,participantId:pid,photo});
@@ -131,16 +190,28 @@ await test('Supabase keeps photos in the private bucket with the server key, the
  assert.match(count.url,/\/rest\/v1\/pads\?select=id&participant_id=eq\.2222/);
  assert.equal(upload.method,'POST');assert.equal(upload.path,`/storage/v1/object/lily-pads/${cid}/${pad.id}.jpg`);assert.equal(upload.init.headers.apikey,'sb_secret_test');assert.equal(upload.init.headers['Content-Type'],'image/jpeg');assert.equal(upload.init.headers['x-upsert'],'false');
  assert.deepEqual([...new Uint8Array(await upload.init.body.arrayBuffer())],[...photo]);
- assert.equal(row.path,'/rest/v1/pads');assert.deepEqual(JSON.parse(row.init.body),{id:pad.id,cohort_id:cid,participant_id:pid});
- assert.deepEqual(pad,{id:pad.id,cohortId:cid,participantId:pid,at:'2026-11-04T01:00:00Z',hidden:false});
+ assert.equal(row.path,'/rest/v1/pads');assert.deepEqual(JSON.parse(row.init.body),{id:pad.id,cohort_id:cid,participant_id:pid,kind:'photo'});
+ assert.deepEqual(pad,{id:pad.id,cohortId:cid,participantId:pid,at:'2026-11-04T01:00:00Z',hidden:false,kind:'photo',text:''});
  // If the row cannot be written, the photo does not stay behind.
  calls.length=0;rowFails=true;await assert.rejects(()=>store.addPad({cohortId:cid,participantId:pid,photo}));rowFails=false;
  const cleanup=calls.at(-1);assert.equal(cleanup.method,'DELETE');assert.equal(cleanup.path,'/storage/v1/object/lily-pads');assert.match(JSON.parse(cleanup.init.body).prefixes[0],new RegExp(`^${cid}/.+\\.jpg$`));
  padCount=pond.MAX_PADS_PER_PERSON;await assert.rejects(()=>store.addPad({cohortId:cid,participantId:pid,photo}),st.TooManyPads);padCount=0;
- calls.length=0;const pads=await store.cohortPads(cid);assert.equal(pads.length,1);assert(calls[0].url.includes(`pads?select=id,cohort_id,participant_id,created_at,hidden&cohort_id=eq.${cid}&order=created_at.desc,id.desc`));
+ calls.length=0;const pads=await store.cohortPads(cid);assert.equal(pads.length,1);assert(calls[0].url.includes(`pads?select=id,cohort_id,participant_id,created_at,hidden,kind,text&cohort_id=eq.${cid}&order=created_at.desc,id.desc`));
  assert.deepEqual([...await store.padPhoto(pads[0])],[...photo]);assert.equal(await store.padPhoto({...pads[0],id:'44444444-4444-4444-8444-444444444444'}),null,'a missing photo is simply not there');
  calls.length=0;await store.removePad(pads[0]);assert.deepEqual(calls.map(c=>[c.method,c.path]),[['DELETE','/storage/v1/object/lily-pads'],['DELETE','/rest/v1/pads']]);assert.deepEqual(JSON.parse(calls[0].init.body),{prefixes:[`${cid}/${padId}.jpg`]});
  calls.length=0;await store.setPadHidden(padId,true);assert.equal(calls[0].method,'PATCH');assert.deepEqual(JSON.parse(calls[0].init.body),{hidden:true});
+ calls.length=0;const words=await store.addPad({cohortId:cid,participantId:pid,text:'오늘은 창문을 열었어요'});assert.equal(words.kind,'text');assert(!calls.some(c=>c.path.startsWith('/storage/')),'a text pad never touches the bucket');
+ assert.deepEqual(JSON.parse(calls.at(-1).init.body),{id:words.id,cohort_id:cid,participant_id:pid,kind:'text',text:'오늘은 창문을 열었어요'});
+ calls.length=0;await store.removePad(words);assert.deepEqual(calls.map(c=>[c.method,c.path]),[['DELETE','/rest/v1/pads']]);
+ calls.length=0;await store.arrive({cohortId:cid,participantId:pid,card:null,day:'2026-11-11'});
+ assert(calls[0].url.endsWith('/rest/v1/frogs?on_conflict=participant_id'));assert.equal(calls[0].init.headers.Prefer,'resolution=merge-duplicates,return=minimal');
+ assert.deepEqual(JSON.parse(calls[0].init.body),{participant_id:pid,cohort_id:cid,card:null,seen_on:'2026-11-11'},'hidden is left to the operator');
+ assert.deepEqual(await store.cohortFrogs(cid),[{participantId:pid,cohortId:cid,card:{name:'폴짝이',color:'mint',growth:'frog',equipped:{}},seenOn:'2026-11-11',hidden:false}]);
+ calls.length=0;await store.setFrogHidden(pid,true);assert.equal(calls[0].method,'PATCH');assert(calls[0].url.includes('frogs?participant_id=eq.'+pid));
+ calls.length=0;await store.addCheer({cohortId:cid,fromId:pid,toId:padId,target:'pad:'+padId,kind:'nice',day:'2026-11-11'});
+ assert(calls[0].url.endsWith('/rest/v1/cheers?on_conflict=from_id,target,day'));assert.equal(calls[0].init.headers.Prefer,'resolution=ignore-duplicates,return=minimal');
+ assert.deepEqual(JSON.parse(calls[0].init.body),{from_id:pid,to_id:padId,cohort_id:cid,target:'pad:'+padId,pad_id:padId,kind:'nice',day:'2026-11-11'});
+ calls.length=0;const got=await store.cheersOf(pid);assert.equal(got[0].kind,'hello');assert.equal(got[0].at,'2026-11-11T01:00:00Z');assert(calls[0].url.includes(`or=(to_id.eq.${pid},from_id.eq.${pid})`));
  calls.length=0;await store.removeParticipant(pid);assert.deepEqual(calls.map(c=>[c.method,c.path]),[['GET','/rest/v1/pads'],['GET','/rest/v1/pads'],['DELETE','/storage/v1/object/lily-pads'],['DELETE','/rest/v1/participants']]);
  calls.length=0;assert.equal(await store.pad('../not-a-uuid'),null);assert.deepEqual(await store.cohortPads('nope'),[]);await store.setPadHidden('nope',true);assert.equal(calls.length,0,'ids that are not uuids never reach Supabase');
 });

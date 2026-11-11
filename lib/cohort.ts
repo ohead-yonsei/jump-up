@@ -33,7 +33,8 @@ export function cohortStage(cohort: CohortInfo, today = seoulDay()) {
 
 /** What the device keeps after joining: the cohort as shown to the person, and which records and days it has already sent
  * (or chose not to send, for everything from before joining). Tracking ids rather than a time keeps a wrong device clock from skipping records. */
-export type Membership = CohortInfo & { token: string; joinedAt: string; sent: string[]; sentVisits: string[]; code: string; lastSync: string };
+/** `showFrog` is the person's answer to whether their frog shows in the pond village; unset until they have been asked. */
+export type Membership = CohortInfo & { token: string; joinedAt: string; sent: string[]; sentVisits: string[]; code: string; lastSync: string; showFrog?: boolean };
 const time = (value: unknown): value is string => typeof value === 'string' && value.length <= 40 && !Number.isNaN(Date.parse(value));
 const strings = (value: unknown, max: number, ok: (s: string) => boolean): value is string[] => Array.isArray(value) && value.length <= max && value.every(s => typeof s === 'string' && ok(s));
 export function validMembership(value: unknown): Membership | null {
@@ -43,7 +44,7 @@ export function validMembership(value: unknown): Membership | null {
   const token = v.token, joinedAt = v.joinedAt, sent = v.sent, sentVisits = v.sentVisits, code = v.code, lastSync = v.lastSync;
   // Without the sent lists there is no telling which records are from before joining, so the device has to join again.
   if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token) || !time(joinedAt) || !strings(sent, 4000, s => s.length <= 100) || !strings(sentVisits, 2000, validDay)) return null;
-  return { ...info, token, joinedAt, sent, sentVisits, code: typeof code === 'string' && validParticipant(code) ? code : '', lastSync: time(lastSync) ? lastSync : '' };
+  return { ...info, token, joinedAt, sent, sentVisits, code: typeof code === 'string' && validParticipant(code) ? code : '', lastSync: time(lastSync) ? lastSync : '', ...(typeof v.showFrog === 'boolean' ? { showFrog: v.showFrog } : {}) };
 }
 /** Everything already on the device counts as handled, except today's visit, so only what comes after joining is sent. */
 export function startMembership(cohort: CohortInfo, token: string, code: string, entries: Entry[], visits: string[], now = new Date()): Membership {

@@ -58,11 +58,44 @@ create table if not exists pads (
 create index if not exists pads_cohort_created on pads (cohort_id, created_at desc);
 create index if not exists pads_participant on pads (participant_id);
 
+-- 연못 마을(0.28.0): 연잎에 사진 대신 한 줄 글도 띄울 수 있어요. 글 연잎은 사진 파일이 없어요.
+alter table pads add column if not exists kind text not null default 'photo';
+alter table pads add column if not exists text text not null default '';
+
+-- 연못 마을에 들른 개구리. 본인이 보여주기로 고른 모습(card: 개구리 이름·색·자란 정도·옷)과 마지막으로 들른 날만 남겨요.
+-- card가 비어 있으면 모습을 보이지 않고 구경만 한 거예요. 같은 기수 사람들에게는 '오늘 다녀간 개구리'만 보여요.
+create table if not exists frogs (
+  participant_id uuid primary key references participants(id) on delete cascade,
+  cohort_id uuid not null references cohorts(id) on delete cascade,
+  card jsonb,
+  seen_on date not null,
+  -- 운영자가 마을에서 내려둔 개구리. 본인에게만 보여요.
+  hidden boolean not null default false
+);
+create index if not exists frogs_cohort on frogs (cohort_id);
+
+-- 응원: 정해진 문구 가운데 하나. 같은 개구리나 연잎에는 하루에 한 번만 남아요.
+-- 받은 사람만 볼 수 있고, 누가 보냈는지는 받은 사람에게도 보여주지 않아요.
+create table if not exists cheers (
+  from_id uuid not null references participants(id) on delete cascade,
+  to_id uuid not null references participants(id) on delete cascade,
+  cohort_id uuid not null references cohorts(id) on delete cascade,
+  target text not null,
+  pad_id uuid references pads(id) on delete cascade,
+  kind text not null,
+  day date not null,
+  created_at timestamptz not null default now(),
+  primary key (from_id, target, day)
+);
+create index if not exists cheers_to on cheers (to_id, created_at desc);
+
 alter table cohorts enable row level security;
 alter table participants enable row level security;
 alter table entries enable row level security;
 alter table visits enable row level security;
 alter table pads enable row level security;
+alter table frogs enable row level security;
+alter table cheers enable row level security;
 
 -- 연잎 사진을 담는 비공개 버킷. 공개 주소가 없고 정책도 두지 않아서, 앱 서버만 비밀 키로 읽고 써요.
 -- 사진은 기기에서 800px 정사각형 JPEG로 다시 그려 위치 같은 사진 정보를 빼고, 서버에서 한 번 더 걸러 올려요.

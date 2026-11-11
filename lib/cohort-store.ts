@@ -3,7 +3,7 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Entry } from './records';
 import type { CohortInfo, ParticipantRecords } from './cohort';
-import { MAX_PADS_PER_PERSON, type Pad } from './pond';
+import { MAX_PADS_PER_PERSON, type Pad, type FrogCard, type VillageFrog, type Cheer, type CheerKind } from './pond';
 
 export type Cohort = CohortInfo & { id: string; joinCode: string; createdAt: string };
 export type Participant = { id: string; cohortId: string; code: string; joinedAt: string; lastSyncAt: string | null };
@@ -32,8 +32,8 @@ export interface CohortStore {
   /** Removes the person and everything they sent, lily pad photos included. */
   removeParticipant(id: string): Promise<void>;
   cohortRecords(cohortId: string): Promise<ParticipantRecords[]>;
-  /** Floats a photo that `cleanJpeg` has already stripped. */
-  addPad(p: { cohortId: string; participantId: string; photo: Uint8Array }): Promise<Pad>;
+  /** Floats a photo that `cleanJpeg` has already stripped, or one line that `cleanPadText` has already tidied. */
+  addPad(p: { cohortId: string; participantId: string } & ({ photo: Uint8Array } | { text: string })): Promise<Pad>;
   /** Every pad in the cohort, hidden ones included, newest first. */
   cohortPads(cohortId: string): Promise<Pad[]>;
   pad(id: string): Promise<Pad | null>;
@@ -42,6 +42,16 @@ export interface CohortStore {
   removePad(pad: Pad): Promise<void>;
   /** An operator taking a pad down, or putting it back. */
   setPadHidden(id: string, hidden: boolean): Promise<void>;
+  /** Notes that the person opened the village on `day`, with the frog they chose to show (or null to look around unseen). */
+  arrive(p: { cohortId: string; participantId: string; card: FrogCard | null; day: string }): Promise<void>;
+  /** Everyone in the cohort who has ever opened the village, whatever day they last came. */
+  cohortFrogs(cohortId: string): Promise<VillageFrog[]>;
+  /** An operator taking a frog out of the village, or putting it back. */
+  setFrogHidden(participantId: string, hidden: boolean): Promise<void>;
+  /** One cheer per sender, target and day; sending again that day changes nothing. */
+  addCheer(c: { cohortId: string; fromId: string; toId: string; target: string; kind: CheerKind; day: string }): Promise<void>;
+  /** The cheers this person received, and the ones they sent (so the screen can show what is already sent today). */
+  cheersOf(participantId: string): Promise<Cheer[]>;
   /** One small read, so a quiet Supabase Free project is not paused for inactivity. */
   ping(): Promise<void>;
 }
@@ -74,8 +84,8 @@ export function folderShelf(dir: string): PhotoShelf {
   };
 }
 
-type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; pads: Pad[] };
-const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, pads: [] });
+type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; pads: Pad[]; frogs: VillageFrog[]; cheers: Cheer[] };
+const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, pads: [], frogs: [], cheers: [] });
 /** Keeps everything in one object, for tests and, through `fileStore`, local development. Photos sit on their own shelf. */
 export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise<void> = async () => {}, kind: 'memory' | 'file' = 'memory', shelf: PhotoShelf = memoryShelf()): CohortStore {
   const cohort = ({ operatorHash: _, ...c }: Data['cohorts'][number]): Cohort => c;
@@ -117,23 +127,45 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
       p.lastSyncAt = new Date().toISOString(); await persist(d);
     },
     async removeParticipant(id) {
-      await shelf.remove(d.pads.filter(p => p.participantId === id).map(photoKey));
-      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; d.pads = d.pads.filter(p => p.participantId !== id); await persist(d);
+      const mine = d.pads.filter(p => p.participantId === id);
+      await shelf.remove(mine.filter(p => p.kind === 'photo').map(photoKey));
+      const gone = new Set(mine.map(p => 'pad:' + p.id));
+      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; d.pads = d.pads.filter(p => p.participantId !== id);
+      // Their frog goes, and so do the cheers they sent and received.
+      d.frogs = d.frogs.filter(f => f.participantId !== id); d.cheers = d.cheers.filter(c => c.fromId !== id && c.toId !== id && !gone.has(c.target));
+      await persist(d);
     },
     async cohortRecords(cohortId) {
       return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [] }));
     },
     async addPad(p) {
       if (d.pads.filter(x => x.participantId === p.participantId).length >= MAX_PADS_PER_PERSON) throw new TooManyPads();
-      const pad: Pad = { id: randomUUID(), cohortId: p.cohortId, participantId: p.participantId, at: new Date().toISOString(), hidden: false };
-      await shelf.put(photoKey(pad), p.photo); d.pads.push(pad); await persist(d);
+      const pad: Pad = { id: randomUUID(), cohortId: p.cohortId, participantId: p.participantId, at: new Date().toISOString(), hidden: false, kind: 'photo' in p ? 'photo' : 'text', text: 'photo' in p ? '' : p.text };
+      if ('photo' in p) await shelf.put(photoKey(pad), p.photo);
+      d.pads.push(pad); await persist(d);
       return { ...pad };
     },
     async cohortPads(cohortId) { return d.pads.filter(p => p.cohortId === cohortId).map(p => ({ ...p })).reverse(); },
     async pad(id) { const p = d.pads.find(x => x.id === id); return p ? { ...p } : null; },
-    padPhoto: pad => shelf.get(photoKey(pad)),
-    async removePad(pad) { await shelf.remove([photoKey(pad)]); d.pads = d.pads.filter(p => p.id !== pad.id); await persist(d); },
+    padPhoto: async pad => pad.kind === 'photo' ? shelf.get(photoKey(pad)) : null,
+    async removePad(pad) {
+      if (pad.kind === 'photo') await shelf.remove([photoKey(pad)]);
+      d.pads = d.pads.filter(p => p.id !== pad.id); d.cheers = d.cheers.filter(c => c.target !== 'pad:' + pad.id); await persist(d);
+    },
     async setPadHidden(id, hidden) { const p = d.pads.find(x => x.id === id); if (p) { p.hidden = hidden; await persist(d); } },
+    async arrive(a) {
+      if (!d.participants.some(p => p.id === a.participantId)) return;
+      const f = d.frogs.find(x => x.participantId === a.participantId);
+      if (f) { f.card = a.card; f.seenOn = a.day; } else d.frogs.push({ participantId: a.participantId, cohortId: a.cohortId, card: a.card, seenOn: a.day, hidden: false });
+      await persist(d);
+    },
+    async cohortFrogs(cohortId) { return d.frogs.filter(f => f.cohortId === cohortId).map(f => ({ ...f, card: f.card && { ...f.card, equipped: { ...f.card.equipped } } })); },
+    async setFrogHidden(participantId, hidden) { const f = d.frogs.find(x => x.participantId === participantId); if (f) { f.hidden = hidden; await persist(d); } },
+    async addCheer(c) {
+      if (d.cheers.some(x => x.fromId === c.fromId && x.target === c.target && x.day === c.day)) return;
+      d.cheers.push({ ...c, at: new Date().toISOString() }); await persist(d);
+    },
+    async cheersOf(participantId) { return d.cheers.filter(c => c.toId === participantId || c.fromId === participantId).map(c => ({ ...c })); },
     async ping() {},
   };
 }
@@ -146,6 +178,8 @@ export function fileStore(file: string): CohortStore {
     const next = fileQueue.then(async () => {
       let data = emptyData();
       try { data = { ...data, ...JSON.parse(await fs.readFile(file, 'utf8')) }; } catch {}
+      // Pads floated before text pads existed are all photos.
+      data.pads = data.pads.map(p => ({ ...p, kind: p.kind ?? 'photo', text: p.text ?? '' }));
       return work(memoryStore(data, async d => { await fs.mkdir(path.dirname(file), { recursive: true }); await fs.writeFile(file, JSON.stringify(d, null, 1)); }, 'file', shelf));
     });
     fileQueue = next.catch(() => {});
@@ -172,20 +206,31 @@ export function fileStore(file: string): CohortStore {
     padPhoto: pad => run(s => s.padPhoto(pad)),
     removePad: pad => run(s => s.removePad(pad)),
     setPadHidden: (id, hidden) => run(s => s.setPadHidden(id, hidden)),
+    arrive: a => run(s => s.arrive(a)),
+    cohortFrogs: cohortId => run(s => s.cohortFrogs(cohortId)),
+    setFrogHidden: (participantId, hidden) => run(s => s.setFrogHidden(participantId, hidden)),
+    addCheer: c => run(s => s.addCheer(c)),
+    cheersOf: participantId => run(s => s.cheersOf(participantId)),
     ping: async () => {},
   };
 }
 
 type CohortRow = { id: string; name: string; org: string; starts_on: string; ends_on: string; join_code: string; created_at: string; participants?: { count: number }[] };
 type ParticipantRow = { id: string; cohort_id: string; code: string; joined_at: string; last_sync_at: string | null; cohort?: CohortRow | null };
-type PadRow = { id: string; cohort_id: string; participant_id: string; created_at: string; hidden: boolean };
+type PadRow = { id: string; cohort_id: string; participant_id: string; created_at: string; hidden: boolean; kind?: string | null; text?: string | null };
+type FrogRow = { participant_id: string; cohort_id: string; card: FrogCard | null; seen_on: string; hidden: boolean };
+type CheerRow = { from_id: string; to_id: string; cohort_id: string; target: string; kind: CheerKind; day: string; created_at: string };
 // The operator code hash and token hashes are never selected back out of the database.
 const cohortColumns = 'id,name,org,starts_on,ends_on,join_code,created_at';
 const participantColumns = 'id,cohort_id,code,joined_at,last_sync_at';
-const padColumns = 'id,cohort_id,participant_id,created_at,hidden';
+const padColumns = 'id,cohort_id,participant_id,created_at,hidden,kind,text';
+const frogColumns = 'participant_id,cohort_id,card,seen_on,hidden';
+const cheerColumns = 'from_id,to_id,cohort_id,target,kind,day,created_at';
 const toCohort = (r: CohortRow): Cohort => ({ id: r.id, name: r.name, org: r.org, startsOn: r.starts_on, endsOn: r.ends_on, joinCode: r.join_code, createdAt: r.created_at });
 const toParticipant = (r: ParticipantRow): Participant => ({ id: r.id, cohortId: r.cohort_id, code: r.code, joinedAt: r.joined_at, lastSyncAt: r.last_sync_at });
-const toPad = (r: PadRow): Pad => ({ id: r.id, cohortId: r.cohort_id, participantId: r.participant_id, at: r.created_at, hidden: r.hidden });
+const toPad = (r: PadRow): Pad => ({ id: r.id, cohortId: r.cohort_id, participantId: r.participant_id, at: r.created_at, hidden: r.hidden, kind: r.kind === 'text' ? 'text' : 'photo', text: r.text ?? '' });
+const toFrog = (r: FrogRow): VillageFrog => ({ participantId: r.participant_id, cohortId: r.cohort_id, card: r.card, seenOn: r.seen_on, hidden: r.hidden });
+const toCheer = (r: CheerRow): Cheer => ({ fromId: r.from_id, toId: r.to_id, cohortId: r.cohort_id, target: r.target, kind: r.kind, day: r.day, at: r.created_at });
 const eq = (value: string) => 'eq.' + encodeURIComponent(value);
 const uuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 const PAGE = 1000;
@@ -288,9 +333,9 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       if (code) try { await call('participants?id=' + eq(id), { method: 'PATCH', prefer: 'return=minimal', body: { code } }); } catch (e) { if (!(e instanceof DuplicateCode)) throw e; }
     },
     async removeParticipant(id) {
-      // The database drops the person's pads with them; their photos in the bucket go first, here.
+      // The database drops the person's pads, frog and cheers with them; their photos in the bucket go first, here.
       const pads = uuid(id) ? await pages<PadRow>(`pads?select=${padColumns}&participant_id=${eq(id)}&order=id.asc`) : [];
-      await shelf.remove(pads.map(r => photoKey(toPad(r))));
+      await shelf.remove(pads.map(toPad).filter(p => p.kind === 'photo').map(photoKey));
       await call('participants?id=' + eq(id), { method: 'DELETE', prefer: 'return=minimal' });
     },
     async cohortRecords(cohortId) {
@@ -307,13 +352,12 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
     },
     async addPad(p) {
       if (await storedCount(p.participantId, 'pads') >= MAX_PADS_PER_PERSON) throw new TooManyPads();
-      // The photo goes in before the row, so a member never sees a pad whose photo is still on its way.
       const id = randomUUID(), key = photoKey({ id, cohortId: p.cohortId });
+      const row = (body: object) => call<PadRow[]>(`pads?select=${padColumns}`, { method: 'POST', prefer: 'return=representation', body: { id, cohort_id: p.cohortId, participant_id: p.participantId, ...body } });
+      if (!('photo' in p)) return toPad((await row({ kind: 'text', text: p.text }))[0]);
+      // The photo goes in before the row, so a member never sees a pad whose photo is still on its way.
       await shelf.put(key, p.photo);
-      try {
-        const rows = await call<PadRow[]>(`pads?select=${padColumns}`, { method: 'POST', prefer: 'return=representation', body: { id, cohort_id: p.cohortId, participant_id: p.participantId } });
-        return toPad(rows[0]);
-      } catch (e) { await shelf.remove([key]).catch(() => {}); throw e; }
+      try { return toPad((await row({ kind: 'photo' }))[0]); } catch (e) { await shelf.remove([key]).catch(() => {}); throw e; }
     },
     async cohortPads(cohortId) {
       if (!uuid(cohortId)) return [];
@@ -324,9 +368,27 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       const rows = await call<PadRow[]>(`pads?select=${padColumns}&id=${eq(id)}&limit=1`);
       return rows[0] ? toPad(rows[0]) : null;
     },
-    padPhoto: pad => shelf.get(photoKey(pad)),
-    async removePad(pad) { await shelf.remove([photoKey(pad)]); await call('pads?id=' + eq(pad.id), { method: 'DELETE', prefer: 'return=minimal' }); },
+    padPhoto: async pad => pad.kind === 'photo' ? shelf.get(photoKey(pad)) : null,
+    // The database drops the cheers a pad received along with it.
+    async removePad(pad) { if (pad.kind === 'photo') await shelf.remove([photoKey(pad)]); await call('pads?id=' + eq(pad.id), { method: 'DELETE', prefer: 'return=minimal' }); },
     async setPadHidden(id, hidden) { if (uuid(id)) await call('pads?id=' + eq(id), { method: 'PATCH', prefer: 'return=minimal', body: { hidden } }); },
+    // `hidden` is left out, so coming back never undoes an operator's choice.
+    async arrive(a) {
+      await call('frogs?on_conflict=participant_id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { participant_id: a.participantId, cohort_id: a.cohortId, card: a.card, seen_on: a.day } });
+    },
+    async cohortFrogs(cohortId) {
+      if (!uuid(cohortId)) return [];
+      return (await pages<FrogRow>(`frogs?select=${frogColumns}&cohort_id=${eq(cohortId)}&order=participant_id.asc`)).map(toFrog);
+    },
+    async setFrogHidden(participantId, hidden) { if (uuid(participantId)) await call('frogs?participant_id=' + eq(participantId), { method: 'PATCH', prefer: 'return=minimal', body: { hidden } }); },
+    async addCheer(c) {
+      const on = c.target.startsWith('pad:') ? c.target.slice(4) : null;
+      await call('cheers?on_conflict=from_id,target,day', { method: 'POST', prefer: 'resolution=ignore-duplicates,return=minimal', body: { from_id: c.fromId, to_id: c.toId, cohort_id: c.cohortId, target: c.target, pad_id: on, kind: c.kind, day: c.day } });
+    },
+    async cheersOf(participantId) {
+      if (!uuid(participantId)) return [];
+      return (await pages<CheerRow>(`cheers?select=${cheerColumns}&or=(to_id.${eq(participantId)},from_id.${eq(participantId)})&order=created_at.desc,from_id.asc,target.asc`)).map(toCheer);
+    },
     async ping() { await call('cohorts?select=id&limit=1'); },
   };
 }

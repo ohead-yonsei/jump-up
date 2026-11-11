@@ -57,3 +57,11 @@
 .ops-pads strong{font-size:13px;color:#35404f}
 .ops-pad-state{font-size:11.5px;font-weight:650;color:#8a5a2e;background:#f6eadb;border-radius:99px;padding:1px 8px;justify-self:start}
 .ops-pads .secondary{min-height:38px;padding:6px 12px;font-size:13px;width:100%}
+.ops-pad-text{display:grid;place-items:center;margin:0;aspect-ratio:1;padding:12px;border-radius:10px;background:#e6efd8;color:#3d5a26;font-size:13.5px;font-weight:650;line-height:1.5;text-align:center;overflow-wrap:anywhere}
+.ops-pads li.is-hidden .ops-pad-text{opacity:.5}
+.ops-frogs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.ops-frogs li{display:grid;gap:8px;padding:12px;border:1px solid #eeede8;border-radius:14px;background:#faf9f7}
+.ops-frogs li>div{display:grid;gap:2px;font-size:12px;color:#6c798a}
+.ops-frogs strong{font-size:15px;color:#35404f;overflow-wrap:anywhere}
+.ops-frogs li.is-hidden strong{opacity:.55}
+.ops-frogs .secondary{min-height:38px;padding:6px 12px;font-size:13px;width:100%}

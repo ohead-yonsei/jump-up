@@ -23,10 +23,16 @@ export async function POST(request:Request){
  const s=await session();if(!s)return json({error:'다시 로그인해 주세요.'},401);
  const input=await readJson(request,300);if('error' in input)return input.error;
  const store=await storeFromEnv();if(!store)return json({error:'기수 기능을 준비 중이에요.'},503);
- const v=input.value as {id?:unknown;hidden?:unknown};
- if(!validPadId(v.id)||typeof v.hidden!=='boolean')return json({error:'입력을 확인해 주세요.'},400);
+ const v=input.value as {id?:unknown;frog?:unknown;cohort?:unknown;hidden?:unknown};
+ if(!(validPadId(v.id)||validPadId(v.frog))||typeof v.hidden!=='boolean')return json({error:'입력을 확인해 주세요.'},400);
  try{
   if(!await stillValid(store,s))return json({error:'운영자 코드가 바뀌었어요. 새 코드로 다시 로그인해 주세요.'},401);
+  // A frog is named by its participant id and has to be in a cohort this session may see.
+  if(validPadId(v.frog)){
+   if(!validPadId(v.cohort)||!canSee(s,v.cohort)||!(await store.cohortFrogs(v.cohort)).some(f=>f.participantId===v.frog))return json({error:'개구리를 찾지 못했어요.'},404);
+   await store.setFrogHidden(v.frog,v.hidden);return json({hidden:v.hidden});
+  }
+  if(!validPadId(v.id))return json({error:'입력을 확인해 주세요.'},400);
   const pad=await store.pad(v.id);if(!pad||!canSee(s,pad.cohortId))return json({error:'연잎을 찾지 못했어요.'},404);
   await store.setPadHidden(pad.id,v.hidden);return json({hidden:v.hidden});
  }catch{return unavailable();}
