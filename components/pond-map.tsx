@@ -12,7 +12,7 @@ const REACH=84;const PANORAMA='/art/pond-village-pano.webp';
  * among the frogs that came by today, the floating pads and the village keeper. Frogs whose owners are here right now move as they
  * steer; the others drift on their own. Both look the same, so the pond does not say who is online.
  * lib/pond-scene.ts draws it; this component decides who is where each frame and keeps the name labels (real buttons) over the canvas. */
-export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,onOpen,onUnknown,onMoved}:{frogs:FrogView[];pads:PadView[];mine:FrogCard|null;showFrog:boolean;live:Live|null;token:string;busy:boolean;
+export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,changed=0,onChanged,onOpen,onUnknown,onMoved}:{changed?:number;onChanged?:()=>void;frogs:FrogView[];pads:PadView[];mine:FrogCard|null;showFrog:boolean;live:Live|null;token:string;busy:boolean;
  picture:(card:FrogCard,angle:number)=>Promise<string>;onOpen:(near:Near)=>void;onUnknown:()=>void;onMoved?:()=>void}){
  const viewRef=useRef<HTMLDivElement>(null);const canvasRef=useRef<HTMLCanvasElement>(null);const stickRef=useRef<HTMLDivElement>(null);const knobRef=useRef<HTMLSpanElement>(null);
  const sceneRef=useRef<PondScene|null>(null);const [ready,setReady]=useState(false);const [failed,setFailed]=useState(false);
@@ -22,15 +22,17 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,onOpen
  const padSpots=useMemo(()=>pads.map((p,i)=>({pad:p,...padSpot(p.id,i)})),[pads]);const padSpotsRef=useRef(padSpots);padSpotsRef.current=padSpots;
  const me=useRef<Point|null>(null);const dir=useRef<Point>({x:0,y:0});const keys=useRef(new Set<string>());const goal=useRef<Point|null>(null);const movedRef=useRef(false);
  const [shown,setShown]=useState<string[]>([]);const [near,setNear]=useState<Near|null>(null);
- const unknownAt=useRef(0);const onUnknownRef=useRef(onUnknown);onUnknownRef.current=onUnknown;const onMovedRef=useRef(onMoved);onMovedRef.current=onMoved;const onOpenRef=useRef(onOpen);onOpenRef.current=onOpen;
+ const unknownAt=useRef(0);const onUnknownRef=useRef(onUnknown);onUnknownRef.current=onUnknown;const onMovedRef=useRef(onMoved);onMovedRef.current=onMoved;const onOpenRef=useRef(onOpen);onOpenRef.current=onOpen;const onChangedRef=useRef(onChanged);onChangedRef.current=onChanged;
  const setLabel=(id:string)=>(el:HTMLElement|null)=>{if(el)labels.current.set(id,el);else labels.current.delete(id);};
  // Live channel: hear where the others are, and say where this frog is (only when its owner chose to show it).
  const link=useRef<LiveLink|null>(null);
  useEffect(()=>{if(!live)return;const l=joinLive(live,token,myId,m=>{liveAt.current.set(m.id,{...m,at:Date.now()});
-   if(!othersRef.current.some(f=>f.id===m.id)&&Date.now()-unknownAt.current>20000){unknownAt.current=Date.now();onUnknownRef.current();}});
+   if(!othersRef.current.some(f=>f.id===m.id)&&Date.now()-unknownAt.current>20000){unknownAt.current=Date.now();onUnknownRef.current();}},()=>onChangedRef.current?.());
   link.current=l;return()=>{l.leave();link.current=null;};
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[live?.kind,live&&'topic' in live?live.topic:'',token,myId]);
+ // `changed` counts this member's own floated or removed pads: each one is a nudge for the others to look again.
+ useEffect(()=>{if(changed)link.current?.changed();},[changed]);
  // The 3D scene loads on its own so the rest of the app does not wait for it.
  useEffect(()=>{const canvas=canvasRef.current,view=viewRef.current;if(!canvas||!view)return;let gone=false;let scene:PondScene|null=null;let ro:ResizeObserver|null=null;
   import('@/lib/pond-scene').then(({createPondScene})=>{if(gone)return;

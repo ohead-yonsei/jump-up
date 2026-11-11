@@ -5,9 +5,10 @@ import {seoulDay} from '@/lib/cohort';
 import {padsFor,frogsFor,cheersFor,cleanFrogCard,cheerTarget,isCheerKind,canOpenPad} from '@/lib/pond';
 export const dynamic='force-dynamic';
 export const runtime='nodejs';
-// Arriving is one request each time the village opens; cheers are a tap each. Both are also limited per address, generously,
+// Arriving is one request when the village opens and then one about every 20 seconds while it stays open (plus one when another
+// member floats a pad); cheers are a tap each. Both are also limited per address, generously,
 // so one institution's shared network still fits and made-up tokens cannot get around the limits.
-const arriveLimit=rateLimiter(30);const cheerLimit=rateLimiter(40);const addressLimit=rateLimiter(600);
+const arriveLimit=rateLimiter(30);const cheerLimit=rateLimiter(40);const addressLimit=rateLimiter(1500);
 const closed=()=>json({error:'기수 기능을 준비 중이에요.',code:'not_configured'},503);
 const unavailable=()=>json({error:'지금은 연못 마을에 닿기 어려워요. 잠시 후 다시 시도해 주세요.'},502);
 const noToken=()=>json({error:'기수 참여 정보가 없어요.'},401);

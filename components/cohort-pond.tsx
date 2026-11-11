@@ -63,6 +63,10 @@ const cheerOf=(kind:CheerKind)=>CHEERS.find(c=>c.id===kind)??CHEERS[0];
 const SCENE_PADS=24;
 type Village={frogs:FrogView[];pads:PadView[];cheers:CheerView[];sent:string[];live:Live|null;day:string};
 type Open={pad:PadView;frog?:undefined;keeper?:undefined}|{frog:FrogView;pad?:undefined;keeper?:undefined}|{keeper:true;pad?:undefined;frog?:undefined};
+/** How often the open pond looks for new pads, frogs and cheers. */
+const REFRESH_MS=20000;
+/** Keeps the old value when nothing changed, so a quiet refresh does not redraw the map or fetch photos again. */
+const same=<T,>(a:T,b:T):T=>JSON.stringify(a)===JSON.stringify(b)?a:b;
 /** 연못 마을: the cohort's shared pond, drawn as a small map (PondMap) where the member steers their own frog among the frogs that
  * came by today and the pads people floated. Pads never say who floated them; a frog shows only when its owner chose to. No counts,
  * and nothing marks who is here right now; cheers are set phrases that only the receiver sees. */
@@ -76,12 +80,23 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  const mine=frogCard(game);const cardKey=showFrog&&mine?JSON.stringify(mine):'';
  const pads=village?.pads??null;const setPads=(change:(list:PadView[])=>PadView[])=>setVillage(v=>v&&{...v,pads:change(v.pads)});
  const keep=(url:string)=>{owned.current.push(url);return url;};
+ const seq=useRef(0);const refresh=useRef<()=>void>(()=>{});const [changed,setChanged]=useState(0);const told=()=>{seq.current++;setChanged(n=>n+1);};
  useEffect(()=>()=>{for(const url of owned.current)URL.revokeObjectURL(url);},[]);
  // Arriving tells the cohort this frog came by today, and only if its owner said yes; otherwise the visit leaves no frog behind.
+ // The pond then looks again on its own (every REFRESH_MS while the screen is showing, when the screen comes back, and when another
+ // member's pad nudges it), so new pads, frogs and cheers appear without reloading. A quiet look never shows an error, and its
+ // answer is dropped if this member changed something meanwhile (`seq`), so a pad just floated is not blinked away by an older list.
  useEffect(()=>{if(!token)return;let stop=false;
-  fetch('/api/village',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},cache:'no-store',body:JSON.stringify({card:cardKey?JSON.parse(cardKey):null})}).then(async r=>{const d=await r.json().catch(()=>({})) as Partial<Village>&{error?:string};if(stop)return;if(!r.ok||!d.pads||!d.frogs)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');setVillage({frogs:d.frogs,pads:d.pads,cheers:d.cheers??[],sent:d.sent??[],live:d.live??null,day:d.day??''});setError('');})
-   .catch(e=>{if(!stop){setError(failed(e));setVillage(v=>v??{frogs:[],pads:[],cheers:[],sent:[],live:null,day:''});}});
-  return()=>{stop=true;};},[token,cardKey,again]);
+  const load=(quiet:boolean)=>{const at=seq.current;
+   fetch('/api/village',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},cache:'no-store',body:JSON.stringify({card:cardKey?JSON.parse(cardKey):null})}).then(async r=>{const d=await r.json().catch(()=>({})) as Partial<Village>&{error?:string};if(stop||(quiet&&at!==seq.current))return;if(!r.ok||!d.pads||!d.frogs)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
+     const n:Village={frogs:d.frogs,pads:d.pads,cheers:d.cheers??[],sent:d.sent??[],live:d.live??null,day:d.day??''};
+     setVillage(v=>v?{frogs:same(v.frogs,n.frogs),pads:same(v.pads,n.pads),cheers:same(v.cheers,n.cheers),sent:same(v.sent,n.sent),live:same(v.live,n.live),day:n.day}:n);if(!quiet)setError('');})
+    .catch(e=>{if(stop||quiet)return;setError(failed(e));setVillage(v=>v??{frogs:[],pads:[],cheers:[],sent:[],live:null,day:''});});};
+  // A nudge waits a random moment first, so a whole cohort hearing the same nudge does not ask at once; nudges in that wait count as one.
+  let soon:ReturnType<typeof setTimeout>|null=null;
+  load(false);const look=()=>{if(!document.hidden)load(true);};refresh.current=()=>{if(!soon)soon=setTimeout(()=>{soon=null;look();},300+Math.random()*2700);};
+  const timer=setInterval(look,REFRESH_MS);document.addEventListener('visibilitychange',look);
+  return()=>{stop=true;refresh.current=()=>{};if(soon)clearTimeout(soon);clearInterval(timer);document.removeEventListener('visibilitychange',look);};},[token,cardKey,again]);
  // Photos come a few at a time, each with the member's token, and stay on the device for as long as this screen is open.
  useEffect(()=>{if(!token||!pads)return;let stop=false;const want=pads.filter(p=>p.kind==='photo'&&!photos[p.id]).map(p=>p.id);
   const next=async()=>{while(!stop&&want.length){const id=want.shift()!;try{const r=await fetch('/api/pond?id='+id,{headers:{Authorization:'Bearer '+token}});if(!r.ok||stop)continue;const url=keep(URL.createObjectURL(await r.blob()));setPhotos(p=>({...p,[id]:url}));}catch{}}};
@@ -97,15 +112,15 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  async function float(){if(!token||(!picked&&!line)||(!picked&&worried))return;setBusy(true);setError('');
   try{const r=await fetch('/api/pond',picked?{method:'POST',headers:{'Content-Type':'image/jpeg',Authorization:'Bearer '+token},body:picked.blob}:{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({text:line})});const d=await r.json().catch(()=>({})) as {pad?:PadView;error?:string};
    if(!r.ok||!d.pad)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
-   const pad=d.pad;if(picked)setPhotos(p=>({...p,[pad.id]:keep(picked.url)}));setPads(list=>[pad,...list]);setPicked(null);setWriting(false);setText('');setPanel(null);haptic([12,60,18]);onToast('연잎 한 장을 띄웠어요. 같은 기수 사람들도 볼 수 있어요.');}
+   const pad=d.pad;told();if(picked)setPhotos(p=>({...p,[pad.id]:keep(picked.url)}));setPads(list=>[pad,...list]);setPicked(null);setWriting(false);setText('');setPanel(null);haptic([12,60,18]);onToast('연잎 한 장을 띄웠어요. 같은 기수 사람들도 볼 수 있어요.');}
   catch(e){setError(failed(e));}finally{setBusy(false);}}
  async function remove(pad:PadView){if(!token)return;setBusy(true);setError('');
   try{const r=await fetch('/api/pond?id='+pad.id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});const d=await r.json().catch(()=>({})) as {error?:string};if(!r.ok&&r.status!==404)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
-   setPads(list=>list.filter(p=>p.id!==pad.id));setOpen(null);setRemoving(false);onToast(pad.kind==='photo'?'연잎을 내렸어요. 사진도 함께 지웠어요.':'연잎을 내렸어요. 글도 함께 지웠어요.');}
+   told();setPads(list=>list.filter(p=>p.id!==pad.id));setOpen(null);setRemoving(false);onToast(pad.kind==='photo'?'연잎을 내렸어요. 사진도 함께 지웠어요.':'연잎을 내렸어요. 글도 함께 지웠어요.');}
   catch(e){setError(failed(e));}finally{setBusy(false);}}
  async function cheer(target:string,kind:CheerKind){if(!token||busy)return;setBusy(true);setError('');
   try{const r=await fetch('/api/village',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({target,kind})});const d=await r.json().catch(()=>({})) as {error?:string};if(!r.ok)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
-   setVillage(v=>v&&{...v,sent:[...v.sent,target]});haptic(10);onToast(`‘${cheerOf(kind).text}’ 응원을 보냈어요. 받은 사람만 볼 수 있어요.`);}
+   seq.current++;setVillage(v=>v&&{...v,sent:[...v.sent,target]});haptic(10);onToast(`‘${cheerOf(kind).text}’ 응원을 보냈어요. 받은 사람만 볼 수 있어요.`);}
   catch(e){onToast(failed(e));}finally{setBusy(false);}}
  const heading=<div className="pond-heading pond-heading-slim"><button className="text-button pond-back" onClick={onBack}><ArrowLeft size={15}/>기록으로</button><h1>연못 마을</h1><p>같은 기수 사람들만 볼 수 있어요.</p></div>;
  if(!token)return <>{heading}<div className="pond-closed"><span className="cohort-icon"><Users size={20}/></span><h3>기수에 함께하면 열리는 연못이에요</h3><p>기관에서 받은 기수 코드로 함께하면, 같은 기수 사람들의 개구리를 만나고 연잎을 나눌 수 있어요.</p><button className="primary" onClick={onJoin}>기수에 함께하기<ArrowRight size={17}/></button></div></>;
@@ -120,7 +135,7 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  if(!host)return null;
  return createPortal(<div className="pond-screen">
   <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={choose}/>
-  <PondMap frogs={frogs} pads={scenePads} mine={mine} showFrog={!!showFrog} live={village?.live??null} token={token} busy={busy} picture={pondPicture}
+  <PondMap frogs={frogs} pads={scenePads} mine={mine} showFrog={!!showFrog} live={village?.live??null} token={token} busy={busy} picture={pondPicture} changed={changed} onChanged={()=>refresh.current()}
    onOpen={n=>{setRemoving(false);setOpen(n.kind==='frog'?{frog:n.frog}:n.kind==='pad'?{pad:n.pad}:{keeper:true});}} onUnknown={()=>setAgain(n=>n+1)} onMoved={()=>setMoved(true)}/>
   <div className="world-top"><button type="button" className="world-round" aria-label="연못 마을에서 나가기" onClick={onBack}><LogOut size={18}/></button><span className="world-title"><strong>폴짝</strong><i aria-hidden="true"/>연못 마을</span>
    <span className="world-top-right"><span className="world-leaves" role="img" aria-label={`모은 잎 ${leaves}잎`}><Leaf size={14}/><strong>{leaves}</strong></span><button type="button" className="world-round help" aria-label="지금 도움이 필요해요" onClick={onHelp}><Heart size={18}/></button><button type="button" className="world-round" aria-label="연못 마을 더보기" onClick={()=>setPanel('more')}><MoreHorizontal size={20}/></button></span></div>
