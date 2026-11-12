@@ -116,56 +116,66 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .spring-complete .complete-frog{width:116px;height:116px;background:radial-gradient(circle at 50% 62%,#fff 0,var(--sky) 45%,transparent 70%);border:0;overflow:visible;box-shadow:none}
 .complete-frog .frog-still{width:116px;height:116px}
 /* closet */
-.closet-app{padding-bottom:10px}
-.closet-app:has(>.closet-action){padding-bottom:84px}
-.closet-stage{position:relative;margin:6px 0 0;border-radius:30px;overflow:hidden;background:radial-gradient(ellipse at 50% 100%,var(--sky-2) 0,var(--sky) 34%,transparent 60%),linear-gradient(180deg,#f5f4f1,#eae9e5);box-shadow:inset 0 0 0 1px var(--sky-2);padding:16px 16px 14px}
-.closet-stage:before{content:'';position:absolute;left:50%;bottom:76px;width:230px;height:46px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#f5f4f1,var(--sky));box-shadow:0 6px 0 var(--sky-2)}
-.closet-stage-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.closet-stage-top strong{display:block;font-size:20px;letter-spacing:-.6px;color:#303a47}
-.closet-stage-top div>span{display:block;font-size:11px;color:#717e90;margin-top:2px}
-.closet-stage .leaf-wallet{min-width:0;height:36px;padding:0 12px;border-radius:18px;background:#fff;border:1px solid var(--hair)}
-.closet-stage .leaf-wallet strong{font-size:16px!important;display:inline;color:var(--accent)}
-.closet-stage-frog{position:relative;height:300px;margin:-18px -16px 0}
-.closet-stage .wearing-chips{position:relative;z-index:2;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;min-height:30px}
-.closet-stage .wearing-chips button{display:flex;align-items:center;gap:4px;height:30px;padding:0 9px 0 11px;border-radius:15px;background:#fff;border:1px solid var(--hair);font-size:12px;color:#525b68}
-.closet-stage .wearing-chips>span{font-size:12px;color:#7e8999;line-height:30px}
-.closet-tabs{position:sticky;top:calc(56px + env(safe-area-inset-top));z-index:30;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:14px -16px 0;padding:8px 16px;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+/* The closet on one phone screen: the friend stays small on top, the tabs under it, and only the shelf moves, sideways. */
+.closet-fit .workspace{display:flex;flex-direction:column;height:var(--app-h,100dvh)}
+.closet-fit .workspace>main{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;padding-bottom:calc(var(--tab-h) + 18px + env(safe-area-inset-bottom))!important}
+.closet-fit .screen{flex:1;min-height:0;display:flex;flex-direction:column}
+.closet-app{flex:1;min-height:0;display:flex;flex-direction:column}
+.closet-stage{position:relative;flex-shrink:0;margin:4px 0 0;border-radius:24px;overflow:hidden;background:radial-gradient(ellipse at 50% 100%,var(--sky-2) 0,var(--sky) 34%,transparent 60%),linear-gradient(180deg,#f5f4f1,#eae9e5);box-shadow:inset 0 0 0 1px var(--sky-2);padding:10px 10px 8px}
+.closet-stage:before{content:'';position:absolute;left:50%;bottom:62px;width:150px;height:30px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse at 50% 40%,#f5f4f1,var(--sky));box-shadow:0 5px 0 var(--sky-2)}
+.closet-stage-top{position:absolute;z-index:2;left:8px;right:10px;top:8px;display:flex;align-items:center;gap:4px;pointer-events:none}
+.closet-stage-top>div{flex:1;min-width:0}
+.closet-home{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;color:#525b68}
+.closet-stage-top>*{pointer-events:auto}
+.closet-stage-top strong{display:block;font-size:16px;letter-spacing:-.5px;color:#303a47;line-height:1.3}
+.closet-stage-top div>span{display:block;font-size:11px;color:#717e90}
+.closet-stage-top div>span.preview-tag{display:inline-flex;white-space:nowrap;align-items:center;gap:3px;margin-top:2px;padding:2px 8px;border-radius:10px;background:var(--accent);color:#fff;font-weight:650}
+.closet-stage:has(.preview-tag){box-shadow:inset 0 0 0 2px var(--accent)}
+.closet-stage .leaf-wallet{display:flex;align-items:center;gap:4px;min-width:0;height:32px;padding:0 11px;border-radius:16px;background:#fff;border:1px solid var(--hair);font-size:12px;color:#657080}
+.closet-stage .leaf-wallet svg{color:var(--accent)}
+.closet-stage .leaf-wallet strong{font-size:15px!important;display:inline;color:var(--accent)}
+.closet-stage-frog{position:relative;height:150px;margin:0 -10px}
+.closet-stage .wearing-chips{position:relative;z-index:2;display:flex;align-items:center;justify-content:safe center;gap:6px;height:48px;overflow-x:auto;scrollbar-width:none}
+.closet-stage .wearing-chips::-webkit-scrollbar{display:none}
+.closet-stage .wearing-chips button{display:flex;align-items:center;gap:4px;flex-shrink:0;height:30px;padding:0 9px 0 11px;border-radius:15px;background:#fff;border:1px solid var(--hair);font-size:12px;color:#525b68}
+.closet-stage .wearing-chips button.kept{border-style:dashed}
+.closet-stage .wearing-chips button small{font-size:10px;color:var(--accent);font-weight:650}
+.closet-stage .wearing-chips>span{font-size:12px;color:#7e8999}
+.closet-tabs{flex-shrink:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:8px -16px 0;padding:0 16px}
 .closet-tabs::-webkit-scrollbar{display:none}
 .closet-tabs button{display:flex;align-items:center;gap:5px;flex-shrink:0;height:36px;padding:0 13px;border-radius:18px;background:#fff;border:1px solid var(--hair);font-size:13px;font-weight:600;color:#657080;transition:background .2s,color .2s}
 .closet-tabs button.selected{background:var(--btn);border-color:var(--accent);color:var(--accent)}
-.closet-hint{font-size:12px;line-height:1.7;color:#727f91;margin:8px 2px 12px}
-.look-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.look-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 6px 10px;border-radius:20px;background:#fff;border:1.5px solid #eae9e5;transition:transform .15s,border-color .2s}
-.look-card:active{transform:scale(.96)}
-.look-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
-.look-card img{width:100%;aspect-ratio:1;object-fit:contain;border-radius:14px}
-.look-card strong{font-size:12.5px;font-weight:700;letter-spacing:-.4px;margin-top:2px;color:#35404f;line-height:1.35}
-.look-card small{font-size:10px;color:#8792a1;line-height:1.4;margin-top:2px;min-height:28px}
-.look-cost{display:inline-flex;align-items:center;gap:3px;margin-top:6px;padding:3px 8px;border-radius:10px;background:#eae9e5;color:var(--accent);font-size:11px;font-weight:650}
+.closet-shelf{flex:1;min-height:0;margin:0 -16px;container:shelf/size}
+.look-grid,.wardrobe-grid{height:100%;display:grid!important;grid-auto-flow:column;grid-template-columns:none!important;grid-template-rows:repeat(2,minmax(0,1fr));grid-auto-columns:29%;gap:8px!important;margin:0;padding:8px 16px 4px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scroll-padding-left:16px;scrollbar-width:none;overscroll-behavior-x:contain}
+.look-grid::-webkit-scrollbar,.wardrobe-grid::-webkit-scrollbar{display:none}
+@container shelf (max-height:260px){.look-grid,.wardrobe-grid{grid-template-rows:minmax(0,1fr);grid-auto-columns:31%}}
+.look-card,.wardrobe-item{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:0;min-width:0;padding:6px 6px 8px!important;border-radius:18px!important;background:#fff!important;border:1.5px solid #eae9e5!important;scroll-snap-align:start;transition:transform .15s,border-color .2s}
+.look-card:active,.wardrobe-item:active{transform:scale(.96)}
+.look-card.selected,.wardrobe-item.selected{border-color:var(--accent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
+.look-card img,.wardrobe-item .frog-still{flex:1 1 0;min-height:0;width:auto;max-width:100%;aspect-ratio:1;object-fit:contain;border-radius:14px}
+.wardrobe-item .frog-still{background:radial-gradient(ellipse at 50% 70%,#eae9e5,transparent 70%)}
+.look-card strong,.wardrobe-item strong{max-width:100%;font-size:12.5px!important;font-weight:700!important;letter-spacing:-.4px;margin-top:2px;color:#35404f;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.look-cost{display:inline-flex;align-items:center;gap:3px;margin-top:3px;padding:2px 8px;border-radius:10px;background:#eae9e5;color:var(--accent);font-size:11px;font-weight:650}
 .look-cost.on{background:#374252;color:#fff}
-.wardrobe-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important;margin-top:12px}
-.wardrobe-item{position:relative;display:flex;flex-direction:column;align-items:center;padding:8px 6px 11px!important;border-radius:20px!important;background:#fff!important;border:1.5px solid #eae9e5!important;transition:transform .15s}
-.wardrobe-item:active{transform:scale(.96)}
-.wardrobe-item.selected{border-color:var(--accent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
-.wardrobe-item .frog-still{border-radius:14px;background:radial-gradient(ellipse at 50% 70%,#eae9e5,transparent 70%)}
-.wardrobe-item strong{font-size:12.5px!important;font-weight:700!important;color:#35404f;margin-top:2px;letter-spacing:-.4px}
-.item-badge{position:absolute;left:8px;top:8px;z-index:1;display:flex;align-items:center;gap:2px;font-size:9.5px;padding:2px 6px;border-radius:8px;background:#eae9e5;color:#7f8a9a;font-weight:600}
+.item-badge{position:absolute;left:7px;top:7px;z-index:1;display:flex;align-items:center;gap:2px;font-size:9.5px;padding:2px 6px;border-radius:8px;background:#eae9e5;color:#7f8a9a;font-weight:600}
 .item-badge.has{background:var(--sky);color:var(--accent)}.item-badge.on{background:#374252;color:#fff}
-.item-price{display:flex!important;align-items:center;gap:3px;font-size:11.5px!important;margin-top:4px!important;color:var(--accent)!important;font-weight:650}
-.closet-color{margin-top:12px;padding:18px 16px;border-radius:22px;background:#fff;border:1px solid #eae9e5}
+.item-price{display:flex!important;align-items:center;gap:3px;font-size:11.5px!important;margin-top:2px!important;color:var(--accent)!important;font-weight:650}
+.closet-color{height:100%;overflow-y:auto;padding:10px 16px 4px}
 .closet-color .character-editor{margin-top:0}
-.closet-action{position:fixed;z-index:45;left:max(10px,calc(50% - var(--app-w)/2 + 10px));right:max(10px,calc(50% - var(--app-w)/2 + 10px));bottom:calc(var(--tab-h) + 16px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:8px;padding:8px 6px 8px 14px;border-radius:20px;background:#fff;box-shadow:0 12px 32px #2b34412e,0 0 0 1px #dddcd6;animation:sheet-up .32s cubic-bezier(.2,.9,.25,1)}
+/* what is picked takes the place of the worn chips, so the shelf never moves */
+.closet-action{position:relative;z-index:2;display:flex;align-items:center;gap:8px;height:48px;padding:0 0 0 10px;border-radius:16px;background:#fff;border:1px solid var(--hair)}
 .closet-action-text{flex:1;min-width:0}
-.closet-action h3{font-size:14.5px;letter-spacing:-.3px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.closet-action p{font-size:11.5px;color:#727f91;line-height:1.4;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closet-action h3{font-size:13.5px;letter-spacing:-.3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.closet-action p{font-size:11px;color:#727f91;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .closet-action p.short{color:#9a7a3c}
-.closet-action .primary{flex-shrink:0;min-height:44px;padding:0 14px;font-size:13.5px;gap:5px}
+.closet-action .primary{flex-shrink:0;min-height:38px;padding:0 12px;font-size:13px;gap:4px;border-radius:13px}
 .closet-action .primary:disabled{opacity:1;background:var(--ivory)!important;color:#7d7c76!important;border-color:#dddcd6!important}
-.closet-action-close{flex-shrink:0;width:36px;height:44px;display:grid;place-items:center;border-radius:12px;color:#7e8999}
-.closet-app .item-tag{font-size:11px;color:var(--accent);font-weight:650}
-.closet-app .earning-guide{margin-top:20px}
-.closet-app .earning-guide summary,.closet-app .earning-guide p,.closet-app .earning-guide small{font-size:12px}
-.closet-app .wardrobe-earn{border-radius:18px}
+.closet-action-close{flex-shrink:0;width:32px;height:44px;display:grid;place-items:center;border-radius:12px;color:#7e8999}
+.leaf-guide h2{display:flex;align-items:center;gap:7px;font-size:19px;letter-spacing:-.5px;margin-bottom:12px}.leaf-guide h2 svg{color:var(--accent)}
+.leaf-guide>p{display:flex;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid #eae9e5;font-size:13px}.leaf-guide>p strong{font-weight:600;color:#35404f}.leaf-guide>p span{flex-shrink:0;color:var(--accent);font-weight:650}
+.leaf-guide>p.leaf-guide-now{display:block;border:0;padding:0 2px 6px;font-size:12px;color:#727f91}
+.leaf-guide>small{display:block;margin:12px 2px 16px;font-size:12px;line-height:1.7;color:#727f91}
+.leaf-guide .wardrobe-earn{border-radius:18px}
 .closet-create h1{font-size:26px}
 /* character editor (onboarding + closet) */
 .character-creation-preview{width:100%!important;height:270px!important;margin:0 auto 10px!important;border-radius:26px;background:radial-gradient(ellipse at 50% 88%,var(--sky-2) 0,var(--sky) 30%,transparent 58%),linear-gradient(180deg,#f5f4f1,#eae9e5)!important;overflow:hidden}
@@ -202,7 +212,6 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .onboarding-loading .frog-mark{animation:float-frog 1.4s ease-in-out infinite}
 /* demo device: keep the bar inside the phone frame */
 .demo-app .mobile-nav.tab-bar{position:sticky;left:auto;right:auto;bottom:10px;margin:-84px 10px 10px}
-.demo-app .closet-action{position:sticky;left:auto;right:auto;margin:0 0 10px}
 .demo-app .topbar.app-bar{padding-top:0}
 @media(prefers-reduced-motion:reduce){.screen,.splash-logo,.splash>span,.cloud-a,.cloud-b,.onboarding-world>img.onboarding-world-frog,dialog[open],.closet-action,.toast{animation:none!important}.splash{animation-delay:.3s}}
 /* practice: voice and breathing */

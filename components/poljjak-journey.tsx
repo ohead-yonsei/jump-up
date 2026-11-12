@@ -8,7 +8,7 @@ import {answerField,answerEmojis,cleanAnswer,ANSWER_MAX} from '@/lib/answers';
 import type {Entry} from '@/lib/records';
 import {FrogMark} from './frog-mark';
 import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
-import {activityDays,returnGift,RETURN_GIFT,growthOf,growthStages,grewFrom,type CharacterGame,type Growth} from '@/lib/character';
+import {activityDays,returnGift,RETURN_GIFT,growthOf,growthStages,grewFrom,canWear,slots,type CharacterGame,type Growth} from '@/lib/character';
 import {missionCheer,restLines,moodFor,greeting,isNight,nightMissions} from '@/lib/companion';
 import {PondInvite} from './cohort-pond';
 import {seasons,seasonOf} from '@/lib/season';
@@ -46,7 +46,9 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  const growth=growthOf(game).id;const [shownGrowth,setShownGrowth]=useState<Growth>(()=>seenGrowth&&demoScene===undefined&&grewFrom(seenGrowth,growth)?seenGrowth:growth);const shown=growthStages.find(s=>s.id===shownGrowth)!;
  // a friend that grew turns into its new look a moment later, after the cheer for what you just did
  useEffect(()=>{if(demoScene!==undefined||!grewFrom(shownGrowth,growth)){setShownGrowth(growth);seenGrowth=growth;return;}
-  const t=setTimeout(()=>{setShownGrowth(growth);seenGrowth=growth;haptic([10,40,10,40,10]);frog.current?.react('spin',growthStages.find(s=>s.id===growth)!.hello);},2400);return ()=>clearTimeout(t);},[growth]);// eslint-disable-line react-hooks/exhaustive-deps
+  // what was bought early and kept is worn from the moment the friend can wear it; it says so once
+  const worn=slots.some(slot=>game.equipped[slot]&&!canWear(shownGrowth,slot)&&canWear(growth,slot));let after:ReturnType<typeof setTimeout>|undefined;
+  const t=setTimeout(()=>{setShownGrowth(growth);seenGrowth=growth;haptic([10,40,10,40,10]);frog.current?.react('spin',growthStages.find(s=>s.id===growth)!.hello);if(worn)after=setTimeout(()=>frog.current?.react('cheer','보관하던 옷, 드디어 입었어!'),3200);},2400);return ()=>{clearTimeout(t);if(after)clearTimeout(after);};},[growth]);// eslint-disable-line react-hooks/exhaustive-deps
  const night=isNight();const season=seasonOf();const hello=greeting();const mood=moodFor(energy,game.equipped,night);const back=returnGift(game);const wave=isWave(profile);
  const color=game.character?.color;
  useEffect(()=>{if(!game.character)return;const t=setTimeout(()=>back?frog.current?.react('hug','보고 싶었어! 와줘서 고마워'):frog.current?.react('jump',night?'늦은 밤에도 와줬구나':profile?'오늘도 와줘서 고마워':'만나서 반가워!'),1500);return ()=>clearTimeout(t);},[]);// eslint-disable-line react-hooks/exhaustive-deps
