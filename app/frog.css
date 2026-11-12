@@ -23,3 +23,38 @@
 @keyframes still-in{from{opacity:0;transform:scale(.96)}}
 .frog-still>.frog-avatar{width:100%;height:100%}
 @media(prefers-reduced-motion:reduce){.burst i,.frog3d-bubble{animation-duration:.01s}.frog3d.is-loading:after{animation:none}}
+/* 0.33.0 · the grow-up moment, full screen */
+.evolve{position:fixed;inset:0;z-index:400;display:grid;grid-template-rows:1fr auto;justify-items:center;overflow:hidden;padding:max(24px,env(safe-area-inset-top)) 20px max(28px,env(safe-area-inset-bottom));
+ background:radial-gradient(circle at 50% 42%,#2f4a6b 0,#16233a 55%,#0b1222 100%);color:#fff;animation:evolve-in .4s ease both;-webkit-tap-highlight-color:transparent}
+.evolve-rays{position:absolute;left:50%;top:42%;width:170vmax;height:170vmax;margin:-85vmax 0 0 -85vmax;opacity:0;transition:opacity .8s;
+ background:repeating-conic-gradient(from 0deg,#ffffff1f 0 7deg,transparent 7deg 20deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 60%);mask:radial-gradient(circle,#000 0,transparent 60%);animation:evolve-spin 14s linear infinite}
+.evolve-change .evolve-rays{opacity:.7}.evolve-reveal .evolve-rays{opacity:1;background:repeating-conic-gradient(from 0deg,#ffe9a61f 0 7deg,transparent 7deg 20deg)}
+.evolve-sparks{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s}.evolve-change .evolve-sparks,.evolve-reveal .evolve-sparks{opacity:1}
+.evolve-sparks i{position:absolute;left:var(--x);bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;background:#fff;box-shadow:0 0 10px 2px #bfe8ff;animation:evolve-up 2.6s linear var(--d) infinite}
+.evolve-reveal .evolve-sparks i{background:#fff4c8;box-shadow:0 0 10px 2px #ffd56b}
+.evolve-frog{position:relative;align-self:center;width:min(78vw,340px);aspect-ratio:1;margin-top:4vh}
+.evolve-frog img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .08s,filter .5s}
+.evolve-frog img.on{opacity:1}
+.evolve-intro .evolve-frog img,.evolve-change .evolve-frog img,.evolve-flash .evolve-frog img{filter:brightness(0) invert(1) drop-shadow(0 0 14px #bfe8ff) drop-shadow(0 0 34px #8fd3ff)}
+.evolve-intro .evolve-frog img.old{filter:none;animation:evolve-shake .5s ease-in-out .5s 2}
+.evolve-intro .evolve-frog{animation:evolve-glow 1.5s ease-in both}
+.evolve-reveal .evolve-frog img.new{filter:drop-shadow(0 0 24px #ffe7a0aa);animation:evolve-pop .7s cubic-bezier(.3,1.6,.5,1) both}
+.evolve-reveal .evolve-frog{animation:evolve-bob 2.6s ease-in-out .8s infinite}
+.evolve-text{position:relative;display:grid;justify-items:center;gap:8px;min-height:150px;text-align:center;word-break:keep-all}
+.evolve-text h2{margin:0;font-size:21px;line-height:1.45;letter-spacing:-.4px;animation:evolve-rise .5s ease both}
+.evolve-text span{font-size:13px;font-weight:650;letter-spacing:.5px;color:#ffd56b;animation:evolve-rise .5s ease both}
+.evolve-text p{margin:0;font-size:14px;color:#ffffffb3;animation:evolve-rise .5s ease .15s both}
+.evolve-ok{margin-top:14px;min-width:180px;height:50px;border:0;border-radius:25px;background:#ffd56b;color:#3a2c08;font-size:16px;font-weight:700;box-shadow:0 4px 18px #ffd56b55;animation:evolve-rise .5s ease .35s both}
+.evolve-white{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.evolve-flash .evolve-white{animation:evolve-flash .9s ease-out both}
+@keyframes evolve-in{from{opacity:0}}
+.evolve-ok:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@keyframes evolve-spin{to{transform:rotate(360deg)}}
+@keyframes evolve-up{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-105vh);opacity:0}}
+@keyframes evolve-shake{0%,100%{transform:none}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+@keyframes evolve-glow{0%{filter:none}100%{filter:brightness(1.15)}}
+@keyframes evolve-pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+@keyframes evolve-bob{0%,100%{transform:none}50%{transform:translateY(-8px)}}
+@keyframes evolve-rise{from{transform:translateY(10px);opacity:0}}
+@keyframes evolve-flash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.evolve,.evolve *{animation:none!important;transition:none!important}}

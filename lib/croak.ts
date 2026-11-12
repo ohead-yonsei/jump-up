@@ -29,3 +29,13 @@ export function croak(ch:string,at=0){
  o.connect(lp).connect(g).connect(c.destination);
  o.start(t);trem.start(t);o.stop(t+.085);trem.stop(t+.085);
 }
+// The grow-up moment: a shimmer that climbs while the two shapes take turns ('rise'), then a short bright chord ('ding').
+export function evolveSound(kind:'rise'|'ding'){
+ if(!soundOn())return;const c=audio();if(!c)return;const t=c.currentTime;
+ const note=(f:number,at:number,len:number,vol:number,type:OscillatorType='triangle',to?:number)=>{const o=c.createOscillator(),g=c.createGain();o.type=type;
+  o.frequency.setValueAtTime(f,t+at);if(to)o.frequency.exponentialRampToValueAtTime(to,t+at+len);
+  g.gain.setValueAtTime(0,t+at);g.gain.linearRampToValueAtTime(vol,t+at+.02);g.gain.exponentialRampToValueAtTime(.0008,t+at+len);
+  o.connect(g).connect(c.destination);o.start(t+at);o.stop(t+at+len+.02);};
+ if(kind==='rise'){for(let i=0;i<14;i++)note(330*Math.pow(2,i/9),i*.32*Math.pow(.93,i),.22,.035,'sine');}
+ else{[523,659,784,1047].forEach((f,i)=>note(f,i*.09,.5+i*.08,.05));note(1568,.42,.7,.025,'sine');}
+}

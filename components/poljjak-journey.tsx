@@ -11,6 +11,7 @@ import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
 import {activityDays,returnGift,RETURN_GIFT,growthOf,growthStages,grewFrom,canWear,slots,type CharacterGame,type Growth} from '@/lib/character';
 import {missionCheer,restLines,moodFor,greeting,isNight,nightMissions} from '@/lib/companion';
 import {PondInvite} from './cohort-pond';
+import {EvolveScene} from './evolve-scene';
 import {seasons,seasonOf} from '@/lib/season';
 import {missionPlaces,placeKind,type PlaceKind} from '@/lib/places';
 const goalIcons={rhythm:Sun,outside:Footprints,connect:MessageCircle};
@@ -47,8 +48,13 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  // a friend that grew turns into its new look a moment later, after the cheer for what you just did
  useEffect(()=>{if(demoScene!==undefined||!grewFrom(shownGrowth,growth)){setShownGrowth(growth);seenGrowth=growth;return;}
   // what was bought early and kept is worn from the moment the friend can wear it; it says so once
-  const worn=slots.some(slot=>game.equipped[slot]&&!canWear(shownGrowth,slot)&&canWear(growth,slot));let after:ReturnType<typeof setTimeout>|undefined;
-  const t=setTimeout(()=>{setShownGrowth(growth);seenGrowth=growth;haptic([10,40,10,40,10]);frog.current?.react('spin',growthStages.find(s=>s.id===growth)!.hello);if(worn)after=setTimeout(()=>frog.current?.react('cheer','보관하던 옷, 드디어 입었어!'),3200);},2400);return ()=>{clearTimeout(t);if(after)clearTimeout(after);};},[growth]);// eslint-disable-line react-hooks/exhaustive-deps
+  const worn=slots.some(slot=>game.equipped[slot]&&!canWear(shownGrowth,slot)&&canWear(growth,slot));
+  // the grow-up moment takes the whole screen; the friend at home shows its new look once it closes
+  const t=setTimeout(()=>setEvolving({from:shownGrowth,to:growth,worn}),2400);return ()=>clearTimeout(t);},[growth]);
+ const [evolving,setEvolving]=useState<{from:Growth;to:Growth;worn:boolean}|null>(null);const wornCheer=useRef<ReturnType<typeof setTimeout>>(undefined);
+ useEffect(()=>()=>clearTimeout(wornCheer.current),[]);
+ const evolved=()=>{if(!evolving)return;const {to,worn}=evolving;setEvolving(null);setShownGrowth(to);seenGrowth=to;
+  setTimeout(()=>frog.current?.react('spin',growthStages.find(s=>s.id===to)!.hello),300);if(worn)wornCheer.current=setTimeout(()=>frog.current?.react('cheer','보관하던 옷, 드디어 입었어!'),3500);};// eslint-disable-line react-hooks/exhaustive-deps
  const night=isNight();const season=seasonOf();const hello=greeting();const mood=moodFor(energy,game.equipped,night);const back=returnGift(game);const wave=isWave(profile);
  const color=game.character?.color;
  useEffect(()=>{if(!game.character)return;const t=setTimeout(()=>back?frog.current?.react('hug','보고 싶었어! 와줘서 고마워'):frog.current?.react('jump',night?'늦은 밤에도 와줬구나':profile?'오늘도 와줘서 고마워':'만나서 반가워!'),1500);return ()=>clearTimeout(t);},[]);// eslint-disable-line react-hooks/exhaustive-deps
@@ -66,6 +72,7 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  const closeSheet=()=>{setSheet(null);setConfirmJump(false);};
  const careChips=(night||wave)&&<div className="pond-stage-care">{night&&<button className="care-chip night" onClick={()=>setSheet('night')}><Moon size={14}/>잠들기 전 1분{nightMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}{wave&&<button className="care-chip wave" onClick={()=>setSheet('wave')}><Waves size={14}/>나만의 썰물{waveMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}</div>;
  return <div className="poljjak-home">
+  {evolving&&game.character&&<EvolveScene character={game.character} equipped={game.equipped} from={evolving.from} to={evolving.to} onDone={evolved}/>}
  {game.character?<section ref={stageRef} className={'pond-stage has-scene'+(night?' is-night':'')+(held?' is-held':'')} style={{'--scene':`url(/scenes/pond-${night?'night':'day'}.webp)`,height:held??undefined} as React.CSSProperties} aria-label="나의 캐릭터와 연못"><div className="pond-stage-sky" aria-hidden="true"><span className="sun"/>{night&&<span className="stars"/>}<span className="cloud cloud-a"/><span className="cloud cloud-b"/><span className="hill hill-a"/><span className="hill hill-b"/><span className="water"/><span className="pad"/></div>
  <div className="pond-stage-frog"><Frog3D ref={frog} character={game.character} equipped={mood.equipped} growth={shownGrowth} framing="stage"/></div>
  <div className="pond-stage-copy"><span>{new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})}</span><h1>{hello.title}<br/><em className={game.character.name.length>10?'name-xs':game.character.name.length>7?'name-s':undefined}>{game.character.name}</em></h1><p className="pond-stage-hint"><Hand size={13}/>{night?hello.note:'톡 폴짝 · 머리 쓰담 · 꾹 포옥'}</p></div>

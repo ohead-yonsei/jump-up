@@ -1,12 +1,13 @@
 'use client';
 import {useState} from 'react';
+import {EvolveScene} from './evolve-scene';
 import {ArrowLeft} from 'lucide-react';
-import {frogColors,growthStages,type CharacterGame,type FrogColor} from '@/lib/character';
+import {frogColors,growthStages,type CharacterGame,type FrogColor,type Growth} from '@/lib/character';
 import {Frog3D} from './frog-3d';
 const outfits:{label:string;equipped:CharacterGame['equipped']}[]=[{label:'새싹',equipped:{head:'sprout'}},{label:'그대로',equipped:{}},{label:'왕관 · 안경',equipped:{head:'crown',eyes:'round'}},{label:'후드티 · 머그',equipped:{outfit:'hoodie',hand:'mug'}}];
 /** Every growth stage side by side, to compare the shapes in one palette. */
 export function GrowthPreview(){
- const [color,setColor]=useState<FrogColor>('leaf');const [outfit,setOutfit]=useState(0);
+ const [color,setColor]=useState<FrogColor>('leaf');const [outfit,setOutfit]=useState(0);const [play,setPlay]=useState<Growth|null>(null);
  return <main className="growth-page">
   <a className="back-button" href="/"><ArrowLeft size={16}/>폴짝으로</a>
   <span className="eyebrow">GROWING UP</span><h1>알에서 다 자란 개구리까지</h1>
@@ -17,7 +18,8 @@ export function GrowthPreview(){
   </div>
   <ol className="growth-row">{growthStages.map((s,i)=><li key={s.id}>
    <div className="growth-frog"><Frog3D character={{name:s.name,color}} equipped={outfits[outfit].equipped} growth={s.id}/></div>
-   <strong><span>{i+1}</span>{s.name}</strong><p>{s.note}</p>
+   <strong><span>{i+1}</span>{s.name}</strong><p>{s.note}</p>{i>0&&<button className="chip evolve-try" onClick={()=>setPlay(s.id)}>자라는 순간 보기</button>}
   </li>)}</ol>
+  {play&&<EvolveScene character={{name:'폴짝이',color}} equipped={outfits[outfit].equipped} from={growthStages[growthStages.findIndex(s=>s.id===play)-1].id} to={play} onDone={()=>setPlay(null)}/>}
  </main>
 }
