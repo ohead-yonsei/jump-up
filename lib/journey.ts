@@ -1,9 +1,10 @@
 import type {Energy, Mission} from './content';
+import type {ScaleResult} from './loneliness';
 export type Goal = 'rhythm' | 'outside' | 'connect';
 export type SpringStage = 0 | 1 | 2 | 3;
 // 4 = 일상은 잘 지내지만 가끔 다시 혼자 있고 싶은, 고립과 일상을 오가는 리듬.
 export type OutsideLevel = SpringStage | 4;
-export type JourneyProfile = {version:1; outside:OutsideLevel; connection:SpringStage; goal:Goal; stage:SpringStage; completed:string[]};
+export type JourneyProfile = {version:1; outside:OutsideLevel; connection:SpringStage; goal:Goal; stage:SpringStage; completed:string[]; scale?:ScaleResult};
 export type SpringMission = Mission & {goal:Goal; springStage:SpringStage};
 export const goals = [
  {id:'rhythm' as Goal,title:'내 일상 돌보기',description:'작은 생활 리듬을 만들고 싶어요.',icon:'sun'},
@@ -31,7 +32,10 @@ export function validProfile(value:unknown):JourneyProfile|null {
  if(!value||typeof value!=='object')return null;
  const p=value as JourneyProfile;const level=(v:unknown)=>Number.isInteger(v)&&Number(v)>=0&&Number(v)<=3;
  if(p.version!==1||!(level(p.outside)||p.outside===WAVE)||!level(p.connection)||!level(p.stage)||!goals.some(g=>g.id===p.goal)||!Array.isArray(p.completed))return null;
- return {...p,completed:p.completed.filter(v=>typeof v==='string'&&springMissions.some(m=>m.id===v)).slice(-100)};
+ const {scale:kept,...rest}=p;const int=(v:unknown,min:number,max:number)=>Number.isInteger(v)&&Number(v)>=min&&Number(v)<=max;
+ // Shape only (tests build this file alone); lib/loneliness.ts recomputes the total and level when it reads the answers.
+ const scale=kept&&typeof kept==='object'&&Array.isArray(kept.answers)&&kept.answers.length===6&&kept.answers.every(v=>int(v,0,3))&&int(kept.total,0,18)&&int(kept.level,1,5)&&typeof kept.at==='string'?kept:null;
+ return {...rest,completed:p.completed.filter(v=>typeof v==='string'&&springMissions.some(m=>m.id===v)).slice(-100),...(scale?{scale}:{})};
 }
 type Seed=[string,string,string,string,string[]];
 const sets:Record<Goal,Seed[][]>={
