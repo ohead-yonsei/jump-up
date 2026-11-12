@@ -162,3 +162,16 @@
 .practice-row-text small{font-size:13.5px;line-height:1.4;color:#6d798a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .practice-row-arrow{flex:none;color:#a3abb6}
 .practice-pick+.small-note{margin:14px 2px 0}
+/* 0.34.0 · the cheer after a mission: about five seconds, then it closes on its own */
+.complete-meaning{margin:10px 0 0!important;font-size:12.5px!important;font-weight:650;color:var(--accent)!important}
+.complete-timer{display:block;width:120px;height:4px;margin:16px auto 2px;border-radius:2px;background:#e3eef2;overflow:hidden}
+.complete-timer i{display:block;height:100%;border-radius:2px;background:var(--accent);transform-origin:left;animation:complete-timer 5.2s linear both}
+.spring-complete.auto .frog-says{font-size:15px!important;padding:12px 16px}
+@keyframes complete-timer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.complete-timer i{animation:none}}
+.evolve-go{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;height:52px;margin:16px auto 0;padding:0 24px;border-radius:26px;background:linear-gradient(135deg,#2f4a6b,#16233a);color:#ffd56b;font-size:16px;font-weight:750;box-shadow:0 6px 18px #16233a40;animation:evolve-go 1.8s ease-in-out infinite}
+.evolve-go:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.complete-frog.ready-evolve{animation:ready-evolve 1.2s ease-in-out infinite}
+@keyframes evolve-go{0%,100%{box-shadow:0 6px 18px #16233a40}50%{box-shadow:0 6px 26px #ffd56b80}}
+@keyframes ready-evolve{0%,100%{transform:none}20%{transform:rotate(-5deg)}40%{transform:rotate(5deg)}60%{transform:none}}
+@media (prefers-reduced-motion:reduce){.evolve-go,.complete-frog.ready-evolve{animation:none}}
