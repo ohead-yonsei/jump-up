@@ -88,7 +88,8 @@ export function cleanMove(value: unknown): Move | null {
 }
 
 /** 연못지기: the one frog that lives in the village. It is drawn with its own badge and never passes for a member. */
-export const KEEPER = { id: 'keeper', name: '연못지기', spot: { x: 150, y: 760 } as Point, card: { name: '연못지기', color: 'leaf', growth: 'frog', equipped: { head: 'bucket' } as Record<string, string> } };
+/** The keeper wears things nobody can buy (`keeper-…`), so it never looks like one of the members. */
+export const KEEPER = { id: 'keeper', name: '연못지기', spot: { x: 150, y: 760 } as Point, card: { name: '연못지기', color: 'leaf', growth: 'frog', equipped: { head: 'keeper-leaf', hand: 'keeper-lantern' } as Record<string, string> } };
 export const KEEPER_LINES = [
   '어서 와요. 오늘은 물이 잔잔해요.',
   '구경만 하다 가도 좋아요.',

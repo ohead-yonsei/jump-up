@@ -169,6 +169,22 @@ const builders:Record<string,(pal:Palette)=>Parts>={
   const lid=group(part(new RoundedBoxGeometry(.7,.42,.03,3,.014),metal,[0,.21,0]),part(ball(),cream,[0,.22,.018],[.09,.058,.01]));for(const s of [-1,1])lid.add(part(ball(.032,12,8),cream,[s*.055,.275,.018],[1,1,.3]));lid.position.set(0,.345,1);lid.rotation.x=.2;
   const table=group(part(new RoundedBoxGeometry(.98,.05,.56,3,.02),wood,[0,.29,.82]));for(const x of [-.4,.4])for(const z of [.6,1.04])table.add(part(new THREE.CylinderGeometry(.03,.035,.27,10),wood,[x,.135,z]));
   return {body:group(table,part(new RoundedBoxGeometry(.7,.03,.46,3,.012),metal,[0,.33,.8]),part(new THREE.BoxGeometry(.58,.008,.22),clay('#8d9097'),[0,.348,.74]),lid),pose:{l:[-.16,.39,.7],r:[.16,.39,.7]}};},
+ /* Only the pond keeper wears these: they are not in `wardrobeItems`, so nobody can buy them, and `cleanFrogCard` drops `keeper-` ids from members' cards. */
+ 'keeper-leaf':()=>{const gap=.16;const prof=[[0,.9],[.3,.84],[.7,.7],[1.05,.54],[1.26,.47],[1.36,.5],[1.4,.56]].map(([x,y])=>new THREE.Vector2(x,y));
+  const geo=new THREE.LatheGeometry(prof,72,Math.PI+gap,Math.PI*2-gap*2);const pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i),r=Math.hypot(x,z),a=Math.atan2(z,x);pos.setY(i,pos.getY(i)+.035*Math.sin(a*9)*ss(.5,1.3,r));}geo.computeVertexNormals();
+  const leaf=clay('#58a657',{side:THREE.DoubleSide,roughness:.5,clearcoat:.3}),vein=clay('#8fcf7a');const pad=group(part(geo,leaf));
+  for(let i=0;i<9;i++){const a=Math.PI+gap+.2+(Math.PI*2-gap*2-.4)*i/8;pad.add(taperTube(prof.slice(0,5).map(v=>[Math.sin(a)*v.x,v.y+.012,Math.cos(a)*v.x] as V3),.022,.4,vein));}pad.rotation.y=Math.PI*.82;const g=group(pad);
+  const petal=clay('#f6b3c4',{roughness:.45}),tip=clay('#ee8fa9',{roughness:.45}),bud=new THREE.Group();
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;bud.add(part(ball(),i%2?petal:tip,[Math.sin(a)*.07,.1,Math.cos(a)*.07],[.075,.15,.05],[Math.cos(a)*.42,a,-Math.sin(a)*.42]));}
+  bud.add(part(ball(),petal,[0,.13,0],[.075,.17,.075]),part(ball(.05,12,10),clay('#f2c04c'),[0,.03,0],[1,.6,1]));bud.position.set(.08,.87,.02);g.add(bud);
+  g.add(part(ball(.05,16,12),new THREE.MeshPhysicalMaterial({color:'#e9f7ff',roughness:.05,transmission:.6,transparent:true,opacity:.75,clearcoat:1}),[-.62,.74,.5],[1,.7,1]));
+  g.scale.set(1,1,.9);g.rotation.z=-.07;g.position.y=.05;return {head:g};},
+ 'keeper-lantern':()=>{const wood=clay('#8a6240',{roughness:.8}),dark=clay('#5d4129',{roughness:.7}),glow=new THREE.MeshStandardMaterial({color:'#ffe9b0',emissive:'#ffb648',emissiveIntensity:1.1,roughness:.4});
+  const g=group(taperTube([[0,0,0],[-.01,.45,0],[0,.9,0],[.03,1.2,0],[.12,1.32,0],[.23,1.31,0],[.28,1.23,0]],.034,.7,wood),part(ball(.045,12,10),wood,[0,.02,0]));
+  const lamp=group(part(new THREE.CylinderGeometry(.008,.008,.1,6),dark,[0,.2,0]),part(new THREE.ConeGeometry(.13,.09,6),dark,[0,.13,0]),part(new THREE.CylinderGeometry(.095,.08,.17,6),glow,[0,0,0]),part(new THREE.CylinderGeometry(.1,.1,.03,6),dark,[0,-.1,0]));
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2+Math.PI/6;lamp.add(part(new THREE.CylinderGeometry(.01,.01,.18,6),dark,[Math.sin(a)*.094,0,Math.cos(a)*.094]));}
+  lamp.position.set(.28,.99,0);lamp.rotation.z=-.05;g.add(lamp);g.position.set(.74,0,.44);g.rotation.z=-.05;return {body:g,pose:{l:REST.l,r:[.62,.62,.46]}};},
  teddy:()=>{const fur=fluffy('#c99b6c',{normalScale:new THREE.Vector2(.35,.35)}),pale=clay('#f1dfc2'),ink=glossy('#2b2420');const g=group(part(ball(.19,24,16),fur,[0,-.12,0]),part(ball(.15,24,16),fur,[0,.12,0]),part(ball(.065,16,12),pale,[0,.09,.12],[1,.85,.7]),part(ball(.022,10,8),ink,[0,.11,.17]));for(const s of [-1,1])g.add(part(ball(.055,14,10),fur,[s*.1,.24,-.01]),part(ball(.016,10,8),ink,[s*.055,.16,.13]),part(ball(.06,14,10),fur,[s*.13,-.25,.08]));g.position.set(0,.55,.66);return {body:g,pose:{l:[-.23,.5,.6],r:[.23,.5,.6]}};},
 };
 

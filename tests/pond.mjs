@@ -96,6 +96,7 @@ await test('a text pad is one clean line, and a frog card keeps only a short nam
  assert.equal(pond.cleanPadText('가'.repeat(pond.MAX_PAD_TEXT)).length,pond.MAX_PAD_TEXT);assert.equal(pond.cleanPadText('🌿'.repeat(pond.MAX_PAD_TEXT)),'🌿'.repeat(pond.MAX_PAD_TEXT),'emoji count as one letter each');
  for(const bad of ['', '   ', '\n\t', '가'.repeat(pond.MAX_PAD_TEXT+1), 'a'.repeat(pond.MAX_PAD_TEXT*4+1), null, 7, ['글']])assert.equal(pond.cleanPadText(bad),null);
  assert.deepEqual(pond.cleanFrogCard({name:'  폴짝이\n ',color:'mint',growth:'frog',equipped:{head:'straw-hat',hand:'<script>',tail:'x',eyes:7},extra:'x'}),{name:'폴짝이',color:'mint',growth:'frog',equipped:{head:'straw-hat'}});
+ assert.deepEqual(pond.cleanFrogCard({name:'a',color:'mint',growth:'frog',equipped:{head:'keeper-leaf',hand:'keeper-lantern',eyes:'round'}}).equipped,{eyes:'round'});
  assert.equal(pond.cleanFrogCard({name:'가'.repeat(30),color:'mint',growth:'egg'}).name,'가'.repeat(12));
  for(const bad of [null,'frog',{name:'',color:'mint',growth:'frog'},{name:'a',color:'MINT!',growth:'frog'},{name:'a',color:'mint'},{name:'a'.repeat(61),color:'mint',growth:'frog'},{name:7,color:'mint',growth:'frog'}])assert.equal(pond.cleanFrogCard(bad),null);
 });
