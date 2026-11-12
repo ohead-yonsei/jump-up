@@ -43,7 +43,8 @@ export function padLook(id: string) {
 }
 
 /** How a frog looks to the cohort: the name its owner gave it, its colour, how far it has grown and what it wears.
- * Ids are only checked for shape here; the screen draws the ones it knows and falls back for the rest. */
+ * Ids are only checked for shape here; the screen draws the ones it knows and falls back for the rest.
+ * `keeper-` ids belong to the pond keeper alone and are dropped. */
 export type FrogCard = { name: string; color: string; growth: string; equipped: Record<string, string> };
 const FROG_SLOTS = ['head', 'eyes', 'outfit', 'hand', 'face'];
 const shortId = (value: unknown): value is string => typeof value === 'string' && /^[a-z0-9-]{1,24}$/.test(value);
@@ -55,7 +56,7 @@ export function cleanFrogCard(value: unknown): FrogCard | null {
   if (!name) return null;
   const worn = v.equipped && typeof v.equipped === 'object' ? v.equipped as Record<string, unknown> : {};
   const equipped: Record<string, string> = {};
-  for (const slot of FROG_SLOTS) { const item = worn[slot]; if (shortId(item)) equipped[slot] = item; }
+  for (const slot of FROG_SLOTS) { const item = worn[slot]; if (shortId(item) && !item.startsWith('keeper-')) equipped[slot] = item; }
   return { name, color: v.color, growth: v.growth, equipped };
 }
 /** One member's place in the village. `card` is null when they look around without showing their frog. */
