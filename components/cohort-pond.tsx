@@ -54,6 +54,8 @@ export function frogCard(game:CharacterGame):FrogCard|null{
 function cardLook(card:FrogCard){
  const character:Character={name:card.name,color:frogColors.some(c=>c.id===card.color)?card.color as Character['color']:'leaf'};
  const equipped:CharacterGame['equipped']={};for(const w of wardrobeItems)if(card.equipped[w.slot]===w.id)equipped[w.slot]=w.id;
+ // The keeper's own things are not in the shop list, so they are let through for the keeper's card alone.
+ if(card===KEEPER.card)Object.assign(equipped,KEEPER.card.equipped);
  return {character,equipped,growth:isGrowth(card.growth)?card.growth:'frog' as const};
 }
 function VillageFrog({card,className}:{card:FrogCard;className?:string}){const look=cardLook(card);return <FrogStill character={look.character} equipped={look.equipped} growth={look.growth} className={className}/>;}
