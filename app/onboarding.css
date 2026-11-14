@@ -123,3 +123,43 @@
 .onboarding-remember.one small{margin:0}
 @keyframes leave-hop{0%,100%{transform:none}45%{transform:translateY(-22px)}}
 @media (prefers-reduced-motion:reduce){.greet.leaving .greet-frog{animation:none}}
+/* 0.35.0 · art behind the keeper's greeting, the talk and the walk to the pond (full bleed, behind everything) */
+.onboarding-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background-position:center;background-size:cover}
+.scene-greet>:not(.onboarding-bg),.scene-chat>:not(.onboarding-bg),.scene-leave>:not(.onboarding-bg){position:relative;z-index:1}
+.scene-greet .onboarding-world,.scene-chat .onboarding-world,.scene-leave .onboarding-world{display:none!important}
+/* the greeting: forest pond, white header, the keeper on a pad, a glassy talk box */
+.scene-greet .onboarding-bg{background-color:#bfe3e6;background-image:url(/art/onboarding-greet.webp)}
+.scene-greet .onboarding-brand img{filter:brightness(0) invert(1) drop-shadow(0 1px 5px rgba(0,50,60,.35))}
+.scene-greet .onboarding-sound,.scene-greet .onboarding-sound[aria-pressed=false]{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,50,60,.35))}
+.scene-greet .onboarding-skip{min-height:40px;padding:0 14px;border-radius:20px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.2);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.scene-greet .greet-stage{background:none;border-radius:0;overflow:visible}
+.scene-greet .greet-stage .hill,.scene-greet .greet-stage .water,.scene-greet .greet-stage .pad.a,.scene-greet .greet-stage .pad.b{display:none}
+.scene-greet .greet-stage .pad.seat{bottom:4%;width:70%;aspect-ratio:3.2;background:radial-gradient(ellipse at 50% 40%,#bfe39a,#9fd078 70%);box-shadow:inset 0 -6px 0 #86bd62,0 10px 22px rgba(20,90,100,.28)}
+.scene-greet .greet-stage .greet-frog{width:min(240px,64%);margin-bottom:9%}
+.scene-greet .greet-box{min-height:150px;margin-top:10px;padding:18px 22px 26px;border:0;border-radius:30px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 12px 32px rgba(20,80,90,.2)}
+.scene-greet .greet-box small{position:static;display:inline-flex;align-items:center;gap:5px;margin-bottom:12px;padding:5px 12px;border-radius:14px;background:#e3f2d5;color:#3c7529;font-size:12px}
+.scene-greet .greet-box p{font-size:16px;line-height:1.7;color:#3c4652;padding-right:44px}
+.scene-greet .greet-box em{right:18px;bottom:18px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#4b5a68;box-shadow:0 3px 10px rgba(20,60,70,.16)}
+.scene-greet .greet-dots{display:none}
+.scene-greet .onboarding-bottom-note{border-top:0;color:#fff;text-shadow:0 1px 4px rgba(0,50,60,.45)}
+/* the talk: soft water, white bubbles */
+.scene-chat .onboarding-bg{background-color:#cdeef3;background-image:url(/art/onboarding-chat.webp);background-position:center top}
+.scene-chat .chat-row.keeper .chat-bubble{background:rgba(255,255,255,.94);box-shadow:0 2px 12px rgba(40,120,140,.1)}
+.scene-chat .chat-keeper{background:#fff}
+.scene-chat .chat-chips>button:not(.selected):not(.near){border-color:rgba(255,255,255,.95);background:rgba(255,255,255,.9)}
+.scene-chat .chat-compose{border-color:rgba(255,255,255,.95);background:rgba(255,255,255,.94)}
+.scene-chat .onboarding-bottom-note{border-top-color:rgba(255,255,255,.7)}
+/* the walk to the pond: the picture fills the screen; my own friend sits in the bubble on the pad */
+.scene-leave .onboarding-bg{--s:max(100vw,100dvh);background:#2f9fae}
+.scene-leave .onboarding-bg::before{content:'';position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);transform:translate(-50%,-50%);background:url(/art/onboarding-leave.webp) center/100% 100%}
+.leave-bubble{position:absolute;left:calc(50% + .0122*var(--s));top:calc(50% - .0826*var(--s));width:calc(.19*var(--s));aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(236,247,214,.98) 0 64%,rgba(236,247,214,0) 100%)}
+.leave-bubble .frog-still{position:absolute;left:50%;top:50%;width:calc(.47*var(--s));height:auto;transform:translate(-50%,-55%);animation:leave-float 2.4s ease-in-out infinite}
+.scene-leave .onboarding-header,.scene-leave .greet-stage,.scene-leave .onboarding-bottom-note{visibility:hidden}
+.scene-leave .leaving-line{position:fixed;left:20px;right:20px;top:64%;display:flex;flex-direction:column;align-items:center;gap:0;margin:0;color:#fff;font-size:21px;font-weight:700;line-height:1.5;letter-spacing:-.3px;text-shadow:0 2px 10px rgba(0,60,70,.4)}
+.leave-dots{display:flex;gap:8px;margin-top:22px}
+.leave-dots i{width:9px;height:9px;border-radius:50%;background:#fff;opacity:.4;animation:leave-dot 1.2s ease-in-out infinite}
+.leave-dots i:nth-child(2){animation-delay:.4s}.leave-dots i:nth-child(3){animation-delay:.8s}
+.scene-leave .chat-care{position:fixed;left:20px;right:20px;bottom:calc(24px + env(safe-area-inset-bottom));background:rgba(255,255,255,.92)}
+@keyframes leave-float{0%,100%{transform:translate(-50%,-55%)}50%{transform:translate(-50%,calc(-55% - 6px))}}
+@keyframes leave-dot{0%,100%{opacity:.4}30%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.leave-bubble .frog-still,.leave-dots i{animation:none}.leave-dots i:first-child{opacity:1}}
