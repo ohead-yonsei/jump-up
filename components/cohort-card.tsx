@@ -1,14 +1,16 @@
 'use client';
-import {useState} from 'react';
-import {Users,ArrowRight,LoaderCircle} from 'lucide-react';
+import {useEffect,useState} from 'react';
+import {Users,ArrowRight,ChevronDown,LoaderCircle} from 'lucide-react';
 import {normalizeCode,validJoinCode,formatCode,type CohortInfo,type Membership} from '@/lib/cohort';
 const md=(day:string)=>{const [,m,d]=day.split('-');return `${Number(m)}월 ${Number(d)}일`;};
 const period=(c:CohortInfo)=>`${md(c.startsOn)} ~ ${md(c.endsOn)}`;
 const when=(at:string)=>new Date(at).toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
 const failed=(e:unknown)=>e instanceof TypeError?'인터넷 연결을 확인해 주세요.':(e as Error).message;
 /** Joining a cohort is the one place records leave the device, so what is shared sits right next to the button. */
-export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave,onPond}:{membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>;onPond:()=>void}){
+export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave,onPond,opened=0}:{opened?:number;membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>;onPond:()=>void}){
  const [code,setCode]=useState(invite?formatCode(invite):'');const [consent,setConsent]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [leaving,setLeaving]=useState(false);
+ // Folded to one line until someone taps it; it opens by itself for a code from the organisation or a ‘join’ button elsewhere.
+ const [open,setOpen]=useState(!!invite);useEffect(()=>{if(opened)setOpen(true);},[opened]);
  const normalized=normalizeCode(code);
  async function join(){setBusy(true);setError('');
   try{const r=await fetch('/api/cohort',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:normalized,participant})});const d=await r.json() as {error?:string;token?:string;participant?:string;cohort?:CohortInfo;members?:number};
@@ -26,12 +28,14 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   {error&&<p className="error" role="alert">{error}</p>}
  </section>;
  return <section id="cohort" className="cohort-card" aria-label="기수에 함께하기">
-  <div className="cohort-head"><span className="cohort-icon"><Users size={20}/></span><div><span className="step-label">기관에서 코드를 받았다면</span><h2>기수에 함께하기</h2></div></div>
+  <button type="button" className="cohort-head fold-head" aria-expanded={open} onClick={()=>setOpen(!open)}><span className="cohort-icon"><Users size={20}/></span><div><span className="step-label">기관에서 코드를 받았다면</span><h2>기수에 함께하기</h2></div><ChevronDown size={19} className="fold-caret"/></button>
+  {open&&<>
   <p>같은 기수의 사람들과 한 달쯤 같은 시간을 지나요. 기관 담당자가 함께 지켜봐요.</p>
   <label className="sr-only" htmlFor="cohort-code">기수 코드</label>
   <input id="cohort-code" value={code} maxLength={12} autoComplete="off" autoCapitalize="characters" placeholder="기수 코드 (예: 7K3Q-PW2M)" onChange={e=>{setCode(e.target.value);setError('')}}/>
   <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>함께하는 동안 남기는 기록(작은 행동, 연습, 마음 체크, 폴짝을 연 날, 연락 버튼, 폴짝에게 한마디)이 기수 운영진(기관 담당자와 폴짝 팀)에게 전달되는 것에 동의해요. 대화 내용은 보내지 않고, 기수에서 나가면 보낸 기록도 지워요.{!save&&' 이 기기에 기록 저장도 함께 켜져요.'}</span></label>
   <button className="primary" disabled={!validJoinCode(normalized)||!consent||busy} onClick={join}>{busy?<LoaderCircle className="spin" size={17}/>:null}함께하기<ArrowRight size={17}/></button>
   {error&&<p className="error" role="alert">{error}</p>}
+  </>}
  </section>;
 }

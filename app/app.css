@@ -409,3 +409,57 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .week-days .grow-3>div{color:#e28384}
 .empty-state .nest-art{display:block;width:150px;height:auto;margin:0 auto 12px}
 .place-finder .teaser{background:#fff;border-color:#eae9e5}
+/* 0.36.0 · a short help page: one folded finder, a filter row, three cards first */
+.help-heading h1{font-size:24px!important;letter-spacing:-.8px}
+.help-heading p{margin-top:4px;font-size:13.5px;color:#6b7684}
+.help-finder .finder-card{padding:0;border-radius:22px;background:#f4f9ef;border:1px solid #e1eed6;box-shadow:0 2px 10px rgba(60,110,40,.06)}
+.finder-toggle{display:flex;align-items:center;gap:12px;width:100%;padding:16px;text-align:left}
+.finder-icon{flex:none;display:grid;place-items:center;width:46px;height:46px;color:#5aa83c}
+.finder-copy{flex:1;min-width:0;display:grid;gap:3px}
+.finder-copy strong{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:16px;color:#26303b;letter-spacing:-.4px}
+.finder-copy em{font-style:normal;padding:2px 9px;border-radius:11px;background:#e2f3d6;color:#3f8a28;font-size:11.5px;font-weight:700}
+.finder-copy small{font-size:12.5px;color:#6b7684;line-height:1.5}
+.finder-caret{flex:none;color:#6b7684;transition:transform .2s}
+.finder-toggle[aria-expanded=true] .finder-caret{transform:rotate(180deg)}
+.finder-body{padding:0 16px 16px}
+.finder-body .finder-q:first-child{margin-top:0}
+.finder-note{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 0;font-size:11.5px;color:#7b8797}
+.finder-note button{min-height:30px;padding:0 10px;border-radius:15px;border:1px solid var(--hair);background:#fff;font-size:12px;color:#445}
+.help-list-top{display:flex;justify-content:space-between;align-items:center;margin:26px 0 10px}
+.help-list-top h2{margin:0;font-size:19px!important;letter-spacing:-.5px}
+.help-list-top h2 small{margin-left:6px;font-size:13px;font-weight:500;color:#8b95a3}
+.help-list-top button{display:inline-flex;align-items:center;gap:2px;min-height:36px;font-size:13.5px;font-weight:700;color:#26303b}
+.help-kinds{display:flex;gap:7px;overflow-x:auto;margin:0 -18px 14px;padding:0 18px 2px;scrollbar-width:none}
+.help-kinds::-webkit-scrollbar{display:none}
+.help-kinds button{flex:none;min-height:40px;padding:0 16px;border-radius:20px;border:1px solid var(--hair);background:#fff;font-size:13.5px;color:#3d4753}
+.help-kinds button.on{border-color:#d6eccb;background:#e6f4dc;color:#3f8a28;font-weight:700}
+.help-finder .support-card{border-radius:22px;border-color:#ecebe7;box-shadow:0 2px 10px rgba(30,40,50,.04)}
+.help-finder .support-head{display:flex;align-items:center;gap:14px;padding:16px 14px 16px 16px}
+.support-icon{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:#eef7e8;color:#5aa83c}
+.support-main{flex:1;min-width:0}
+.help-finder .support-head h3{margin-top:6px;font-size:16px!important;letter-spacing:-.4px}
+.help-finder .support-head p{margin-top:2px;font-size:12.5px}
+.help-finder .support-caret{position:static;flex:none}
+.help-finder .support-head[aria-expanded=true] .support-caret{transform:rotate(90deg)}
+.help-finder .support-chips .pill{background:#f2f2ef;color:#4a5562}
+.help-finder .tier-program .support-chips .tier{background:#e6f1fd;color:#2f6fb8}
+.help-finder .tier-space .support-chips .tier{background:#f0eafd;color:#6a45c2}
+.help-finder .tier-talk .support-chips .tier{background:#fdf0e3;color:#a55a12}
+.help-finder .tier-info .support-chips .tier{background:#e6f4dc;color:#3f8a28}
+.help-start{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:104px;margin-top:16px;padding:16px 128px 16px 18px;border-radius:22px;background:#f4f9ef;text-align:left;overflow:hidden}
+.help-start>span:first-child{display:grid;gap:4px}
+.help-start strong{font-size:15.5px;color:#26303b;letter-spacing:-.4px;line-height:1.4}
+.help-start small{font-size:12.5px;color:#6b7684}
+.help-start-go{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:#e2f3d6;color:#3f8a28}
+.help-start img{position:absolute;right:4px;bottom:-6px;width:118px;height:auto}
+/* 0.38.0 · the cohort card and the note to the team fold to one line until tapped */
+.fold-head{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;text-align:left}
+.fold-head h2{flex:1;margin:0}
+.fold-head>div{flex:1;min-width:0}
+.fold-caret{flex:none;color:#7e8999;transition:transform .2s}
+.fold-head[aria-expanded=true] .fold-caret{transform:rotate(180deg)}
+.app-note .fold-head+p{margin-top:10px}
+.cohort-card .fold-head+p{margin-top:12px}
+.fold-title{flex:1;display:grid;gap:2px;font-size:14px;font-weight:700;color:#35404f}
+.fold-title small{font-size:12px;font-weight:400;color:#7e8999}
+.cohort-card{margin-bottom:20px}

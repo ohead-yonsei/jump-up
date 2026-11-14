@@ -163,3 +163,6 @@
 @keyframes leave-float{0%,100%{transform:translate(-50%,-55%)}50%{transform:translate(-50%,calc(-55% - 6px))}}
 @keyframes leave-dot{0%,100%{opacity:.4}30%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.leave-bubble .frog-still,.leave-dots i{animation:none}.leave-dots i:first-child{opacity:1}}
+/* 0.37.0 · meeting the friend comes right after the greeting, on the same forest pond, in one glassy panel */
+.scene-friend .onboarding-card{margin-top:4px;padding:20px 18px 18px!important;border-radius:30px;background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 12px 32px rgba(20,80,90,.2)}
+.scene-friend .character-creation-preview{background:radial-gradient(ellipse at 50% 72%,#e3f2d5 0,rgba(227,242,213,0) 66%)!important;border:0!important;box-shadow:none!important}
