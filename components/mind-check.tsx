@@ -1,6 +1,6 @@
 'use client';
 import {useState} from 'react';
-import {Leaf,Check,ArrowRight,Phone,MessageCircleHeart} from 'lucide-react';
+import {Leaf,Check,ArrowRight,Phone,MessageCircleHeart,ChevronDown} from 'lucide-react';
 import {checkinQuestions,checkinDue,lastCheckin,validParticipant,type Entry} from '@/lib/records';
 import {needsSupport,supportiveText} from '@/lib/content';
 type Values={calm:number;talk:number;outside:number};
@@ -22,15 +22,17 @@ export function MindCheck({entries,shared=false,onSave}:{entries:Entry[];shared?
 }
 /** A short note to the team; crisis language gets support instead of being filed away. */
 export function AppNote({shared=false,onSave,onHelp}:{shared?:boolean;onSave:(note:string)=>void;onHelp:()=>void}){
- const [text,setText]=useState('');const [support,setSupport]=useState(false);const [sent,setSent]=useState(false);
+ const [text,setText]=useState('');const [support,setSupport]=useState(false);const [sent,setSent]=useState(false);const [open,setOpen]=useState(false);
  function submit(){const note=text.trim();if(!note)return;if(needsSupport(note)){setSupport(true);return;}onSave(note);setText('');setSent(true);}
- return <section className="app-note" aria-label="폴짝에게 한마디"><h2><MessageCircleHeart size={19}/>폴짝에게 한마디</h2><p>써보니 어땠나요? 불편했던 점, 더 있었으면 하는 것도 좋아요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'이 기기에만 남고, 내보내기를 해야 팀에 전달돼요.'}</p>
+ return <section className="app-note" aria-label="폴짝에게 한마디"><button type="button" className="fold-head" aria-expanded={open} onClick={()=>setOpen(!open)}><h2><MessageCircleHeart size={19}/>폴짝에게 한마디</h2><ChevronDown size={19} className="fold-caret"/></button>
+  {open&&<><p>써보니 어땠나요? 불편했던 점, 더 있었으면 하는 것도 좋아요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'이 기기에만 남고, 내보내기를 해야 팀에 전달돼요.'}</p>
   {support?<div className="support-response"><p>{supportiveText}</p><div className="button-row"><a className="primary" href="tel:109"><Phone size={17}/>109 상담전화</a><button className="secondary" onClick={onHelp}>긴급 도움 보기</button></div><button className="text-button" onClick={()=>{setSupport(false);setText('')}}>돌아가기</button></div>
-  :<><label className="sr-only" htmlFor="app-note">폴짝에게 남길 말</label><textarea id="app-note" rows={3} maxLength={300} value={text} placeholder="예: 미션 글씨가 조금 작아요." onChange={e=>{setText(e.target.value);setSent(false)}}/><div className="app-note-foot"><span>{sent?'고마워요. 잘 남겨두었어요.':`${text.length}/300`}</span><button className="secondary" disabled={!text.trim()} onClick={submit}>남기기</button></div></>}
+  :<><label className="sr-only" htmlFor="app-note">폴짝에게 남길 말</label><textarea id="app-note" rows={3} maxLength={300} value={text} placeholder="예: 미션 글씨가 조금 작아요." onChange={e=>{setText(e.target.value);setSent(false)}}/><div className="app-note-foot"><span>{sent?'고마워요. 잘 남겨두었어요.':`${text.length}/300`}</span><button className="secondary" disabled={!text.trim()} onClick={submit}>남기기</button></div></>}</>}
  </section>
 }
 /** Lets field-study staff set the code that appears in exported records. */
 export function ParticipantCode({value,shared=false,onChange}:{value:string;shared?:boolean;onChange:(code:string)=>void}){
- const [draft,setDraft]=useState(value);const ok=validParticipant(draft);
+ const [draft,setDraft]=useState(value);const ok=validParticipant(draft);const [open,setOpen]=useState(false);
+ if(!open)return <div className="participant-code"><button type="button" className="fold-head" aria-expanded={false} onClick={()=>setOpen(true)}><span className="fold-title">실증 참여 코드<small>{value||'담당자가 알려준 코드가 있을 때만'}</small></span><ChevronDown size={19} className="fold-caret"/></button></div>;
  return <div className="participant-code"><label htmlFor="participant">실증 참여 코드<small>담당자가 알려준 코드가 있다면 적어주세요. {shared?'기수 운영진에게는 이름 대신 이 코드로 보여요.':'내보낸 기록에만 들어가요.'}</small></label><div><input id="participant" value={draft} maxLength={16} autoComplete="off" placeholder="예: P07" onChange={e=>setDraft(e.target.value.replace(/\s/g,''))}/><button className="secondary" disabled={!ok||draft===value} onClick={()=>onChange(draft)}>저장</button></div>{draft&&!ok&&<small className="error">영문·숫자·하이픈으로 16자까지 적을 수 있어요.</small>}</div>
 }

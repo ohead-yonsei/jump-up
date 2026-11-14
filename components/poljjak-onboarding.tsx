@@ -32,8 +32,8 @@ const turns:Turn[]=[
 const greeting=[
  `안녕, 반가워요. 나는 이 연못에 사는 ${KEEPER.name}예요.`,
  '여기는 저마다의 속도로 작은 봄을 찾아가는 연못이에요. 서두르지 않아도 돼요.',
- '먼저 나랑 잠깐 이야기해요. 요즘 어떻게 지내는지 편하게 말해주면, 지금에 맞는 작은 미션을 찾아줄게요.',
- '이야기가 끝나면 함께할 나만의 친구를 만나요. 준비됐어요?',
+ '먼저 이 연못에서 함께할 나만의 친구를 만나요. 작은 알에서 시작해, 함께한 날만큼 자라요.',
+ '그다음 나랑 잠깐 이야기해요. 요즘 어떻게 지내는지 말해주면, 지금에 맞는 작은 미션을 찾아줄게요.',
 ];
 type Row={who:'keeper'|'me'|'typing';text?:string;soft?:boolean;edit?:number};
 const keeperFace={name:KEEPER.card.name,color:KEEPER.card.color} as Character;
@@ -53,7 +53,9 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  // The keeper croaks as it talks: every other letter while the greeting types, a short run when a chat line appears.
  const [sound,setSoundState]=useState(true);useEffect(()=>{setSoundState(soundOn());},[]);
  useEffect(()=>{if(sound&&step===0&&!creating&&shown>0&&shown<whole&&shown%2===1)croak(greeting[line][shown-1]);},[shown,line,step,creating,whole,sound]);
- const nextLine=()=>{if(shown<whole)setShown(whole);else if(line<greeting.length-1)setLine(line+1);else setStep(1);};
+ // after the last line: meet the friend first (once), then the talk
+ const afterGreeting=()=>met?setStep(1):setCreating(true);
+ const nextLine=()=>{if(shown<whole)setShown(whole);else if(line<greeting.length-1)setLine(line+1);else afterGreeting();};
  const root=useRef<HTMLDivElement>(null);const heading=useRef<HTMLHeadingElement>(null);const choices=useRef<HTMLDivElement>(null);const log=useRef<HTMLDivElement>(null);
  useEffect(()=>{const frame=root.current?.closest('.demo-device');if(frame)frame.scrollTo({top:0,behavior:'instant'});else window.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});},[step,creating]);
  useEffect(()=>{if(step===1&&!creating){log.current?.scrollTo({top:log.current.scrollHeight,behavior:'smooth'});choices.current?.scrollIntoView({block:'nearest'});}},[at,step,creating,tries.length,busy]);
@@ -104,19 +106,19 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  const seen=rows.map((r,i)=>r.who!=='keeper'||i<=freshFrom||out(i)>0);const seenCount=seen.filter(Boolean).length;
  const lastKeeper=rows.reduce((last,r,i)=>r.who==='me'||!seen[i]?last:i,-1);
  useEffect(()=>{if(step===1&&!creating)log.current?.scrollTo({top:log.current.scrollHeight,behavior:'smooth'});},[seenCount,step,creating]);
- const leaving=!creating&&step===2&&!!(draft&&energy&&measured);const scene=creating?'':step===0?' scene-greet':step===1?' scene-chat':leaving?' scene-leave':'';
+ const leaving=!creating&&step===2&&!!(draft&&energy&&measured);const scene=creating?' scene-greet scene-friend':step===0?' scene-greet':step===1?' scene-chat':leaving?' scene-leave':'';
  return <div ref={root} onPointerDown={wakeSound} className={'onboarding-shell'+(creating?' compact':' fit')+scene}>{scene&&<div className="onboarding-bg" aria-hidden="true">{leaving&&<span className="leave-bubble"><FrogStill character={character} equipped={growth==='egg'?{}:{head:'sprout',face:'happy'}} growth={growth} framing="full" angle={0}/></span>}</div>}<header className="onboarding-header"><span className="onboarding-brand"><BrandLogo height={28}/></span><span className="onboarding-header-end">{step<2&&!creating&&<button className="onboarding-sound" aria-pressed={sound} aria-label={sound?KEEPER.name+' 목소리 끄기':KEEPER.name+' 목소리 켜기'} onClick={()=>{setSound(!sound);setSoundState(!sound);}}>{sound?<Volume2 size={17}/>:<VolumeX size={17}/>}</button>}<button className="onboarding-skip" onClick={onBrowse}>{initialProfile?'돌아가기':'먼저 둘러보기'}<ArrowRight size={14}/></button></span></header>{demo&&<div className="onboarding-demo">발표용 가상 체험 · 선택은 개인 기록에 저장되지 않아요</div>}
  <main className={'onboarding-layout '+(step===0&&!creating?'is-welcome':step===2&&!creating?'is-review':'is-question')}>
  <aside className={'onboarding-world season-'+seasonOf()} aria-label="계절 연못의 개구리"><img className="onboarding-world-season" src={seasons[seasonOf()].image} alt={seasons[seasonOf()].alt}/><div className="onboarding-world-copy"><span>YOUR OWN SPRING</span><p>봄이 오는 시간은,<br/>모두 다르니까.</p><small>{seasons[seasonOf()].name} · {seasons[seasonOf()].line}</small></div><span className="onboarding-world-note"><FrogMark size={24} color={character.color}/>나는 여기서 기다리고 있을게.</span></aside>
  <section className="onboarding-card" aria-label={creating?'나의 친구 만나기':step===0?'폴짝 시작 안내':step===2?'나의 시작점 확인':KEEPER.name+'와 나누는 시작 대화'}>
- {creating?<><h1 ref={heading} tabIndex={-1}>{met?<>나와 함께하는<br/>친구예요.</>:<>이제 함께할 친구를<br/>만나볼까요?</>}</h1><p className="onboarding-description">{growth==='egg'?<>작은 알에서 시작해, 함께한 날만큼 자라요.<br/>작은 활동이 쌓이면 새 옷과 소품도 만날 수 있어요.</>:<>이름과 색을 고르고, 조금씩 꾸며가요.<br/>작은 활동이 쌓이면 새 옷과 소품을 만날 수 있어요.</>}</p><CharacterEditor value={character} onChange={setCharacter} growth={growth}/><p className="welcome-gift"><Sparkles size={16}/>첫 선물은 새싹과 30잎. 시작을 마치면 받아요.</p>{!demo&&!met&&<label className="onboarding-remember one"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}/><span><strong>이 기기에 기억하기</strong><small>끄면 이번 방문에만 남아요.</small></span></label>}<button className="primary onboarding-next" disabled={!character.name.trim()} onClick={()=>{setMet(true);setCreating(false);}}>이 친구와 시작할래요<ArrowRight size={18}/></button><button className="onboarding-repick" onClick={()=>{setCreating(false);if(!met)setStep(1);}}>{met?'이전으로':'대화로 돌아가기'}</button></>
+ {creating?<><h1 ref={heading} tabIndex={-1}>{met?<>나와 함께하는<br/>친구예요.</>:<>함께할 친구를<br/>만나볼까요?</>}</h1><p className="onboarding-description">{growth==='egg'?<>작은 알에서 시작해, 함께한 날만큼 자라요.<br/>작은 활동이 쌓이면 새 옷과 소품도 만날 수 있어요.</>:<>이름과 색을 고르고, 조금씩 꾸며가요.<br/>작은 활동이 쌓이면 새 옷과 소품을 만날 수 있어요.</>}</p><CharacterEditor value={character} onChange={setCharacter} growth={growth}/><p className="welcome-gift"><Sparkles size={16}/>첫 선물은 새싹과 30잎. 시작을 마치면 받아요.</p>{!demo&&!met&&<label className="onboarding-remember one"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}/><span><strong>이 기기에 기억하기</strong><small>끄면 이번 방문에만 남아요.</small></span></label>}<button className="primary onboarding-next" disabled={!character.name.trim()} onClick={()=>{setMet(true);setCreating(false);if(step===0)setStep(1);}}>이 친구와 시작할래요<ArrowRight size={18}/></button><button className="onboarding-repick" onClick={()=>setCreating(false)}>{met?'이전으로':'연못지기에게 돌아가기'}</button></>
  :step===0?<>
  <h1 ref={heading} tabIndex={-1} className="chat-title">{KEEPER.name}의 인사</h1>
  <div className="greet"><div className="greet-stage" aria-hidden="true"><i className="hill a"/><i className="hill b"/><i className="water"/><i className="pad a"/><i className="pad b"/><i className="pad seat"/><span className="greet-frog"><FrogStill character={keeperFace} equipped={KEEPER.card.equipped} growth="frog" framing="full" angle={0}/></span></div>
   <button className="greet-box" onClick={nextLine} aria-label={shown<whole?'말 끝까지 보기':line<greeting.length-1?'다음 말 듣기':'이야기 시작하기'}><small><Sprout size={13} aria-hidden="true"/>{KEEPER.name}</small><p aria-hidden="true">{greeting[line].slice(0,shown)}<span>{greeting[line].slice(shown)}</span></p><span className="greet-dots" aria-hidden="true">{greeting.map((_,i)=><i key={i} className={i===line?'on':''}/>)}</span>{shown>=whole&&line<greeting.length-1&&<em aria-hidden="true"><ChevronDown size={18}/></em>}</button>
   <p className="chat-title" aria-live="polite">{greeting[line]}</p>
  </div>
- {line===greeting.length-1&&shown>=whole?<button className="primary onboarding-next" onClick={()=>setStep(1)}>이야기 시작할게요<ArrowRight size={18}/></button>:null}</>
+ {line===greeting.length-1&&shown>=whole?<button className="primary onboarding-next" onClick={afterGreeting}>{met?'이야기 시작할게요':'친구 만나러 갈게요'}<ArrowRight size={18}/></button>:null}</>
  :step===1?<>
  <div className="onboarding-progress-title chat-top"><button disabled={busy} onClick={()=>at===0?setStep(0):open(at-1)} aria-label="이전 질문으로"><ArrowLeft size={15}/>이전</button><span>{KEEPER.name}와 나누는 이야기</span><span>{at+1} <i>/ {TURNS}</i></span></div><div className="onboarding-progress" aria-label={`아홉 질문 중 ${at+1}번째`}>{turns.map((_,i)=><span key={i} className={i<=at?'filled':''}/>)}</div>
  <h1 ref={heading} tabIndex={-1} className="chat-title">{KEEPER.name}와 나누는 시작 대화</h1>
