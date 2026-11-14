@@ -64,7 +64,7 @@ export function HelpFinder({onPractice,onContact}:{onPractice:()=>void;onContact
  const clear=()=>{setNeed(null);setContact(null);setAge(null);setRegion(null);};
  return <div className="help-finder">
   <div ref={finder} className={'finder-card'+(finding?' open':'')}>
-   <button type="button" className="finder-toggle" aria-expanded={finding} onClick={()=>setFinding(!finding)}><span className="finder-icon" aria-hidden="true"><Search size={26}/></span><span className="finder-copy"><strong>내게 맞는 도움 찾기 <em>맞춤 검색</em></strong><small>{asked?'고른 조건에 맞는 곳을 위에 보여줘요.':'원하는 도움과 조건을 선택해 찾아볼 수 있어요.'}</small></span><ChevronDown size={20} className="finder-caret"/></button>
+   <button type="button" className="finder-toggle" aria-expanded={finding} onClick={()=>setFinding(!finding)}><span className="finder-icon" aria-hidden="true"><Search size={26}/></span><span className="finder-copy"><strong>내게 맞는 도움 찾기 <em>맞춤 검색</em></strong><small>{asked?'고른 조건에 맞는 곳을 위에 보여줘요.':'원하는 도움과 조건을 골라 찾아봐요.'}</small></span><ChevronDown size={20} className="finder-caret"/></button>
    {finding&&<div className="finder-body">
     <Chips label="지금 가장 가까운 마음은?" options={needs} value={need} onChange={setNeed}/>
     <Chips label="연락은 어떤 방법이 편해요?" options={contactWays} value={contact} onChange={setContact}/>
