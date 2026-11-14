@@ -4,9 +4,8 @@ import {createPortal} from 'react-dom';
 import {growthStages,type Character,type CharacterGame,type Growth} from '@/lib/character';
 import {evolveSound} from '@/lib/croak';
 import {haptic} from './frog-3d';
+import {josa} from '@/lib/josa';
 type Phase='load'|'intro'|'change'|'flash'|'reveal';
-/** 받침이 있으면 a, 없으면 b(‘이/가’, ‘으로/로’). A name that does not end in Hangul gets the softer form. */
-const josa=(word:string,a:string,b:string)=>{const c=word.charCodeAt(word.length-1)-0xac00;if(c<0||c>11171)return b;const end=c%28;return end===0||(a==='으로'&&end===8)?b:a;};
 // The silhouettes take turns faster and faster, like an evolution in a monster game.
 const BEATS=[460,420,380,340,300,260,230,200,170,150,130,110,95,85,75,70,65,60,60,60,60,60];
 /** Full-screen moment when the friend grows into its next stage: the old shape glows white, the two shapes take turns,

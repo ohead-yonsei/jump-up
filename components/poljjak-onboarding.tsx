@@ -1,6 +1,7 @@
 'use client';
 import {Fragment,useEffect,useRef,useState} from 'react';
-import {ArrowRight,ArrowLeft,ArrowUp,Leaf,Footprints,MessageCircle,ShieldCheck,Pencil,Sparkles,Volume2,VolumeX} from 'lucide-react';
+import {ArrowRight,ArrowLeft,ArrowUp,Leaf,Footprints,MessageCircle,ShieldCheck,Pencil,Sparkles,Volume2,VolumeX,Sprout,ChevronDown} from 'lucide-react';
+import {josa} from '@/lib/josa';
 import {FrogMark,BrandLogo} from './frog-mark';
 import {CharacterEditor} from './character-editor';
 import {FrogStill} from './frog-3d';
@@ -22,7 +23,7 @@ const outsideEcho=['방 안이 제일 편하군요.','집 안이나 문 앞까�
 const goalEcho:Record<Goal,string>={rhythm:'내 일상을 돌보고 싶군요.',outside:'바깥과 가까워지고 싶군요.',connect:'사람과 이어지고 싶군요.'};
 const scaleHints=['예: 가끔 그래요','예: 별로 없어요','예: 엄마한테는 기대요','예: 한 명 있어요','예: 두 명쯤','예: 하루 30분쯤'];
 const turns:Turn[]=[
- {kind:'outside',say:'먼저 하나 물어볼게요. 요즘은 어디까지 편하게 지내고 있어요?',hint:'예: 집 근처는 다녀요',options:outsideOptions.map((label,i)=>({label,echo:outsideEcho[i]}))},
+ {kind:'outside',say:'먼저 하나 물어볼게요. 요즘 편하게 느껴지는 곳은 어디까지예요?',hint:'예: 집 근처는 다녀요',options:outsideOptions.map((label,i)=>({label,echo:outsideEcho[i]}))},
  ...scaleItems.map((item,i):Turn=>({kind:i<4?'agree':i===4?'count':'minutes',lead:i===0?'이번엔 요즘 한 달, 사람들과 지낸 얘기를 해볼까요?':undefined,say:item.ask,hint:scaleHints[i],options:item.chat.map((label,k)=>({label,echo:item.echo[k]}))})),
  {kind:'goal',say:'거의 다 왔어요. 어떤 일상에 가까워지고 싶어요?',hint:'예: 밖에 나가보고 싶어요',options:goals.map(g=>({label:g.title,echo:goalEcho[g.id]}))},
  {kind:'energy',say:'마지막이에요. 오늘은 어느 정도 움직여볼 수 있을까요?',hint:'예: 작은 거 하나만',options:energies.map(e=>({label:e.label}))},
@@ -103,7 +104,8 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  const seen=rows.map((r,i)=>r.who!=='keeper'||i<=freshFrom||out(i)>0);const seenCount=seen.filter(Boolean).length;
  const lastKeeper=rows.reduce((last,r,i)=>r.who==='me'||!seen[i]?last:i,-1);
  useEffect(()=>{if(step===1&&!creating)log.current?.scrollTo({top:log.current.scrollHeight,behavior:'smooth'});},[seenCount,step,creating]);
- return <div ref={root} onPointerDown={wakeSound} className={'onboarding-shell'+(creating?' compact':' fit')}><header className="onboarding-header"><span className="onboarding-brand"><BrandLogo height={28}/></span><span className="onboarding-header-end">{step<2&&!creating&&<button className="onboarding-sound" aria-pressed={sound} aria-label={sound?KEEPER.name+' 목소리 끄기':KEEPER.name+' 목소리 켜기'} onClick={()=>{setSound(!sound);setSoundState(!sound);}}>{sound?<Volume2 size={17}/>:<VolumeX size={17}/>}</button>}<button className="onboarding-skip" onClick={onBrowse}>{initialProfile?'돌아가기':'먼저 둘러보기'}<ArrowRight size={14}/></button></span></header>{demo&&<div className="onboarding-demo">발표용 가상 체험 · 선택은 개인 기록에 저장되지 않아요</div>}
+ const leaving=!creating&&step===2&&!!(draft&&energy&&measured);const scene=creating?'':step===0?' scene-greet':step===1?' scene-chat':leaving?' scene-leave':'';
+ return <div ref={root} onPointerDown={wakeSound} className={'onboarding-shell'+(creating?' compact':' fit')+scene}>{scene&&<div className="onboarding-bg" aria-hidden="true">{leaving&&<span className="leave-bubble"><FrogStill character={character} equipped={growth==='egg'?{}:{head:'sprout',face:'happy'}} growth={growth} framing="full" angle={0}/></span>}</div>}<header className="onboarding-header"><span className="onboarding-brand"><BrandLogo height={28}/></span><span className="onboarding-header-end">{step<2&&!creating&&<button className="onboarding-sound" aria-pressed={sound} aria-label={sound?KEEPER.name+' 목소리 끄기':KEEPER.name+' 목소리 켜기'} onClick={()=>{setSound(!sound);setSoundState(!sound);}}>{sound?<Volume2 size={17}/>:<VolumeX size={17}/>}</button>}<button className="onboarding-skip" onClick={onBrowse}>{initialProfile?'돌아가기':'먼저 둘러보기'}<ArrowRight size={14}/></button></span></header>{demo&&<div className="onboarding-demo">발표용 가상 체험 · 선택은 개인 기록에 저장되지 않아요</div>}
  <main className={'onboarding-layout '+(step===0&&!creating?'is-welcome':step===2&&!creating?'is-review':'is-question')}>
  <aside className={'onboarding-world season-'+seasonOf()} aria-label="계절 연못의 개구리"><img className="onboarding-world-season" src={seasons[seasonOf()].image} alt={seasons[seasonOf()].alt}/><div className="onboarding-world-copy"><span>YOUR OWN SPRING</span><p>봄이 오는 시간은,<br/>모두 다르니까.</p><small>{seasons[seasonOf()].name} · {seasons[seasonOf()].line}</small></div><span className="onboarding-world-note"><FrogMark size={24} color={character.color}/>나는 여기서 기다리고 있을게.</span></aside>
  <section className="onboarding-card" aria-label={creating?'나의 친구 만나기':step===0?'폴짝 시작 안내':step===2?'나의 시작점 확인':KEEPER.name+'와 나누는 시작 대화'}>
@@ -111,10 +113,10 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  :step===0?<>
  <h1 ref={heading} tabIndex={-1} className="chat-title">{KEEPER.name}의 인사</h1>
  <div className="greet"><div className="greet-stage" aria-hidden="true"><i className="hill a"/><i className="hill b"/><i className="water"/><i className="pad a"/><i className="pad b"/><i className="pad seat"/><span className="greet-frog"><FrogStill character={keeperFace} equipped={KEEPER.card.equipped} growth="frog" framing="full" angle={0}/></span></div>
-  <button className="greet-box" onClick={nextLine} aria-label={shown<whole?'말 끝까지 보기':line<greeting.length-1?'다음 말 듣기':'이야기 시작하기'}><small>{KEEPER.name}</small><p aria-hidden="true">{greeting[line].slice(0,shown)}<span>{greeting[line].slice(shown)}</span></p><span className="greet-dots" aria-hidden="true">{greeting.map((_,i)=><i key={i} className={i===line?'on':''}/>)}</span>{shown>=whole&&line<greeting.length-1&&<em aria-hidden="true">▼</em>}</button>
+  <button className="greet-box" onClick={nextLine} aria-label={shown<whole?'말 끝까지 보기':line<greeting.length-1?'다음 말 듣기':'이야기 시작하기'}><small><Sprout size={13} aria-hidden="true"/>{KEEPER.name}</small><p aria-hidden="true">{greeting[line].slice(0,shown)}<span>{greeting[line].slice(shown)}</span></p><span className="greet-dots" aria-hidden="true">{greeting.map((_,i)=><i key={i} className={i===line?'on':''}/>)}</span>{shown>=whole&&line<greeting.length-1&&<em aria-hidden="true"><ChevronDown size={18}/></em>}</button>
   <p className="chat-title" aria-live="polite">{greeting[line]}</p>
  </div>
- {line===greeting.length-1&&shown>=whole?<button className="primary onboarding-next" onClick={()=>setStep(1)}>이야기 시작할게요<ArrowRight size={18}/></button>:<button className="primary onboarding-next" onClick={nextLine}>다음<ArrowRight size={18}/></button>}</>
+ {line===greeting.length-1&&shown>=whole?<button className="primary onboarding-next" onClick={()=>setStep(1)}>이야기 시작할게요<ArrowRight size={18}/></button>:null}</>
  :step===1?<>
  <div className="onboarding-progress-title chat-top"><button disabled={busy} onClick={()=>at===0?setStep(0):open(at-1)} aria-label="이전 질문으로"><ArrowLeft size={15}/>이전</button><span>{KEEPER.name}와 나누는 이야기</span><span>{at+1} <i>/ {TURNS}</i></span></div><div className="onboarding-progress" aria-label={`아홉 질문 중 ${at+1}번째`}>{turns.map((_,i)=><span key={i} className={i<=at?'filled':''}/>)}</div>
  <h1 ref={heading} tabIndex={-1} className="chat-title">{KEEPER.name}와 나누는 시작 대화</h1>
@@ -129,7 +131,7 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  </>:draft&&energy&&measured?<>
  <h1 ref={heading} tabIndex={-1} className="chat-title">연못으로 가고 있어요</h1>
  <div className="greet leaving" role="status"><div className="greet-stage" aria-hidden="true"><i className="hill a"/><i className="hill b"/><i className="water"/><i className="pad a"/><i className="pad b"/><i className="pad seat"/><span className="greet-frog"><FrogStill character={character} equipped={{head:'sprout',face:'happy'}} growth={growth} framing="full" angle={0}/></span></div>
-  <p className="leaving-line"><strong>{character.name}</strong>와 연못으로 폴짝 뛰어가고 있어요<span className="chat-typing" aria-hidden="true"><i/><i/><i/></span></p>
+  <p className="leaving-line">{character.name}{josa(character.name,'과','와')}<br/>연못으로 가고 있어요<span className="leave-dots" aria-hidden="true"><i/><i/><i/></span></p>
   {careful&&<p className="chat-care"><Keeper/><span>혼자 버거운 날에는 이야기할 곳을 함께 찾을 수 있어요. <button onClick={onHelp}>도움받을 곳 보기</button></span></p>}
  </div>
  </>:null}
