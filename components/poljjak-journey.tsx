@@ -14,6 +14,7 @@ import {PondInvite} from './cohort-pond';
 import {EvolveScene} from './evolve-scene';
 import {seasons,seasonOf} from '@/lib/season';
 import {missionPlaces,placeKind,type PlaceKind} from '@/lib/places';
+import {sfx} from '@/lib/sound';
 const goalIcons={rhythm:Sun,outside:Footprints,connect:MessageCircle};
 /** The stage this page last showed, so a friend that grew while you were on another tab is celebrated on coming home. */
 let seenGrowth:Growth|null=null;
@@ -80,13 +81,13 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  function finish(rest=false){if(!rest&&!mission)return;hold();const title=rest?'내 연못에서 쉬어가기':mission!.title;const field=rest?null:answerField(mission!.id);const left=field?cleanAnswer(field.kind,answer):undefined;onRecord(rest?'rest':'step',title,{missionId:rest?undefined:mission!.id,goal:profile?.goal,springStage:profile?.stage,...(left?{answer:left}:{})});setKept(left??'');if(!rest&&profile&&mission)onProfile(markSpringComplete(profile,mission.id));const line=rest?restLines[Date.now()%restLines.length]:missionCheer(mission);setCheer(line);setCompleted(title);setIsRest(rest);setMission(null);setAutoClose(!(left&&needsSupport(left)));haptic(rest?[10,40,10]:[12,60,18]);frog.current?.react(rest?'hug':'cheer',line);}
  // A bedtime or rest-rhythm mission closes its sheet, so the friend's answer is seen.
  function finishCare(m:Mission){onRecord('step',m.title,{missionId:m.id,goal:profile?.goal,springStage:profile?.stage});setCareDone(m.title);setSheet(null);haptic([10,40,10]);frog.current?.react('hug',missionCheer(m));}
- function advance(){if(!profile||!canJump(profile))return;onProfile(jump(profile));setCompleted('');setMission(null);setOffset(0);setConfirmJump(false);setSheet(null);onNotice('다음 징검다리로 폴짝! 오늘의 에너지에 맞춰 천천히 시작해요.');haptic([12,60,18]);frog.current?.react('cheer','폴짝! 여기서도 천천히 가보자');}
+ function advance(){if(!profile||!canJump(profile))return;onProfile(jump(profile));setCompleted('');setMission(null);setOffset(0);setConfirmJump(false);setSheet(null);onNotice('다음 징검다리로 폴짝! 오늘의 에너지에 맞춰 천천히 시작해요.');haptic([12,60,18]);sfx('jump');frog.current?.react('cheer','폴짝! 여기서도 천천히 가보자');}
  const closeSheet=()=>{setSheet(null);setConfirmJump(false);};
  const careChips=(night||wave)&&<div className="pond-stage-care">{night&&<button className="care-chip night" onClick={()=>setSheet('night')}><Moon size={14}/>잠들기 전 1분{nightMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}{wave&&<button className="care-chip wave" onClick={()=>setSheet('wave')}><Waves size={14}/>나만의 썰물{waveMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}</div>;
  return <div className="poljjak-home">
   {evolving&&game.character&&<EvolveScene character={game.character} equipped={game.equipped} from={evolving.from} to={evolving.to} onDone={evolved}/>}
  {game.character?<section ref={stageRef} className={'pond-stage has-scene'+(night?' is-night':'')+(held?' is-held':'')} style={{'--scene':`url(/scenes/pond-${night?'night':'day'}.webp)`,height:held??undefined} as React.CSSProperties} aria-label="나의 캐릭터와 연못"><div className="pond-stage-sky" aria-hidden="true"><span className="sun"/>{night&&<span className="stars"/>}<span className="cloud cloud-a"/><span className="cloud cloud-b"/><span className="hill hill-a"/><span className="hill hill-b"/><span className="water"/><span className="pad"/></div>
- <div className="pond-stage-frog"><Frog3D ref={frog} character={game.character} equipped={mood.equipped} growth={shownGrowth} framing="stage"/></div>
+ <div className="pond-stage-frog"><Frog3D ref={frog} character={game.character} equipped={mood.equipped} growth={shownGrowth} framing="stage" nudge={demoScene===undefined}/></div>
  <div className="pond-stage-copy"><span>{new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})}</span><h1>{hello.title}<br/><em className={game.character.name.length>10?'name-xs':game.character.name.length>7?'name-s':undefined}>{game.character.name}</em></h1><p className="pond-stage-hint"><Hand size={13}/>{night?hello.note:'톡 폴짝 · 머리 쓰담 · 꾹 포옥'}</p></div>
  {careChips}
  {back?<div className="pond-stage-bottom is-return" role="group" aria-label="다시 만난 선물"><span><Gift size={18}/><span><strong>{back.away}일 동안 연못을 지키고 있었어</strong><small>모은 잎과 옷장도 그대로예요.</small></span></span><button onClick={()=>{onClaimReturn();frog.current?.react('hug','다시 와줘서 정말 고마워');}}>선물 {RETURN_GIFT}잎 받기<Leaf size={15}/></button></div>

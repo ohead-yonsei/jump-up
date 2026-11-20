@@ -3,9 +3,10 @@
 // so nothing is heard until the first touch; before that the calls are silently dropped.
 const KEY='poljjak-sound';
 let ctx:AudioContext|null=null;
-export function soundOn():boolean{try{return localStorage.getItem(KEY)!=='off';}catch{return true;}}
+export function soundOn():boolean{if(typeof window==='undefined')return true;try{return localStorage.getItem(KEY)!=='off';}catch{return true;}}
 export function setSound(on:boolean){try{localStorage.setItem(KEY,on?'on':'off');}catch{}}
-function audio():AudioContext|null{
+/** The one audio context every sound shares, or null until a tap has allowed sound. */
+export function audio():AudioContext|null{
  if(typeof window==='undefined')return null;
  try{
   if(!ctx){const A=window.AudioContext||(window as unknown as {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;if(!A)return null;ctx=new A();}

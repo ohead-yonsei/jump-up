@@ -6,6 +6,7 @@ import {activityDays,balance,canWear,growthOf,lookCost,looks,nextGrowth,suggestN
 import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
 import {CharacterEditor} from './character-editor';
 import {useTonePreview} from './tone';
+import {sfx} from '@/lib/sound';
 type Tab='looks'|Slot|'color';
 const tabs:{id:Tab;label:string;Icon:typeof Crown}[]=[{id:'looks',label:'코디 예시',Icon:Sparkles},{id:'head',label:'모자',Icon:Crown},{id:'eyes',label:'안경',Icon:Glasses},{id:'outfit',label:'옷',Icon:Shirt},{id:'hand',label:'소품',Icon:Coffee},{id:'face',label:'표정',Icon:Smile},{id:'color',label:'색 · 이름',Icon:Palette}];
 const slotLabel:Record<Slot,string>={head:'모자',eyes:'안경',outfit:'옷',hand:'소품',face:'표정'};
@@ -37,9 +38,9 @@ export function CharacterCloset({game,save,demo,onCharacter,onCollect,onLook,onR
    <div className="closet-stage-frog"><Frog3D ref={frog} character={shown} equipped={preview} growth={later?later.id:growth.id} lines={!fits?['자라면 이렇게 입을래!','미리 입어봤어!']:look||item?['어때, 잘 어울려?','이 모습도 나야!','두근두근, 새 옷!']:undefined}/></div>
    {item||look?<div className="closet-action" role="region" aria-label="선택한 꾸미기" aria-live="polite">
     {item?<><div className="closet-action-text"><h3>{item.name}</h3><p className={!owned&&coins<item.price?'short':''}>{!owned&&coins<item.price?`${item.price-coins}잎 더 모으면 돼요`:later?'자라면 입어요':item.description}</p></div>
-     <button className="primary" disabled={!owned&&coins<item.price} onClick={()=>{if(wearing)onRemove(item.slot);else{onCollect(item.id);frog.current?.react('cheer');}setSelected(null)}}>{owned?<Check size={15}/>:<Leaf size={15}/>}{wearing?(later?'내려놓기':'벗기'):owned?(later?'자라면 입기':'입기'):coins<item.price?`${item.price}잎`:item.price?`${item.price}잎${later?' 미리':''} 데려오기`:later?'미리 받아두기':'무료로 입기'}</button></>
+     <button className="primary" disabled={!owned&&coins<item.price} onClick={()=>{if(wearing){onRemove(item.slot);sfx('pick');}else{onCollect(item.id);sfx(owned?'pick':'cheer');frog.current?.react('cheer');}setSelected(null)}}>{owned?<Check size={15}/>:<Leaf size={15}/>}{wearing?(later?'내려놓기':'벗기'):owned?(later?'자라면 입기':'입기'):coins<item.price?`${item.price}잎`:item.price?`${item.price}잎${later?' 미리':''} 데려오기`:later?'미리 받아두기':'무료로 입기'}</button></>
     :look&&<><div className="closet-action-text"><h3>{look.title}</h3><p className={coins<cost?'short':''}>{coins<cost?`${cost-coins}잎 더 모으면 돼요`:later?'자라면 입어요':cost?'미리 입어보는 중':'모두 내 옷장에 있어요'}</p></div>
-     <button className="primary" disabled={coins<cost} onClick={()=>{onLook(look.id);frog.current?.react('cheer');setLookId(null)}}>{cost?<Leaf size={15}/>:<Check size={15}/>}{coins<cost?`${cost}잎`:cost?`${cost}잎${later?' 미리':''} 데려오기`:later?'자라면 입기':'이 코디 입기'}</button></>}
+     <button className="primary" disabled={coins<cost} onClick={()=>{onLook(look.id);sfx(cost?'cheer':'pick');frog.current?.react('cheer');setLookId(null)}}>{cost?<Leaf size={15}/>:<Check size={15}/>}{coins<cost?`${cost}잎`:cost?`${cost}잎${later?' 미리':''} 데려오기`:later?'자라면 입기':'이 코디 입기'}</button></>}
     <button className="closet-action-close" aria-label="선택 취소" onClick={()=>{setSelected(null);setLookId(null)}}><X size={16}/></button>
    </div>
    :<div className="wearing-chips" aria-label="지금 입고 있는 것">{(Object.keys(slotLabel) as Slot[]).filter(s=>game.equipped[s]).map(s=>{const worn=wardrobeItems.find(i=>i.id===game.equipped[s])!;return <button key={s} className={kept(s)?'kept':''} onClick={()=>{onRemove(s);setSelected(null);setLookId(null)}} aria-label={kept(s)?`${worn.name}, 자라면 입어요. 내려놓기`:`${worn.name} 벗기`}>{worn.name}{kept(s)&&<small>보관 중</small>}<X size={12}/></button>})}{!Object.values(game.equipped).some(Boolean)&&<span>있는 그대로의 모습</span>}</div>}

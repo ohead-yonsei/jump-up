@@ -5,6 +5,7 @@ import {POND,SPEED,MAX_SHOWN,LIVE_STALE_MS,KEEPER,step,approach,strollAt,padSpot
 import type {PondScene} from '@/lib/pond-scene';
 import type {FrogView,PadView,FrogCard} from '@/lib/pond';
 import {joinLive,type Live,type LiveLink} from './pond-live';
+import {sfx,nearness,sideOf,pondAmbience} from '@/lib/sound';
 type Near={kind:'frog';frog:FrogView}|{kind:'pad';pad:PadView}|{kind:'keeper'};
 const REACH=84;const PANORAMA='/art/pond-village-pano.webp';
 /** The village as a small 3D world: a pond with grass around it. The member steers their own frog (joystick, a tap on the ground,
@@ -64,6 +65,9 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
   // I start where the others already see my frog drifting, so it does not jump for them when I arrive.
   if(!me.current||(myId&&!movedRef.current))me.current=myId?(({x,y})=>({x,y}))(strollAt(myId,Date.now(),still)):{x:POND.cx,y:POND.cy+190};
   let raf=0,last=performance.now(),sentAt=0,sentPos:Point={x:-1,y:-1},pickAt=0,nearKey='';
+  // What the pond sounds like from where my frog is: its own hops and strokes, the water, and the others calling from their side.
+  const water=pondAmbience();let wet:boolean|null=null,stepAt=0,callAt=Date.now()+2500+Math.random()*3000;
+  const quiet=()=>{if(document.hidden)water.set(null);};document.addEventListener('visibilitychange',quiet);
   const frame=(now:number)=>{
    raf=requestAnimationFrame(frame);const scene=sceneRef.current;if(!scene||document.hidden)return;
    const dt=Math.min(.05,(now-last)/1000);last=now;const clock=Date.now();
@@ -74,7 +78,9 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
    const raw=dir.current.x||dir.current.y?dir.current:kd,yaw=scene.yaw(),cs=Math.cos(yaw),sn=Math.sin(yaw);const d={x:raw.x*cs+raw.y*sn,y:-raw.x*sn+raw.y*cs};let p=me.current!;let moving=false;
    if(d.x||d.y){goal.current=null;const n=step(p,d,dt);moving=n.x!==p.x||n.y!==p.y;p=n;}
    else if(goal.current){const n=approach(p,goal.current,dt);moving=n.x!==p.x||n.y!==p.y;p=n;if(!moving)goal.current=null;}
-   me.current=p;scene.place('me',p,moving,inPond(p));scene.follow(p);if(moving&&!movedRef.current){movedRef.current=true;onMovedRef.current?.();}
+   const swimming=inPond(p);if(wet!==null&&wet!==swimming)sfx('splash',{vol:.8});wet=swimming;
+   if(moving&&clock-stepAt>(swimming?560:400)){stepAt=clock;sfx(swimming?'paddle':'hop',{vol:swimming?.9:.55});}
+   me.current=p;scene.place('me',p,moving,swimming);scene.follow(p);if(moving&&!movedRef.current){movedRef.current=true;onMovedRef.current?.();}
    // Say where I am: a few times a second while moving, and every few seconds while resting so the others keep seeing me here.
    const changed=sentPos.x!==p.x||sentPos.y!==p.y;
    if(link.current&&myId&&((changed&&clock-sentAt>(moving?330:120))||clock-sentAt>3000)){sentAt=clock;sentPos={...p};link.current.send(p);}
@@ -88,6 +94,10 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
    for(const [id,el] of labels.current){const at=scene.labelAt(id);
     if(!at){el.style.visibility='hidden';continue;}el.style.visibility='visible';el.style.transform=`translate3d(${at.x.toFixed(1)}px,${at.y.toFixed(1)}px,0) translate(-50%,-100%) scale(${at.scale.toFixed(3)})`;el.style.zIndex=String(Math.round(at.scale*100));}
    if(clock-pickAt>500){pickAt=clock;
+    // Water is loudest in the pond and fades over the grass. Now and then one of the frogs calls: near ones clearly, far ones faintly, from their side of the view.
+    const edge=Math.hypot((p.x-POND.cx)/POND.rx,(p.y-POND.cy)/POND.ry);water.set(edge<=1?1:Math.max(0,1-(edge-1)/.6));
+    if(clock>callAt){callAt=clock+3500+Math.random()*5500;const voices=[KEEPER.spot,...[...spots.current.values()]];const from=voices[Math.floor(Math.random()*voices.length)];
+     if(from)sfx('ribbit',{vol:nearness(Math.hypot(from.x-p.x,from.y-p.y),560)*.9,pan:sideOf(from.x-p.x,from.y-p.y,scene.yaw())*.8});}
     const liveNow=othersRef.current.filter(f=>{const h=liveAt.current.get(f.id);return h&&clock-h.at<LIVE_STALE_MS;}).map(f=>({id:f.id,...(spots.current.get(f.id)??liveAt.current.get(f.id)!)}));
     const next=pickShown(p,liveNow,othersRef.current.map(f=>f.id),MAX_SHOWN);setShown(s=>s.length===next.length&&s.every((id,i)=>id===next[i])?s:next);
     // What is close enough to greet or open.
@@ -98,7 +108,7 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
     const key=!best?'':best.kind==='frog'?'f'+best.frog.id:best.kind==='pad'?'p'+best.pad.id:'k';if(key!==nearKey){nearKey=key;setNear(best);}
    }
   };
-  raf=requestAnimationFrame(frame);return()=>cancelAnimationFrame(raf);
+  raf=requestAnimationFrame(frame);return()=>{cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',quiet);water.stop();};
  },[ready,myId]);
  // Joystick: drag from the pad; the knob follows the finger and the frog goes that way.
  function stick(e:React.PointerEvent){const pad=stickRef.current;if(!pad)return;
@@ -134,7 +144,7 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
   {/* The pads are drawn in 3D; this list gives each one a real button for screen readers and keyboards. */}
   <ul className={failed?'map-pad-list':'sr-only'} aria-label="연못에 떠 있는 연잎">{pads.map(p=><li key={p.id}><button type="button" onClick={()=>onOpen({kind:'pad',pad:p})}>{padName(p)}{p.mine?', 내 연잎':''}</button></li>)}</ul>
   {near&&<button type="button" className="map-near" disabled={busy} onClick={()=>onOpen(near)}>{nearLabel}<ArrowRight size={15}/></button>}
-  <div ref={stickRef} className="map-stick" aria-hidden="true" onPointerDown={stick} onPointerMove={stick} onPointerUp={stick} onPointerCancel={stick}><span ref={knobRef}/></div>
+  <div ref={stickRef} className="map-stick" data-quiet="" aria-hidden="true" onPointerDown={stick} onPointerMove={stick} onPointerUp={stick} onPointerCancel={stick}><span ref={knobRef}/></div>
  </div>;
 }
 export type {Near};
