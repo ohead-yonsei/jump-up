@@ -33,7 +33,7 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   <p>같은 기수의 사람들과 한 달쯤 같은 시간을 지나요. 기관 담당자가 함께 지켜봐요.</p>
   <label className="sr-only" htmlFor="cohort-code">기수 코드</label>
   <input id="cohort-code" value={code} maxLength={12} autoComplete="off" autoCapitalize="characters" placeholder="기수 코드 (예: 7K3Q-PW2M)" onChange={e=>{setCode(e.target.value);setError('')}}/>
-  <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>함께하는 동안 남기는 기록(작은 행동, 연습, 마음 체크, 폴짝을 연 날, 연락 버튼, 폴짝에게 한마디)이 기수 운영진(기관 담당자와 폴짝 팀)에게 전달되는 것에 동의해요. 대화 내용은 보내지 않고, 기수에서 나가면 보낸 기록도 지워요.{!save&&' 이 기기에 기록 저장도 함께 켜져요.'}</span></label>
+  <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>함께하는 동안 남기는 기록(작은 행동, 연습, 마음 체크, 폴짝을 연 날, 연락 버튼, 폴짝에게 한마디와 돌아보기 답)이 기수 운영진(기관 담당자와 폴짝 팀)에게 전달되는 것에 동의해요. 대화 내용은 보내지 않고, 기수에서 나가면 보낸 기록도 지워요.{!save&&' 이 기기에 기록 저장도 함께 켜져요.'}</span></label>
   <button className="primary" disabled={!validJoinCode(normalized)||!consent||busy} onClick={join}>{busy?<LoaderCircle className="spin" size={17}/>:null}함께하기<ArrowRight size={17}/></button>
   {error&&<p className="error" role="alert">{error}</p>}
   </>}
