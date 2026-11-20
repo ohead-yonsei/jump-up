@@ -552,3 +552,19 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .notes-foot{margin-top:14px;font-size:11.5px;line-height:1.7;color:#7e8999}
 .dialog-content .frog-notes ul,.dialog-content .frog-notes ol{list-style:none;padding-left:0;line-height:inherit}
 .dialog-content .frog-notes li{margin-bottom:0}
+/* 0.46.0 — places as lily pads: a pad for each kind, a hint about quiet hours, and stamps for the pads already hopped to */
+.place-pad{position:relative;display:inline-grid;place-items:center;flex-shrink:0;color:#fff}
+.place-pad svg:first-child{position:absolute;inset:0;fill:#8ec46a}
+.place-pad>svg+svg{position:relative}
+.place-pad.kind-cafe svg:first-child{fill:#e2a66a}.place-pad.kind-park svg:first-child{fill:#7fbf6a}.place-pad.kind-library svg:first-child{fill:#8fa9d6}.place-pad.kind-store svg:first-child{fill:#6fc2b4}
+.place-pad-name{display:inline-flex;align-items:center;gap:5px;margin-bottom:3px;font-size:11.5px;font-weight:700;color:var(--accent)}
+.place-kind-note p.place-quiet{margin-top:8px;padding:8px 10px;border-radius:11px;font-weight:600}
+.place-quiet.calm{background:#eef6e9;color:#44663a!important}.place-quiet.busy{background:#fbf2e2;color:#7a5a22!important}
+.place-quiet small{display:block;margin-top:1px;font-size:10.5px;font-weight:500;opacity:.8}
+.place-stamps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 0;padding:0}
+.place-stamps li{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;text-align:center}
+.place-stamps li:not(.got) .place-pad{opacity:.34;filter:grayscale(1)}
+.place-stamps span:not(.place-pad){font-size:11px;font-weight:700;letter-spacing:-.4px;color:#35404f;white-space:nowrap}
+.place-stamps small{font-size:10.5px;color:#7e8999}
+.place-stamps li.got small{color:var(--accent);font-weight:700}
+.place-visit>p.place-stamps-note{margin-top:10px;font-size:12px!important;text-align:center}
