@@ -10,7 +10,7 @@ type Phase='load'|'intro'|'change'|'flash'|'reveal';
 const BEATS=[460,420,380,340,300,260,230,200,170,150,130,110,95,85,75,70,65,60,60,60,60,60];
 /** Full-screen moment when the friend grows into its next stage: the old shape glows white, the two shapes take turns,
  * a flash, then the new friend in colour. A tap before the end skips to the new friend; with reduced motion it opens there. */
-export function EvolveScene({character,equipped,from,to,onDone}:{character:Character;equipped:CharacterGame['equipped'];from:Growth;to:Growth;onDone:()=>void}){
+export function EvolveScene({character,equipped,from,to,gift=false,onDone}:{character:Character;equipped:CharacterGame['equipped'];from:Growth;to:Growth;gift?:boolean;onDone:()=>void}){
  const [urls,setUrls]=useState<[string,string]|null>(null);const [phase,setPhase]=useState<Phase>('load');const [showNew,setShowNew]=useState(false);
  const timers=useRef<ReturnType<typeof setTimeout>[]>([]);const done=useRef<HTMLButtonElement>(null);const onDoneRef=useRef(onDone);onDoneRef.current=onDone;
  const stage=growthStages.find(s=>s.id===to)!;const name=character.name;
@@ -44,7 +44,7 @@ export function EvolveScene({character,equipped,from,to,onDone}:{character:Chara
    {urls?.[1]&&<img className={'new'+(showNew?' on':'')} src={urls[1]} alt="" draggable={false}/>}
   </div>
   <div className="evolve-text" aria-live="polite">
-   {phase==='reveal'?<><span>축하해요!</span><h2>{line}</h2><p>{stage.note}</p><button ref={done} className="evolve-ok" onClick={e=>{e.stopPropagation();onDoneRef.current();}}>좋아요</button></>
+   {phase==='reveal'?<><span>축하해요!</span><h2>{line}</h2><p>{stage.note}</p>{gift&&<p className="evolve-gift">🎁 옷장에 선물이 도착했어요</p>}<button ref={done} className="evolve-ok" onClick={e=>{e.stopPropagation();onDoneRef.current();}}>좋아요</button></>
     :phase==='load'?null:<h2>{lead}</h2>}
   </div>
   <div className="evolve-white" aria-hidden="true"/>

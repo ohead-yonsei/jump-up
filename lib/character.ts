@@ -13,10 +13,11 @@ export type Character={name:string;color:FrogColor};
 /**
  * Five looks of the same friend, from a sleeping egg to a fully grown frog. 'frog' is the friend as it has always looked.
  * The friend grows with the days you did anything at all, rest included (`days`), and never shrinks back.
- * `wears` lists the slots that stage can show: the egg wears nothing yet, the tadpole has a head and no body.
+ * `wears` lists the slots that stage can show: the baby in the egg and the tadpole have a head and no body, so they wear what sits on a head.
+ * (The egg wore nothing until 0.44.0; feedback asked for something to wear from the very first day.)
  */
 export const growthStages=[
- {id:'egg',name:'알',days:0,wears:[],note:'말랑한 알 속에서 새근새근 꿈꾸는 중',hello:''},
+ {id:'egg',name:'알',days:0,wears:['head','eyes'],note:'말랑한 알 속에서 새근새근 꿈꾸는 중',hello:''},
  {id:'tadpole',name:'올챙이',days:1,wears:['head','eyes','face'],note:'동그란 몸에 꼬리 하나, 살랑살랑 헤엄쳐요',hello:'알에서 깨어났어! 이제 올챙이야'},
  {id:'froglet',name:'아기 개구리',days:3,wears:['head','eyes','outfit','hand','face'],note:'팔다리가 나오고 꼬리가 조금 남았어요',hello:'다리가 생겼어! 아기 개구리야'},
  {id:'frog',name:'어른 개구리',days:7,wears:['head','eyes','outfit','hand','face'],note:'지금의 폴짝이, 내 속도로 폴짝',hello:'꼬리 안녕! 이제 어른 개구리야'},
@@ -26,26 +27,32 @@ export type Growth=typeof growthStages[number]['id'];
 export type GrowthStage=typeof growthStages[number];
 export type Slot='head'|'eyes'|'outfit'|'hand'|'face';
 export const slots:Slot[]=['head','eyes','outfit','hand','face'];
-export type WardrobeItem={id:string;name:string;slot:Slot;price:number;description:string;tag:string};
+/**
+ * What can be worn. Three kinds, so there is always something to put on and something to look forward to (0.44.0):
+ * - basics: free from the first day, one for each slot (새싹 한 잎, 동그란 안경, 포근한 스카프, 따뜻한 머그) and every expression;
+ * - gifts (`gift`): free, one for each time the friend grows. Until then they are shown as a dark silhouette and cannot be bought;
+ * - the rest are brought home with leaves.
+ */
+export type WardrobeItem={id:string;name:string;slot:Slot;price:number;description:string;tag:string;gift?:Growth};
 export const wardrobeItems:WardrobeItem[]=[
- {id:'sprout',name:'새싹 한 잎',slot:'head',price:0,description:'우리의 시작을 함께하는 작은 새싹.',tag:'첫 선물'},
- {id:'daisy',name:'봄날의 꽃',slot:'head',price:30,description:'작은 폴짝이 모여 피어난 봄꽃.',tag:'봄의 조각'},
+ {id:'sprout',name:'새싹 한 잎',slot:'head',price:0,description:'우리의 시작을 함께하는 작은 새싹.',tag:'기본'},
+ {id:'daisy',name:'봄날의 꽃',slot:'head',price:0,description:'알에서 깨어난 날 피어난 봄꽃.',tag:'올챙이의 선물',gift:'tadpole'},
  {id:'ribbon',name:'말랑 리본 밴드',slot:'head',price:40,description:'나를 돌보는 시간엔 리본을 묶어요.',tag:'셀프 케어'},
  {id:'headphones',name:'포근 헤드폰',slot:'head',price:50,description:'좋아하는 노래 한 곡이면 충분해요.',tag:'나만의 음악'},
  {id:'bucket',name:'산책 모자',slot:'head',price:60,description:'햇살 좋은 날, 나만의 산책 친구.',tag:'가벼운 외출'},
  {id:'nightcap',name:'체크 수면 모자',slot:'head',price:60,description:'오늘은 일찍 포근하게 잠들어요.',tag:'꿀잠 준비'},
  {id:'fleece',name:'뽀송 후드',slot:'head',price:80,description:'폭 감싸면 어디든 내 방처럼 편해요.',tag:'나의 동굴'},
- {id:'dino',name:'공룡 후드',slot:'head',price:110,description:'오늘은 용감한 공룡이 되어볼까요?',tag:'변신 놀이'},
- {id:'crown',name:'나의 봄 왕관',slot:'head',price:120,description:'내 속도로 쌓아온 날들을 위한 왕관.',tag:'차곡차곡'},
- {id:'round',name:'동그란 안경',slot:'eyes',price:30,description:'익숙한 세상을 조금 새롭게 바라봐요.',tag:'새로운 시선'},
+ {id:'dino',name:'공룡 후드',slot:'head',price:0,description:'오늘은 용감한 공룡이 되어볼까요?',tag:'어른 개구리의 선물',gift:'frog'},
+ {id:'crown',name:'나의 봄 왕관',slot:'head',price:0,description:'내 속도로 쌓아온 날들을 위한 왕관.',tag:'다 자란 개구리의 선물',gift:'grown'},
+ {id:'round',name:'동그란 안경',slot:'eyes',price:0,description:'익숙한 세상을 조금 새롭게 바라봐요.',tag:'기본'},
  {id:'cucumber',name:'오이 팩',slot:'eyes',price:20,description:'시원하게 쉬어가는 나만의 휴식.',tag:'셀프 케어'},
  {id:'sunglasses',name:'햇살 선글라스',slot:'eyes',price:60,description:'눈부신 날에도 여유롭게, 폴짝.',tag:'느긋한 오후'},
- {id:'scarf',name:'포근한 스카프',slot:'outfit',price:40,description:'조금 쌀쌀한 날도 포근하게 감싸줘요.',tag:'따뜻한 마음'},
+ {id:'scarf',name:'포근한 스카프',slot:'outfit',price:0,description:'조금 쌀쌀한 날도 포근하게 감싸줘요.',tag:'기본'},
  {id:'hoodie',name:'연못 후드티',slot:'outfit',price:70,description:'내 연못처럼 편안한 민트색 후드티.',tag:'나의 편안함'},
  {id:'blanket',name:'구름 담요',slot:'outfit',price:70,description:'몽글몽글 담요 속에서 숨 고르기.',tag:'포근한 오후'},
- {id:'raincoat',name:'노란 비옷',slot:'outfit',price:90,description:'비 오는 날에도 나의 봄은 자라고 있어요.',tag:'비 오는 봄'},
+ {id:'raincoat',name:'노란 비옷',slot:'outfit',price:0,description:'비 오는 날에도 나의 봄은 자라고 있어요.',tag:'아기 개구리의 선물',gift:'froglet'},
  {id:'cookie',name:'초코칩 쿠키',slot:'hand',price:15,description:'달콤한 한 입으로 나를 챙겨요.',tag:'작은 간식'},
- {id:'mug',name:'따뜻한 머그',slot:'hand',price:20,description:'코코아 한 잔의 온기를 손에 쥐어요.',tag:'따뜻한 한 잔'},
+ {id:'mug',name:'따뜻한 머그',slot:'hand',price:0,description:'코코아 한 잔의 온기를 손에 쥐어요.',tag:'기본'},
  {id:'coffee',name:'테이크아웃 커피',slot:'hand',price:25,description:'주문 연습을 마친 날의 작은 기념.',tag:'한마디 성공'},
  {id:'phone',name:'나의 폰',slot:'hand',price:30,description:'보내지 않아도 괜찮은 안부 한 줄.',tag:'느린 연결'},
  {id:'book',name:'좋아하는 책',slot:'hand',price:40,description:'한 페이지만 읽어도 충분해요.',tag:'조용한 취향'},
@@ -129,15 +136,23 @@ export function earnActivity(game:CharacterGame,kind:'step'|'practice'|'rest',id
  if(game.rewards.some(r=>r.key===key)||game.rewards.filter(r=>r.day===day&&r.kind===kind).reduce((n,r)=>n+r.amount,0)>=cap)return game;
  return {...game,rewards:[...game.rewards,{key,day,amount,kind}]};
 }
+/** The free basics, one for each slot: what a new friend can try on before it has a single leaf to spend. */
+export const basicItems=wardrobeItems.filter(i=>i.price===0&&!i.gift&&i.slot!=='face');
+/** A gift opens once the friend has grown into its stage. Anything that is not a gift is always open. */
+export const giftOpen=(game:CharacterGame,item:WardrobeItem)=>!item.gift||stageIndex(growthOf(game).id)>=stageIndex(item.gift);
+/** Gifts that have arrived and are still wrapped: shown with a dot on the home and ‘선물 받기’ in the closet. */
+export const giftsWaiting=(game:CharacterGame)=>game.character?wardrobeItems.filter(i=>i.gift&&giftOpen(game,i)&&!game.owned.includes(i.id)):[];
+/** A look is out of reach while it needs a gift that has not arrived. */
+export const lookLocked=(game:CharacterGame,look:Look)=>Object.values(look.equipped).some(id=>{const item=wardrobeItems.find(i=>i.id===id);return !!item&&!game.owned.includes(item.id)&&!giftOpen(game,item);});
 export function collectItem(game:CharacterGame,id:string):CharacterGame{
  const item=wardrobeItems.find(i=>i.id===id);if(!item||!game.character)return game;
  if(game.owned.includes(id))return {...game,equipped:{...game.equipped,[item.slot]:id}};
- if(balance(game)<item.price)return game;
+ if(balance(game)<item.price||!giftOpen(game,item))return game;
  return {...game,owned:[...game.owned,id],equipped:{...game.equipped,[item.slot]:id}};
 }
 export function lookCost(game:CharacterGame,look:Look){return Object.values(look.equipped).filter(id=>!game.owned.includes(id!)).reduce((n,id)=>n+(wardrobeItems.find(i=>i.id===id)?.price??0),0);}
 export function wearLook(game:CharacterGame,look:Look):CharacterGame{
- if(!game.character||balance(game)<lookCost(game,look))return game;
+ if(!game.character||balance(game)<lookCost(game,look)||lookLocked(game,look))return game;
  let next:CharacterGame={...game,equipped:{}};for(const id of Object.values(look.equipped))next=collectItem(next,id!);return next;
 }
 export function removeItem(game:CharacterGame,slot:Slot):CharacterGame{const equipped={...game.equipped};delete equipped[slot];return {...game,equipped};}
@@ -156,6 +171,7 @@ export function validGame(raw:unknown):CharacterGame{
   }else continue;
   keys.add(r.key);rewards.push({key:r.key,day:r.day,amount:r.amount,kind:r.kind});
  }
+ // What was once in the closet stays there: a gift bought with leaves before 0.44.0 is kept even if the friend has not grown into it yet (nothing is ever taken back).
  let funds=rewards.reduce((n,r)=>n+r.amount,0);const owned=['sprout'];
  if(Array.isArray(g.owned))for(const id of g.owned){const item=wardrobeItems.find(i=>i.id===id);if(item&&!owned.includes(id)&&funds>=item.price){owned.push(id);funds-=item.price;}}
  const equipped:CharacterGame['equipped']={};if(g.equipped&&typeof g.equipped==='object')for(const slot of slots){const id=(g.equipped as Record<string,unknown>)[slot];if(typeof id==='string'&&owned.includes(id)&&wardrobeItems.some(i=>i.id===id&&i.slot===slot))equipped[slot]=id;}

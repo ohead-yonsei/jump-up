@@ -8,7 +8,7 @@ import {answerField,answerEmojis,cleanAnswer,ANSWER_MAX} from '@/lib/answers';
 import type {Entry} from '@/lib/records';
 import {FrogMark} from './frog-mark';
 import {Frog3D,FrogStill,haptic,type Frog3DHandle} from './frog-3d';
-import {nextGrowth,activityDays,returnGift,RETURN_GIFT,growthOf,growthStages,grewFrom,canWear,slots,type CharacterGame,type Growth} from '@/lib/character';
+import {nextGrowth,activityDays,returnGift,RETURN_GIFT,growthOf,growthStages,grewFrom,canWear,slots,giftsWaiting,type CharacterGame,type Growth} from '@/lib/character';
 import {missionCheer,restLines,moodFor,greeting,isNight,nightMissions} from '@/lib/companion';
 import {PondInvite} from './cohort-pond';
 import {EvolveScene} from './evolve-scene';
@@ -57,9 +57,11 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  const [evolving,setEvolving]=useState<{from:Growth;to:Growth;worn:boolean}|null>(null);const wornCheer=useRef<ReturnType<typeof setTimeout>>(undefined);
  useEffect(()=>()=>clearTimeout(wornCheer.current),[]);
  const evolved=()=>{if(!evolving)return;const {to,worn}=evolving;setEvolving(null);setShownGrowth(to);seenGrowth=to;
-  setTimeout(()=>frog.current?.react('spin',growthStages.find(s=>s.id===to)!.hello),300);if(worn)wornCheer.current=setTimeout(()=>frog.current?.react('cheer','보관하던 옷, 드디어 입었어!'),3500);};// eslint-disable-line react-hooks/exhaustive-deps
+  setTimeout(()=>frog.current?.react('spin',growthStages.find(s=>s.id===to)!.hello),300);if(worn)wornCheer.current=setTimeout(()=>frog.current?.react('cheer','보관하던 옷, 드디어 입었어!'),3500);
+  // growing brings a gift to the closet; the friend says so once the hello has been read
+  else if(gifts)wornCheer.current=setTimeout(()=>frog.current?.react('cheer','옷장에 선물이 도착했어!'),3500);};// eslint-disable-line react-hooks/exhaustive-deps
  const night=isNight();const season=seasonOf();const hello=greeting();const mood=moodFor(energy,game.equipped,night);const back=returnGift(game);const wave=isWave(profile);
- const color=game.character?.color;
+ const color=game.character?.color;const gifts=giftsWaiting(game).length;
  useEffect(()=>{if(!game.character)return;const t=setTimeout(()=>back?frog.current?.react('hug','보고 싶었어! 와줘서 고마워'):frog.current?.react('jump',night?'늦은 밤에도 와줬구나':profile?'오늘도 와줘서 고마워':'만나서 반가워!'),1500);return ()=>clearTimeout(t);},[]);// eslint-disable-line react-hooks/exhaustive-deps
  const activeGoal=goals.find(g=>g.id===profile?.goal);const GoalIcon=profile?goalIcons[profile.goal]:Leaf;
  // One mission at a time; ‘다른 미션’ walks today's list.
@@ -85,13 +87,13 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  const closeSheet=()=>{setSheet(null);setConfirmJump(false);};
  const careChips=(night||wave)&&<div className="pond-stage-care">{night&&<button className="care-chip night" onClick={()=>setSheet('night')}><Moon size={14}/>잠들기 전 1분{nightMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}{wave&&<button className="care-chip wave" onClick={()=>setSheet('wave')}><Waves size={14}/>나만의 썰물{waveMissions.some(m=>m.title===careDone)&&<Check size={13}/>}</button>}</div>;
  return <div className="poljjak-home">
-  {evolving&&game.character&&<EvolveScene character={game.character} equipped={game.equipped} from={evolving.from} to={evolving.to} onDone={evolved}/>}
+  {evolving&&game.character&&<EvolveScene character={game.character} equipped={game.equipped} from={evolving.from} to={evolving.to} gift={gifts>0} onDone={evolved}/>}
  {game.character?<section ref={stageRef} className={'pond-stage has-scene'+(night?' is-night':'')+(held?' is-held':'')} style={{'--scene':`url(/scenes/pond-${night?'night':'day'}.webp)`,height:held??undefined} as React.CSSProperties} aria-label="나의 캐릭터와 연못"><div className="pond-stage-sky" aria-hidden="true"><span className="sun"/>{night&&<span className="stars"/>}<span className="cloud cloud-a"/><span className="cloud cloud-b"/><span className="hill hill-a"/><span className="hill hill-b"/><span className="water"/><span className="pad"/></div>
  <div className="pond-stage-frog"><Frog3D ref={frog} character={game.character} equipped={mood.equipped} growth={shownGrowth} framing="stage" nudge={demoScene===undefined}/></div>
  <div className="pond-stage-copy"><span>{new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})}</span><h1>{hello.title}<br/><em className={game.character.name.length>10?'name-xs':game.character.name.length>7?'name-s':undefined}>{game.character.name}</em></h1><p className="pond-stage-hint"><Hand size={13}/>{night?hello.note:'톡 폴짝 · 머리 쓰담 · 꾹 포옥'}</p></div>
  {careChips}
  {back?<div className="pond-stage-bottom is-return" role="group" aria-label="다시 만난 선물"><span><Gift size={18}/><span><strong>{back.away}일 동안 연못을 지키고 있었어</strong><small>모은 잎과 옷장도 그대로예요.</small></span></span><button onClick={()=>{onClaimReturn();frog.current?.react('hug','다시 와줘서 정말 고마워');}}>선물 {RETURN_GIFT}잎 받기<Leaf size={15}/></button></div>
- :<div className="pond-stage-bottom"><span><Leaf size={14}/>{shown.name} · 함께한 날 {activityDays(game)}일</span><button onClick={()=>onNavigate('closet')}><Shirt size={15}/>꾸미기<ArrowRight size={15}/></button></div>}</section>:<section className="pond-hero" aria-label="폴짝, 저마다의 봄을 기다리는 연못"><img className="pond-image" src={seasons[season].image} alt={seasons[season].alt}/><div className="pond-shade"/><div className="pond-copy"><span className="pond-eyebrow"><span/>나의 속도로 만나는 봄</span><h1>나의 봄이 오면,<br/><em>폴짝.</em></h1><p>개구리에게 경칩이 오듯,<br/>우리에게도 저마다의 봄이 와요.</p></div><div className="pond-whisper"><span className="whisper-icon"><FrogMark size={30}/></span><span>{profile?'오늘도, 여기서 기다리고 있었어.':'조금 늦어도 괜찮아. 네 봄이니까.'}</span></div><span className="pond-caption">POLJJAK · YOUR OWN SPRING</span></section>}
+ :<div className="pond-stage-bottom"><span><Leaf size={14}/>{shown.name} · 함께한 날 {activityDays(game)}일</span><button onClick={()=>onNavigate('closet')} aria-label={gifts?'꾸미기, 선물이 도착했어요':undefined}><Shirt size={15}/>꾸미기{gifts>0&&<i className="gift-dot" aria-hidden="true"/>}<ArrowRight size={15}/></button></div>}</section>:<section className="pond-hero" aria-label="폴짝, 저마다의 봄을 기다리는 연못"><img className="pond-image" src={seasons[season].image} alt={seasons[season].alt}/><div className="pond-shade"/><div className="pond-copy"><span className="pond-eyebrow"><span/>나의 속도로 만나는 봄</span><h1>나의 봄이 오면,<br/><em>폴짝.</em></h1><p>개구리에게 경칩이 오듯,<br/>우리에게도 저마다의 봄이 와요.</p></div><div className="pond-whisper"><span className="whisper-icon"><FrogMark size={30}/></span><span>{profile?'오늘도, 여기서 기다리고 있었어.':'조금 늦어도 괜찮아. 네 봄이니까.'}</span></div><span className="pond-caption">POLJJAK · YOUR OWN SPRING</span></section>}
  {!game.character&&<button className="create-companion" onClick={()=>onNavigate('closet')}><FrogMark size={35}/><span><strong>나와 함께할 친구 만들기</strong><small>이름과 색을 고르고, 30잎 선물도 받아요.</small></span><ArrowRight size={18}/></button>}
  {!game.character&&careChips}
  {!profile&&<section className="begin-card"><div><span className="step-label">우리, 여기서 시작해요</span><h2>지금 나에게 편한 거리는?</h2><p>편한 선택으로 나의 시작점을 찾아요.<br/>정답도, 정해진 속도도 없어요.</p></div><button className="primary" onClick={onStartCheck}>내 봄의 시작점 찾기<ArrowRight size={18}/></button><span className="check-note">약 1분 · 언제든 다시 고를 수 있어요</span></section>}
