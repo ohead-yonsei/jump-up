@@ -19,7 +19,7 @@ type Props={initialCharacter:Character|null;initialProfile:JourneyProfile|null;i
 const SCALE_FROM=1,GOAL_AT=SCALE_FROM+scaleItems.length,ENERGY_AT=GOAL_AT+1,TURNS=ENERGY_AT+1;
 // I answer by typing, as in a chat; the options sit under the talk as small bubbles to tap instead. echo = what the keeper says back, which is also how I see what was understood.
 type Turn={kind:ReadKind;lead?:string;say:string;hint:string;options:{label:string;echo?:string}[]};
-const outsideEcho=['방 안이 제일 편하군요.','집 안이나 문 앞까지는 괜찮군요.','익숙한 집 근처는 다닐 수 있군요.','익숙한 가게나 공간까지는 갈 수 있군요.','일상은 잘 지내지만 가끔은 혼자 있고 싶군요. 혼자만의 시간을 잘 보내는 ‘나만의 썰물’ 미션도 함께 열려요.'];
+const outsideEcho=['방 안이 제일 편하군요. 괜찮아요, 저도 연못이 제일 편해요.','집 안이나 문 앞까지는 괜찮군요.','익숙한 집 근처는 다닐 수 있군요.','익숙한 가게나 공간까지는 갈 수 있군요.','일상은 잘 지내지만 가끔은 혼자 있고 싶군요. 혼자만의 시간을 잘 보내는 ‘나만의 썰물’ 미션도 함께 열려요.'];
 const goalEcho:Record<Goal,string>={rhythm:'내 일상을 돌보고 싶군요.',outside:'바깥과 가까워지고 싶군요.',connect:'사람과 이어지고 싶군요.'};
 const scaleHints=['예: 가끔 그래요','예: 별로 없어요','예: 엄마한테는 기대요','예: 한 명 있어요','예: 두 명쯤','예: 하루 30분쯤'];
 const turns:Turn[]=[
