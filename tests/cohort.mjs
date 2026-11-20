@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['records','request-origin','cohort','cohort-server','pond','cohort-store']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
+for(const name of ['records','usage','request-origin','cohort','cohort-server','pond','cohort-store']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
 const j=await import(new URL('records.js',out));const c=await import(new URL('cohort.js',out));const srv=await import(new URL('cohort-server.js',out));const st=await import(new URL('cohort-store.js',out));
 let passed=0;const test=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const token='A'.repeat(43);const step=(id,at,extra={})=>({id,at,type:'step',title:'창밖 보기',energy:2,...extra});
@@ -69,7 +69,8 @@ await test('a cohort keeps each record once, counts Korean days and forgets peop
  const [first,second]=await store.cohortRecords(cohort.id);
  assert.equal(first.entries.length,3);assert.equal(first.entries[0].title,'창밖 보기');assert.deepEqual(first.visits,['2026-11-03']);assert.equal(first.code,'P01');assert(first.lastSyncAt);assert.equal(second.entries.length,0);
  const s=c.participantSummary(first,new Date('2026-11-04T00:00:00Z'));
- assert.equal(s.firstDay,'2026-11-03');assert.equal(s.visitDays,1);assert.equal(s.activeDays,1);assert.equal(s.recentActiveDays,1);assert.equal(s.firstCheckin.calm,2);assert.equal(s.lastCheckin,null);assert.equal(s.notes,1);
+ assert.equal(s.firstDay,'2026-11-03');assert.equal(s.visitDays,1);assert.equal(s.activeDays,1);assert.equal(s.recentActiveDays,1);assert.equal(s.firstCheckin.calm,2);assert.equal(s.lastCheckin,null);assert.equal(s.notes,1);assert.deepEqual(s.review,{'review-use':null,'review-grow':null,'review-change':null});
+ const rated=c.participantSummary({...first,entries:[...first.entries,{id:'r1',at:'2026-11-03T03:00:00.000Z',type:'feedback',title:'돌아보기 · 써보니',energy:null,missionId:'review-use',rating:4}]},new Date('2026-11-04T00:00:00Z'));assert.equal(rated.notes,1,'a rating is not a note');assert.equal(rated.review['review-use'],4);
  const csv=c.cohortCsv([first,second]);const lines=csv.split('\r\n');
  assert.equal(lines.filter(l=>l.includes('participant_code')).length,1);assert(lines.some(l=>l.startsWith('"P02","summary"')));assert(csv.includes(`"'=좋아요"`));
  assert.equal((await store.listCohorts())[0].participants,2);assert.equal(await store.memberCount(cohort.id),2);

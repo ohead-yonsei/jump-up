@@ -3,8 +3,8 @@ import fs from 'node:fs/promises';
 import vm from 'node:vm';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-const src=await fs.readFile(new URL('../lib/records.ts',import.meta.url),'utf8');
-await fs.writeFile(new URL('records.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+for(const name of ['records','usage']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');
+await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
 const r=await import(new URL('records.js',out));let count=0;
 async function test(name,fn){await fn();count++;console.log('PASS '+name)}
 const entry={id:'test',at:'2026-10-24T12:00:00.000Z',type:'step',title:'작은 한 걸음',energy:2};
@@ -23,7 +23,7 @@ await test('old 5-level energy maps onto the 3 levels and old records still load
 });
 await test('CSV keeps the old energy column as it was and adds energy_level (1-3) for every record',()=>{
  const rows=r.recordsCsv([{...entry,id:'old',energy:4},{...entry,id:'new',energy:null,energyLevel:2},{...entry,id:'none',energy:null}],'P07',['2026-10-24']).slice(1).split('\r\n').map(row=>row.slice(1,-1).split('","'));
- const col=name=>rows[0].indexOf(name);assert.equal(col('energy'),5);assert.equal(col('energy_level'),rows[0].length-1);
+ const col=name=>rows[0].indexOf(name);assert.equal(col('energy'),5);assert.equal(col('energy_level'),rows[0].length-4);assert.deepEqual(rows[0].slice(-3),['screen','seconds','opens']);assert(rows.every(row=>row.length===rows[0].length),'every row has every column');
  const byId=id=>rows.find(row=>row[1]===id);
  assert.equal(byId('old')[col('energy')],'4');assert.equal(byId('old')[col('energy_level')],'3');
  assert.equal(byId('new')[col('energy')],'');assert.equal(byId('new')[col('energy_level')],'2');
@@ -87,13 +87,13 @@ await test('CSV starts with a usage summary and lists each day the app was opene
  const u=r.usageSummary(entries,['2026-10-01','2026-10-02','2026-10-09']);
  assert.deepEqual(u,{firstDay:'2026-10-01',lastDay:'2026-10-09',spanDays:9,visitDays:5,activeDays:2,contactTaps:1});
  const csv=r.recordsCsv(entries,'P07',['2026-10-01','2026-10-02','2026-10-09']);const rows=csv.slice(1).split('\r\n');
- assert(rows[0].endsWith('"support_id","contact_channel","first_day","last_day","span_days","visit_days","active_days","contact_taps","energy_level"'));
- assert(rows[1].startsWith('"P07","summary"'));assert(rows[1].endsWith('"2026-10-01","2026-10-09","9","5","2","1",""'));
+ assert(rows[0].endsWith('"support_id","contact_channel","first_day","last_day","span_days","visit_days","active_days","contact_taps","energy_level","screen","seconds","opens"'));
+ assert(rows[1].startsWith('"P07","summary"'));assert(rows[1].endsWith('"2026-10-01","2026-10-09","9","5","2","1","","","",""'));
  assert(rows.some(row=>row.includes('"youth-future-center","phone"')));
  assert.equal(rows.filter(row=>row.includes('"visit"')).length,3);
  const columns=row=>row.split('","').length;assert(rows.every(row=>columns(row)===columns(rows[0])));
  assert(!csv.includes('undefined'));
- assert(r.recordsCsv([],'P07').split('\r\n')[1].endsWith('"","","0","0","0","0",""'));
+ assert(r.recordsCsv([],'P07').split('\r\n')[1].endsWith('"","","0","0","0","0","","","",""'));
 });
 await test('app manifest provides standalone install assets and internal shortcuts',async()=>{
  const m=JSON.parse(await fs.readFile(new URL('../public/manifest.webmanifest',import.meta.url),'utf8'));
@@ -114,5 +114,16 @@ await test('service worker never caches redirects or API/auth responses',async()
 await test('service worker falls back on offline navigation and only clears its own cache',async()=>{
  offline=true;let response;handlers.fetch({request:{url:'https://example.test/demo',method:'GET',mode:'navigate'},respondWith:p=>response=p});assert.equal(await (await response).text(),'offline-help');
  let pending;handlers.activate({waitUntil:p=>pending=p});await pending;assert.deepEqual(deleted,['one-step-shell-old']);
+});
+await test('돌아보기 asks three numbers about the app after a few days, again two weeks later, and reads back the latest',()=>{
+ assert.deepEqual(r.reviewQuestions.map(q=>q.id),['review-use','review-grow','review-change']);for(const q of r.reviewQuestions){assert(q.label.endsWith('요?'));assert(q.low&&q.high&&q.short);}
+ const now=new Date('2026-11-21T03:00:00.000Z');const ans=(id,rating,at)=>({...entry,id:id+at,type:'feedback',title:'돌아보기',missionId:id,rating,at});
+ assert.equal(r.reviewDue([],2,now),false,'not in the first days');assert.equal(r.reviewDue([],3,now),true);
+ const done=[ans('review-use',4,'2026-11-10T03:00:00.000Z'),ans('review-grow',5,'2026-11-10T03:00:01.000Z'),ans('review-change',3,'2026-11-10T03:00:02.000Z')];
+ assert.equal(r.reviewDue(done,9,now),false);assert.equal(r.reviewDue(done,9,new Date('2026-11-25T03:00:00.000Z')),true);
+ assert.deepEqual(r.latestReview(done),{'review-use':4,'review-grow':5,'review-change':3});assert.deepEqual(r.latestReview([...done,ans('review-use',2,'2026-11-25T03:00:00.000Z')])['review-use'],2);
+ assert.deepEqual(r.latestReview([{...entry,type:'feedback',title:'폴짝에게 한마디',note:'좋아요'}]),{'review-use':null,'review-grow':null,'review-change':null});
+ assert(!r.isReview({type:'feedback',missionId:'review-use'}),'a rating is needed');assert(!r.isReview({type:'step',missionId:'review-use',rating:3}));
+ assert.equal(r.validEntries(done).length,3,'the answers are ordinary records');const csv=r.recordsCsv(done,'P07');assert(csv.includes('"review-grow"')&&csv.includes('"5"'));
 });
 console.log(`${count} app checks passed. Device installation and live model calls are not simulated by these tests.`);

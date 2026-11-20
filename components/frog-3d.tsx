@@ -6,7 +6,7 @@ import {FrogAvatar} from './frog-avatar';
 import {sfx} from '@/lib/sound';
 import {frogSays} from '@/lib/frog-lore';
 export type Frog3DHandle={react:(kind:Reaction,line?:string)=>void};
-type Props={character:Character;equipped?:CharacterGame['equipped'];growth?:Growth;framing?:Framing;interactive?:boolean;lines?:string[];className?:string;ref?:Ref<Frog3DHandle>;onReact?:(kind:Reaction)=>void;nudge?:boolean};
+type Props={character:Character;equipped?:CharacterGame['equipped'];growth?:Growth;framing?:Framing;interactive?:boolean;lines?:string[];className?:string;ref?:Ref<Frog3DHandle>;onReact?:(kind:Reaction,touched:boolean)=>void;nudge?:boolean};
 /** Set once the friend has been touched on this device, so the ‘눌러보세요’ hint is shown only until then. */
 const TOUCHED_KEY='poljjak-frog-touched';
 type Burst={id:number;x:number;y:number;kind:Reaction};
@@ -32,7 +32,7 @@ export function Frog3D({character,equipped={},growth='frog',framing='full',inter
   const own=touched&&kind==='pat'&&!latest.current.lines&&Math.random()<.4?frogSays[latest.current.look.growth??'frog']:null;
   const pool=own??latest.current.lines??(youngLines[latest.current.look.growth]??defaultLines)[kind];setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),1900);
   // Only a touch makes a sound: the friend greeting on its own stays quiet, so nothing startles.
-  if(touched){haptic(kind==='hug'?[10,40,10]:8);sfx(kind);setHint(false);try{localStorage.setItem(TOUCHED_KEY,'1');}catch{}}latest.current.onReact?.(kind);
+  if(touched){haptic(kind==='hug'?[10,40,10]:8);sfx(kind);setHint(false);try{localStorage.setItem(TOUCHED_KEY,'1');}catch{}}latest.current.onReact?.(kind,touched);
  }
  useImperativeHandle(ref,()=>({react(kind,line){stage.current?.react(kind);celebrate(kind,undefined,undefined,line);}}),[]);
  useEffect(()=>{
