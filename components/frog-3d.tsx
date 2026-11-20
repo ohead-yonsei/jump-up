@@ -4,6 +4,7 @@ import type {Character,CharacterGame,Growth} from '@/lib/character';
 import type {FrogStage,Framing,Reaction} from '@/lib/frog-scene';
 import {FrogAvatar} from './frog-avatar';
 import {sfx} from '@/lib/sound';
+import {frogSays} from '@/lib/frog-lore';
 export type Frog3DHandle={react:(kind:Reaction,line?:string)=>void};
 type Props={character:Character;equipped?:CharacterGame['equipped'];growth?:Growth;framing?:Framing;interactive?:boolean;lines?:string[];className?:string;ref?:Ref<Frog3DHandle>;onReact?:(kind:Reaction)=>void;nudge?:boolean};
 /** Set once the friend has been touched on this device, so the ‘눌러보세요’ hint is shown only until then. */
@@ -27,7 +28,9 @@ export function Frog3D({character,equipped={},growth='frog',framing='full',inter
  function celebrate(kind:Reaction,x?:number,y?:number,line?:string,touched=false){
   const r=box.current?.getBoundingClientRect();if(!r)return;const id=Date.now()+Math.random();
   setBursts(b=>[...b.slice(-4),{id,kind,x:x===undefined?r.width/2:x-r.left,y:y===undefined?r.height*.35:y-r.top}]);setTimeout(()=>setBursts(b=>b.filter(i=>i.id!==id)),1300);
-  const pool=latest.current.lines??(youngLines[latest.current.look.growth]??defaultLines)[kind];setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),1900);
+  // A pat on the head sometimes gets a line about the friend's own frog life (lib/frog-lore.ts).
+  const own=touched&&kind==='pat'&&!latest.current.lines&&Math.random()<.4?frogSays[latest.current.look.growth??'frog']:null;
+  const pool=own??latest.current.lines??(youngLines[latest.current.look.growth]??defaultLines)[kind];setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),1900);
   // Only a touch makes a sound: the friend greeting on its own stays quiet, so nothing startles.
   if(touched){haptic(kind==='hug'?[10,40,10]:8);sfx(kind);setHint(false);try{localStorage.setItem(TOUCHED_KEY,'1');}catch{}}latest.current.onReact?.(kind);
  }

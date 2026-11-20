@@ -5,7 +5,7 @@ import type {CharacterGame, Slot} from './character';
 
 /** One line per mission that notices what was done, plus a gentle question that needs no answer. */
 const missionLines: Record<string, string> = {
- 'rhythm-water': '물 한 모금, 몸이 고마워하고 있을 거야.',
+ 'rhythm-water': '물 한 모금! 나는 피부로 마시지만, 몸이 고마워하는 건 똑같아.',
  'rhythm-color': '눈에 들어온 색, 오늘은 어떤 색이었어?',
  'rhythm-curtain': '빛이 조금 들어왔네. 방 안이 어때 보여?',
  'rhythm-tidy': '딱 하나 옮긴 것도 공간이 달라지는 시작이야.',
@@ -101,7 +101,8 @@ const fallback = ['작은 폴짝, 정말 멋져!', '해본 것만으로 충분�
 export function missionCheer(mission: Pick<Mission, 'id'> | null, seed = Date.now()) {
  return (mission && missionLines[mission.id]) || fallback[seed % fallback.length];
 }
-export const restLines = ['쉬어가는 날도 나의 봄이야.', '오늘은 같이 쉬자. 연못은 그대로 있을게.', '쉬는 것도 내가 고른 소중한 선택이야.'];
+// The last one is from real frogs: in winter they sit still on the pond floor until spring (lib/frog-lore.ts).
+export const restLines = ['쉬어가는 날도 나의 봄이야.', '오늘은 같이 쉬자. 연못은 그대로 있을게.', '쉬는 것도 내가 고른 소중한 선택이야.', '개구리도 겨울엔 연못 바닥에서 가만히 봄을 기다려. 오늘은 그런 날이야.'];
 
 /** The frog mirrors today's energy without overriding anything the person chose to wear. */
 const moods: Record<Energy, {equipped: Partial<Record<Slot, string>>; line: string}> = {

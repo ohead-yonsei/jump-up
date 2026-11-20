@@ -98,6 +98,10 @@ export const KEEPER_LINES = [
   '와줘서 반가워요. 편한 자리에 머물러요.',
   '물가는 조용해서 쉬기 좋아요.',
   '다른 개구리에게 다가가 눌러 보면 응원을 건넬 수 있어요.',
+  // From real frogs (lib/frog-lore.ts): wintering on the pond floor, the spring chorus, the tail that becomes strength.
+  '개구리는 겨울이면 연못 바닥에서 가만히 봄을 기다려요. 쉬는 것도 사는 방법이에요.',
+  '봄밤에는 개구리들이 물가에 모여 함께 울어요. 한 마디면 충분해요.',
+  '올챙이의 꼬리는 사라지지 않고 힘이 된대요. 지나온 날들처럼요.',
 ];
 /** One line a day, the same for everyone that day. */
 export const keeperLine = (day: string) => KEEPER_LINES[Math.floor(hash01('keeper:' + day) * KEEPER_LINES.length)];

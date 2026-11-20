@@ -75,6 +75,36 @@
 
 실증에서 확인할 것: 처음 만난 친구가 알이라 아쉬운지 기대되는지, 1·3·7·14일 간격이 한 달 기수 안에서 알맞은지, ‘다음 모습까지 N일’이 부담이 되는지.
 
+## 진짜 개구리에게서 가져온 것(0.45.0)
+
+2차 피드백: 세계관은 실제 개구리가 어떻게 살고 왜 그렇게 자라는지에서 출발해 사용자의 행동과 연결하고, 지금은 공감할 수 있는 정도면 충분하다. 현실에 있는 것을 포착해 의인화하고 개구리들이 사는 규칙을 만든다.
+
+- **규칙은 새로 만들지 않고, 이미 있던 원칙에 개구리의 이유를 붙였어요.** ‘연못의 약속’ 네 가지(`pondPromises`)는 꾸미기를 유지한 이유의 원칙 1~4와 같은 내용이에요. 경칩(저마다 다른 봄) · 겨울잠(쉬어가기) · 뒷다리 먼저(한 번에 하나) · 꼬리(잃는 것이 없어요).
+- **사실 한 줄, 폴짝에서의 뜻 한 줄.** 이야기(`frogStories`)는 실제 개구리가 하는 일과 그것이 앱에서 무엇인지를 따로 적어요. 사실을 앱에 맞게 고치지 않아요. “많은 개구리는”, “쯤”처럼 자료가 말하는 만큼만 말해요.
+- **징그럽지 않게, 그림은 그대로.** 0.24.0의 원칙대로 변태 과정은 그리지 않고 글로만 전해요.
+- **자랄 때 열려요.** 이야기는 친구의 단계에 맞춰 열려서, 지금 내 친구에게 일어나는 일을 읽게 돼요. 아직 열리지 않은 것은 수만 보여요.
+
+사실과 자료(2026-11-21에 검색 결과의 요약으로 확인했어요. 발표나 인쇄물에 옮기기 전에 원문을 한 번 더 읽어 주세요):
+
+| 이야기 | 자료 |
+| --- | --- |
+| 알은 물을 머금은 젤리에 싸여 보호받는다 | [Hepper](https://www.hepper.com/what-do-frog-eggs-look-like/), [Woodland Trust](https://woodlandtrust.org.uk/blog/2026/04/when-do-frogs-spawn-and-how-to-spot-them/) |
+| 경칩 무렵 겨울잠에서 깨어 물가에 모이고, 봄이 더딘 해에는 늦다 | [서울대공원](https://news.seoul.go.kr/env/archives/67210), [국립수목원 보도자료](https://m.korea.kr/briefing/pressReleaseView.do?newsId=156498504) |
+| 올챙이는 아가미로, 자라면 허파로 숨 쉰다 | [호주박물관](https://australian.museum/learn/teachers/learning/frog-life-cycle/), [브리태니커](https://kids.britannica.com/students/article/frog-life-cycle/639282) |
+| 뒷다리가 먼저, 앞다리는 나중에 나온다 | [호주박물관](https://australian.museum/learn/teachers/learning/frog-life-cycle/) (앞다리가 아가미 덮개 안에서 먼저 만들어진다는 자료도 있어요. 겉으로 보이는 순서는 뒷다리가 먼저예요) |
+| 꼬리는 떨어지지 않고 흡수되어 양분이 된다 | [호주박물관](https://australian.museum/learn/teachers/learning/frog-life-cycle/), [세인트앤드루스대 올챙이 프로젝트](https://tadpoles.wp.st-andrews.ac.uk/from-tadpole-to-frog) |
+| 많은 개구리는 물을 마시지 않고 배 쪽 피부로 흡수한다 | [Live Science](https://www.livescience.com/animals/frogs/how-do-frogs-breathe-and-drink-through-their-skin), [미국생리학회 연구 소개](https://www.sciencedaily.com/releases/2002/08/020827062602.htm) |
+| 물에 사는 개구리는 연못 바닥에서 피부로 숨 쉬며 겨울을 나고, 땅의 개구리는 낙엽·흙 속으로 간다 | [온타리오 주립공원](https://www.ontarioparks.ca/parksblog/?p=9011), [Scientific American](https://www.scientificamerican.com/article/how-do-frogs-survive-wint/) |
+| 숲개구리는 몸의 약 3분의 2가 얼고 심장이 멈췄다가, 봄에 심장부터 다시 뛴다 | [미국 국립공원관리청](https://www.nps.gov/gaar/learn/nature/wood-frog-page-2.htm) |
+| 울음은 주로 수컷이 울음주머니로 내고, 겨울잠을 끝낸 개구리들이 함께 운다 | [국립수목원 보도자료](https://m.korea.kr/briefing/pressReleaseView.do?newsId=156498504), [수원청개구리 기사(사진 국립생물자원관)](https://www.wikitree.co.kr/articles/1129509) |
+| 일주일에 한 번쯤 허물을 벗고 대개 먹는다 | [Exploratorium](https://annex.exploratorium.edu/frogs/mainstory/frogstory2.html) |
+| 많은 개구리가 몸길이의 20배 넘게 뛴다 | [샌디에이고 동물원](https://sandiegozoowildlifealliance.org/story-hub/zoonooz/legendary-leapers), [미국자연사박물관](https://www.amnh.org/exhibitions/frogs-a-chorus-of-colors/frog-fun-facts) |
+| 기온이 오르면 울음이 빨라지는 청개구리가 있다 | [National Geographic](https://www.nationalgeographic.com/animals/article/male-frog-calls-weather) |
+
+넣지 않은 것: “개구리는 대부분 밤에 활동한다”(낮에 다니는 종도 많다는 자료가 있어요), “비 오기 전에 운다”(습도·비와 번식이 관련 있다는 자료는 있지만 ‘예보’라는 근거는 찾지 못했어요), “눈으로 먹이를 삼킨다”(눈을 당겨 삼킴을 돕는다는 설명이 있지만 굳이 넣지 않았어요).
+
+실증에서 확인할 것: 수첩을 여는지, 이야기가 위로가 되는지 설교처럼 느껴지는지, 열리지 않은 ‘???’가 기대가 되는지.
+
 ## 미션에 남기는 답(0.27.0)
 
 - **왜 넣었나.** 한 단어나 이모지를 고르는 미션이 머릿속에서만 끝나면, 나중에 돌아볼 것이 제목뿐이에요. 고른 것이 남아야 기록 탭이 ‘내가 지나온 마음’이 돼요.

@@ -5,6 +5,7 @@ import {growthStages,type Character,type CharacterGame,type Growth} from '@/lib/
 import {evolveSound} from '@/lib/croak';
 import {haptic} from './frog-3d';
 import {josa} from '@/lib/josa';
+import {storiesOf} from '@/lib/frog-lore';
 type Phase='load'|'intro'|'change'|'flash'|'reveal';
 // The silhouettes take turns faster and faster, like an evolution in a monster game.
 const BEATS=[460,420,380,340,300,260,230,200,170,150,130,110,95,85,75,70,65,60,60,60,60,60];
@@ -44,7 +45,7 @@ export function EvolveScene({character,equipped,from,to,gift=false,onDone}:{char
    {urls?.[1]&&<img className={'new'+(showNew?' on':'')} src={urls[1]} alt="" draggable={false}/>}
   </div>
   <div className="evolve-text" aria-live="polite">
-   {phase==='reveal'?<><span>축하해요!</span><h2>{line}</h2><p>{stage.note}</p>{gift&&<p className="evolve-gift">🎁 옷장에 선물이 도착했어요</p>}<button ref={done} className="evolve-ok" onClick={e=>{e.stopPropagation();onDoneRef.current();}}>좋아요</button></>
+   {phase==='reveal'?<><span>축하해요!</span><h2>{line}</h2><p>{stage.note}</p>{gift&&<p className="evolve-gift">🎁 옷장에 선물이 도착했어요</p>}{storiesOf(to).length>0&&<p className="evolve-gift">📖 개구리 수첩에 새 이야기 {storiesOf(to).length}개</p>}<button ref={done} className="evolve-ok" onClick={e=>{e.stopPropagation();onDoneRef.current();}}>좋아요</button></>
     :phase==='load'?null:<h2>{lead}</h2>}
   </div>
   <div className="evolve-white" aria-hidden="true"/>

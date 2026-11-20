@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import {ArrowRight,ArrowUpRight,Check,ChevronRight,Sun,Footprints,MessageCircle,Leaf,RefreshCw,Pause,Settings2,X,Shirt,Hand,Waves,Moon,Gift,MapPin,Users,Sparkles} from 'lucide-react';
+import {ArrowRight,ArrowUpRight,BookOpen,Check,ChevronRight,Sun,Footprints,MessageCircle,Leaf,RefreshCw,Pause,Settings2,X,Shirt,Hand,Waves,Moon,Gift,MapPin,Users,Sparkles} from 'lucide-react';
 import {energies,type Energy} from '@/lib/content';
 import {goals,springStages,missionPool,markSpringComplete,canJump,jump,isWave,waveMissions,type JourneyProfile,type SpringMission} from '@/lib/journey';
 import {needsSupport,supportiveText,type Mission} from '@/lib/content';
@@ -15,6 +15,10 @@ import {EvolveScene} from './evolve-scene';
 import {seasons,seasonOf} from '@/lib/season';
 import {missionPlaces,placeKind,type PlaceKind} from '@/lib/places';
 import {sfx} from '@/lib/sound';
+import {storiesOpen} from '@/lib/frog-lore';
+import {FrogNotes} from './frog-notes';
+/** How many of the notebook's stories this device has already been shown, for the ‘new story’ dot. */
+const NOTES_SEEN_KEY='poljjak-notes-seen';
 const goalIcons={rhythm:Sun,outside:Footprints,connect:MessageCircle};
 /** The stage this page last showed, so a friend that grew while you were on another tab is celebrated on coming home. */
 let seenGrowth:Growth|null=null;
@@ -39,7 +43,8 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  const [offset,setOffset]=useState(0);const [mission,setMission]=useState<SpringMission|null>(null);const [completed,setCompleted]=useState('');const [isRest,setIsRest]=useState(false);const [confirmJump,setConfirmJump]=useState(false);const [autoClose,setAutoClose]=useState(false);
  // What the person chose to leave with the open mission, and what was kept when it was finished.
  const [answer,setAnswer]=useState('');const [kept,setKept]=useState('');
- const [sheet,setSheet]=useState<'journey'|'night'|'wave'|null>(null);
+ const [sheet,setSheet]=useState<'journey'|'night'|'wave'|'notes'|null>(null);const [notesSeen,setNotesSeen]=useState(Infinity);
+ useEffect(()=>{try{setNotesSeen(Number(localStorage.getItem(NOTES_SEEN_KEY))||0);}catch{}},[]);
  const detailRef=useRef<HTMLDivElement>(null);const frog=useRef<Frog3DHandle>(null);const [careDone,setCareDone]=useState('');const [cheer,setCheer]=useState('');
  // The pond takes whatever height one screen leaves it. While a mission or its result is open the screen may scroll, so the pond keeps the height it had and the friend does not jump.
  const stageRef=useRef<HTMLElement>(null);const [held,setHeld]=useState<number|null>(null);const opened=!!mission||!!completed;
@@ -62,6 +67,9 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
   else if(gifts)wornCheer.current=setTimeout(()=>frog.current?.react('cheer','옷장에 선물이 도착했어!'),3500);};// eslint-disable-line react-hooks/exhaustive-deps
  const night=isNight();const season=seasonOf();const hello=greeting();const mood=moodFor(energy,game.equipped,night);const back=returnGift(game);const wave=isWave(profile);
  const color=game.character?.color;const gifts=giftsWaiting(game).length;
+ // 개구리 수첩 opens from the friend's stage on the pond; a dot says a story opened since it was last read.
+ const stories=storiesOpen(shownGrowth).length;const newStory=demoScene===undefined&&stories>notesSeen;
+ const openNotes=()=>{setSheet('notes');setNotesSeen(stories);if(demoScene===undefined){try{localStorage.setItem(NOTES_SEEN_KEY,String(stories));}catch{}}};
  useEffect(()=>{if(!game.character)return;const t=setTimeout(()=>back?frog.current?.react('hug','보고 싶었어! 와줘서 고마워'):frog.current?.react('jump',night?'늦은 밤에도 와줬구나':profile?'오늘도 와줘서 고마워':'만나서 반가워!'),1500);return ()=>clearTimeout(t);},[]);// eslint-disable-line react-hooks/exhaustive-deps
  const activeGoal=goals.find(g=>g.id===profile?.goal);const GoalIcon=profile?goalIcons[profile.goal]:Leaf;
  // One mission at a time; ‘다른 미션’ walks today's list.
@@ -93,7 +101,7 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  <div className="pond-stage-copy"><span>{new Date().toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})}</span><h1>{hello.title}<br/><em className={game.character.name.length>10?'name-xs':game.character.name.length>7?'name-s':undefined}>{game.character.name}</em></h1><p className="pond-stage-hint"><Hand size={13}/>{night?hello.note:'톡 폴짝 · 머리 쓰담 · 꾹 포옥'}</p></div>
  {careChips}
  {back?<div className="pond-stage-bottom is-return" role="group" aria-label="다시 만난 선물"><span><Gift size={18}/><span><strong>{back.away}일 동안 연못을 지키고 있었어</strong><small>모은 잎과 옷장도 그대로예요.</small></span></span><button onClick={()=>{onClaimReturn();frog.current?.react('hug','다시 와줘서 정말 고마워');}}>선물 {RETURN_GIFT}잎 받기<Leaf size={15}/></button></div>
- :<div className="pond-stage-bottom"><span><Leaf size={14}/>{shown.name} · 함께한 날 {activityDays(game)}일</span><button onClick={()=>onNavigate('closet')} aria-label={gifts?'꾸미기, 선물이 도착했어요':undefined}><Shirt size={15}/>꾸미기{gifts>0&&<i className="gift-dot" aria-hidden="true"/>}<ArrowRight size={15}/></button></div>}</section>:<section className="pond-hero" aria-label="폴짝, 저마다의 봄을 기다리는 연못"><img className="pond-image" src={seasons[season].image} alt={seasons[season].alt}/><div className="pond-shade"/><div className="pond-copy"><span className="pond-eyebrow"><span/>나의 속도로 만나는 봄</span><h1>나의 봄이 오면,<br/><em>폴짝.</em></h1><p>개구리에게 경칩이 오듯,<br/>우리에게도 저마다의 봄이 와요.</p></div><div className="pond-whisper"><span className="whisper-icon"><FrogMark size={30}/></span><span>{profile?'오늘도, 여기서 기다리고 있었어.':'조금 늦어도 괜찮아. 네 봄이니까.'}</span></div><span className="pond-caption">POLJJAK · YOUR OWN SPRING</span></section>}
+ :<div className="pond-stage-bottom"><span><button type="button" className="growth-chip" onClick={openNotes} aria-label={`개구리 수첩 열기. ${shown.name}, 함께한 날 ${activityDays(game)}일${newStory?'. 새 이야기가 있어요':''}`}><BookOpen size={14}/>{shown.name} · 함께한 날 {activityDays(game)}일{newStory&&<i className="gift-dot" aria-hidden="true"/>}<ChevronRight size={13}/></button></span><button onClick={()=>onNavigate('closet')} aria-label={gifts?'꾸미기, 선물이 도착했어요':undefined}><Shirt size={15}/>꾸미기{gifts>0&&<i className="gift-dot" aria-hidden="true"/>}<ArrowRight size={15}/></button></div>}</section>:<section className="pond-hero" aria-label="폴짝, 저마다의 봄을 기다리는 연못"><img className="pond-image" src={seasons[season].image} alt={seasons[season].alt}/><div className="pond-shade"/><div className="pond-copy"><span className="pond-eyebrow"><span/>나의 속도로 만나는 봄</span><h1>나의 봄이 오면,<br/><em>폴짝.</em></h1><p>개구리에게 경칩이 오듯,<br/>우리에게도 저마다의 봄이 와요.</p></div><div className="pond-whisper"><span className="whisper-icon"><FrogMark size={30}/></span><span>{profile?'오늘도, 여기서 기다리고 있었어.':'조금 늦어도 괜찮아. 네 봄이니까.'}</span></div><span className="pond-caption">POLJJAK · YOUR OWN SPRING</span></section>}
  {!game.character&&<button className="create-companion" onClick={()=>onNavigate('closet')}><FrogMark size={35}/><span><strong>나와 함께할 친구 만들기</strong><small>이름과 색을 고르고, 30잎 선물도 받아요.</small></span><ArrowRight size={18}/></button>}
  {!game.character&&careChips}
  {!profile&&<section className="begin-card"><div><span className="step-label">우리, 여기서 시작해요</span><h2>지금 나에게 편한 거리는?</h2><p>편한 선택으로 나의 시작점을 찾아요.<br/>정답도, 정해진 속도도 없어요.</p></div><button className="primary" onClick={onStartCheck}>내 봄의 시작점 찾기<ArrowRight size={18}/></button><span className="check-note">약 1분 · 언제든 다시 고를 수 있어요</span></section>}
@@ -111,6 +119,7 @@ export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,
  <div className="home-cohort">{onPond?<PondInvite justDid={isRest?'':completed} onOpen={onPond}/>:cohort&&<button className="home-entry" onClick={cohort.onOpen}><span className="home-entry-icon"><Users size={19}/></span><span className="home-entry-copy"><span className="step-label">{cohort.label}</span><strong>{cohort.title}</strong></span><ArrowRight size={17}/></button>}</div>
  {sheet==='journey'&&profile&&<Sheet label="나의 봄 여정" onClose={closeSheet}><section className="spring-route" aria-label="나의 봄 여정"><div className="route-title"><div><span className="step-label">나의 봄 여정</span><h2>지금은, {springStages[profile.stage].title}</h2></div><button className="text-button" onClick={()=>{closeSheet();onStartCheck()}}><Settings2 size={15}/>다시 체크</button></div><div className="lily-path">{springStages.map((s,i)=><div key={s.title} className={'lily-stop '+(i===profile.stage?'current':i<profile.stage?'visited':'')}><span className="lily-pad">{i===profile.stage?<FrogMark size={38} color={color}/>:i<profile.stage?<Check size={17}/>:<span>{i+1}</span>}</span><span>{s.short}</span></div>)}</div><div className="goal-line"><GoalIcon size={17}/><span>{activeGoal?.title}</span><span>나만의 목표</span></div><p className="route-note">{springStages[profile.stage].description} 머무르는 시간은 내가 정해요.<br/>에너지가 적은 날엔 더 작은 미션으로. 내 여정은 그대로예요.</p>
  {canJump(profile)?(confirmJump?<div className="jump-confirm" role="group" aria-label="다음 단계 확인"><strong>{springStages[profile.stage+1].title}로 가볼까요?</strong><p>언제든 다시 체크해 편한 시작점으로 돌아올 수 있어요.</p><button className="primary" onClick={advance}>준비됐어요, 폴짝!<ArrowUpRight size={18}/></button><button className="text-button" onClick={()=>setConfirmJump(false)}>아직 여기 있을래요</button></div>:<div className="route-next"><p>이 크기의 미션을 해봤어요. 다음 크기가 궁금한가요?<br/>충분히 편해졌을 때만 넘어가요.</p><button className="primary" onClick={()=>setConfirmJump(true)}>다음으로 폴짝<ArrowUpRight size={18}/></button></div>):profile.stage<3&&<p className="route-next-note">지금 크기의 미션을 하나 해보면, 다음으로 갈지 내가 고를 수 있어요.</p>}</section></Sheet>}
+ {sheet==='notes'&&game.character&&<Sheet label="개구리 수첩" onClose={closeSheet}><FrogNotes game={game}/></Sheet>}
  {sheet==='night'&&<Sheet label="잠들기 전 1분" onClose={closeSheet}><CareCard kind="night-card" icon={<Moon size={21}/>} label="잠들기 전 1분" title={<>밤이 길게 느껴지는 날엔<br/>아주 작은 것 하나만</>} body="낮과 밤이 바뀌어도 괜찮아요. 고치려 애쓰기보다, 오늘 밤 나를 조금 편하게 해줘요." missions={nightMissions} done={careDone} onDone={finishCare}/></Sheet>}
  {sheet==='wave'&&<Sheet label="나만의 썰물" onClose={closeSheet}><CareCard kind="wave-card" icon={<Waves size={22}/>} label="나만의 썰물" title={<>다시 혼자 있고 싶은 날도<br/>괜찮아요</>} body="일상과 혼자만의 시간을 오가는 것도 나의 리듬이에요. 숨어버리기 전에, 쉬는 방법을 내가 골라봐요." missions={waveMissions} done={careDone} onDone={finishCare}/></Sheet>}
  </div>
