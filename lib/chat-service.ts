@@ -1,4 +1,5 @@
 import {isScenarioId,scenarios,needsSupport,supportiveText, type ScenarioId} from './content';
+import {asksIfAi,honestLine} from './chat-pace';
 export type ChatMessage={role:'user'|'assistant';content:string};
 export type ChatInput={scenario:ScenarioId;messages:ChatMessage[];consent:true};
 /** Hints are asked for after the reply arrives, so their history ends with the partner's line. */
@@ -47,7 +48,7 @@ export function systemPrompt(id:ScenarioId,userTurns=1){
  return `너는 '폴짝' 앱에서 은둔·고립을 겪었거나 사람과의 대화가 오랜만인 청년이 일상 대화를 안전하게 연습하도록 돕는 역할극 상대야.
 [상황] ${s.title} — ${s.description}
 [누가 말하나] 너(assistant) = ${f.me}. 사용자(user) = ${f.user}. 너는 언제나 ${f.me}로서만 말해.
-[말투] ${f.tone} 말투. ${sp.rule} 한 번에 1~2문장, 60자 안팎. 질문은 맨 끝에 하나만.
+[말투] ${f.tone} 말투. ${sp.rule} 한 번에 1~2문장, 60자 안팎. 질문은 맨 끝에 하나만. 실제 사람이 말하듯 자연스러운 입말로 해. 안내문이나 번역투처럼 딱딱한 말은 피하고, 같은 맞장구로 매번 시작하지 마. 사용자가 쓴 낱말을 한 번 받아서 이어가.
 [알고 있는 정보] ${f.facts} 여기에 없는 메뉴·가격·시간은 지어내지 말고 확인해 보겠다고 넘겨.
 [대화 흐름] ${f.flow} 사용자가 이미 답한 단계는 건너뛰고 바로 다음 단계로 가. 같은 질문을 두 번 하지 마.
 [진행] 지금이 사용자의 ${userTurns}번째 말이야.${userTurns>=5?' 사용자의 말에 답한 뒤, 이번 답에서 상황답게 인사하며 마무리하고 done=true로 해.':''}
@@ -132,6 +133,8 @@ function caller(server:TeamServer,fetcher:typeof fetch):Call{
 export async function generateTeamReply(input:ChatInput,server:TeamServer,fetcher:typeof fetch=fetch){
  const last=input.messages.at(-1)!.content;
  if(needsSupport(last))return {reply:supportiveText,done:true,support:true,hints:[] as string[]};
+ // Asked whether it is an AI, the partner says so instead of playing on.
+ if(asksIfAi(last))return {reply:honestLine(input.scenario,true),done:false,support:false,hints:[] as string[]};
  const turns=input.messages.filter(m=>m.role==='user').length;const call=caller(server,fetcher);
  const ask=async(temperature:number)=>cleanTeamReply(await call([{role:'system',content:systemPrompt(input.scenario,turns)},...input.messages],schema,temperature,160,40000),turns,input.scenario);
  let result=await ask(.4);
@@ -157,6 +160,7 @@ export async function warmTeamServer(server:TeamServer,fetcher:typeof fetch=fetc
 export async function generateReply(input:ChatInput,key:string,model:string,fetcher:typeof fetch=fetch){
  const last=input.messages.at(-1)!.content;
  if(needsSupport(last))return {reply:supportiveText,done:true,support:true};
+ if(asksIfAi(last))return {reply:honestLine(input.scenario,true),done:false,support:false};
  const moderation=await fetcher('https://api.openai.com/v1/moderations',{method:'POST',headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model:'omni-moderation-latest',input:last}),signal:AbortSignal.timeout(12000)});
  if(!moderation.ok)throw new Error('safety_unavailable');
  const mod=await moderation.json() as {results?:{categories?:Record<string,boolean>}[]};

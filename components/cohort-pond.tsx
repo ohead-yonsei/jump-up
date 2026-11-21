@@ -1,13 +1,15 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
-import {ArrowLeft,ArrowRight,Camera,LoaderCircle,X,EyeOff,ShieldCheck,Users,PenLine,Lock,LogOut,Leaf,Heart,MoreHorizontal} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Camera,LoaderCircle,X,EyeOff,ShieldCheck,Users,PenLine,Lock,LogOut,Leaf,Heart,MoreHorizontal,Volume2,VolumeX} from 'lucide-react';
 import {padLook,PAD_SIDE,PAD_MISSIONS,MAX_PAD_TEXT,CHEERS,type PadView,type FrogView,type FrogCard,type CheerView,type CheerKind} from '@/lib/pond';
 import {frogColors,isGrowth,growthOf,wardrobeItems,type Character,type CharacterGame} from '@/lib/character';
 import type {FrogLook} from '@/lib/frog-scene';
 import {needsSupport} from '@/lib/content';
 import {springMissions} from '@/lib/journey';
 import {haptic,FrogStill} from './frog-3d';
+import {sfx} from '@/lib/sound';
+import {useSoundSwitch} from './touch-feedback';
 import {PondMap} from './pond-map';
 import type {Live} from './pond-live';
 import {KEEPER,keeperLine} from '@/lib/village-map';
@@ -73,6 +75,7 @@ const same=<T,>(a:T,b:T):T=>JSON.stringify(a)===JSON.stringify(b)?a:b;
  * came by today and the pads people floated. Pads never say who floated them; a frog shows only when its owner chose to. No counts,
  * and nothing marks who is here right now; cheers are set phrases that only the receiver sees. */
 export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onToast,onBack,onJoin,leaves,onHelp}:{leaves:number;onHelp:()=>void;token:string|null;game:CharacterGame;showFrog:boolean|undefined;onShowFrog:(show:boolean)=>void;draft?:string;onDraftUsed?:()=>void;onToast:(text:string)=>void;onBack:()=>void;onJoin:()=>void}){
+ const [sound,toggleSound]=useSoundSwitch();
  const [village,setVillage]=useState<Village|null>(null);const [photos,setPhotos]=useState<Record<string,string>>({});const owned=useRef<string[]>([]);
  const [error,setError]=useState('');const [picked,setPicked]=useState<{blob:Blob;url:string}|null>(null);const [preparing,setPreparing]=useState(false);const [busy,setBusy]=useState(false);
  const [writing,setWriting]=useState(false);const [text,setText]=useState('');const [more,setMore]=useState(false);
@@ -114,7 +117,7 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  async function float(){if(!token||(!picked&&!line)||(!picked&&worried))return;setBusy(true);setError('');
   try{const r=await fetch('/api/pond',picked?{method:'POST',headers:{'Content-Type':'image/jpeg',Authorization:'Bearer '+token},body:picked.blob}:{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({text:line})});const d=await r.json().catch(()=>({})) as {pad?:PadView;error?:string};
    if(!r.ok||!d.pad)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
-   const pad=d.pad;told();if(picked)setPhotos(p=>({...p,[pad.id]:keep(picked.url)}));setPads(list=>[pad,...list]);setPicked(null);setWriting(false);setText('');setPanel(null);haptic([12,60,18]);onToast('연잎 한 장을 띄웠어요. 같은 기수 사람들도 볼 수 있어요.');}
+   const pad=d.pad;told();if(picked)setPhotos(p=>({...p,[pad.id]:keep(picked.url)}));setPads(list=>[pad,...list]);setPicked(null);setWriting(false);setText('');setPanel(null);haptic([12,60,18]);sfx('float');onToast('연잎 한 장을 띄웠어요. 같은 기수 사람들도 볼 수 있어요.');}
   catch(e){setError(failed(e));}finally{setBusy(false);}}
  async function remove(pad:PadView){if(!token)return;setBusy(true);setError('');
   try{const r=await fetch('/api/pond?id='+pad.id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});const d=await r.json().catch(()=>({})) as {error?:string};if(!r.ok&&r.status!==404)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
@@ -122,7 +125,7 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
   catch(e){setError(failed(e));}finally{setBusy(false);}}
  async function cheer(target:string,kind:CheerKind){if(!token||busy)return;setBusy(true);setError('');
   try{const r=await fetch('/api/village',{method:'PUT',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({target,kind})});const d=await r.json().catch(()=>({})) as {error?:string};if(!r.ok)throw new Error(d.error||'잠시 후 다시 시도해 주세요.');
-   seq.current++;setVillage(v=>v&&{...v,sent:[...v.sent,target]});haptic(10);onToast(`‘${cheerOf(kind).text}’ 응원을 보냈어요. 받은 사람만 볼 수 있어요.`);}
+   seq.current++;setVillage(v=>v&&{...v,sent:[...v.sent,target]});haptic(10);sfx('pat');onToast(`‘${cheerOf(kind).text}’ 응원을 보냈어요. 받은 사람만 볼 수 있어요.`);}
   catch(e){onToast(failed(e));}finally{setBusy(false);}}
  const heading=<div className="pond-heading pond-heading-slim"><button className="text-button pond-back" onClick={onBack}><ArrowLeft size={15}/>기록으로</button><h1>연못 마을</h1><p>같은 기수 사람들만 볼 수 있어요.</p></div>;
  if(!token)return <>{heading}<div className="pond-closed"><span className="cohort-icon"><Users size={20}/></span><h3>기수에 함께하면 열리는 연못이에요</h3><p>기관에서 받은 기수 코드로 함께하면, 같은 기수 사람들의 개구리를 만나고 연잎을 나눌 수 있어요.</p><button className="primary" onClick={onJoin}>기수에 함께하기<ArrowRight size={17}/></button></div></>;
@@ -138,9 +141,9 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  return createPortal(<div className="pond-screen">
   <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={choose}/>
   <PondMap frogs={frogs} pads={scenePads} mine={mine} showFrog={!!showFrog} live={village?.live??null} token={token} busy={busy} picture={pondPicture} changed={changed} onChanged={()=>refresh.current()}
-   onOpen={n=>{setRemoving(false);setOpen(n.kind==='frog'?{frog:n.frog}:n.kind==='pad'?{pad:n.pad}:{keeper:true});}} onUnknown={()=>setAgain(n=>n+1)} onMoved={()=>setMoved(true)}/>
+   onOpen={n=>{sfx(n.kind==='pad'?'open':'ribbit',{vol:.8});setRemoving(false);setOpen(n.kind==='frog'?{frog:n.frog}:n.kind==='pad'?{pad:n.pad}:{keeper:true});}} onUnknown={()=>setAgain(n=>n+1)} onMoved={()=>setMoved(true)}/>
   <div className="world-top"><button type="button" className="world-round" aria-label="연못 마을에서 나가기" onClick={onBack}><LogOut size={18}/></button><span className="world-title"><strong>폴짝</strong><i aria-hidden="true"/>연못 마을</span>
-   <span className="world-top-right"><span className="world-leaves" role="img" aria-label={`모은 잎 ${leaves}잎`}><Leaf size={14}/><strong>{leaves}</strong></span><button type="button" className="world-round help" aria-label="지금 도움이 필요해요" onClick={onHelp}><Heart size={18}/></button><button type="button" className="world-round" aria-label="연못 마을 더보기" onClick={()=>setPanel('more')}><MoreHorizontal size={20}/></button></span></div>
+   <span className="world-top-right"><span className="world-leaves" role="img" aria-label={`모은 잎 ${leaves}잎`}><Leaf size={14}/><strong>{leaves}</strong></span><button type="button" className="world-round help" aria-label="지금 도움이 필요해요" onClick={onHelp}><Heart size={18}/></button><button type="button" className="world-round" role="switch" aria-checked={sound} aria-label="연못 소리" onClick={toggleSound}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button type="button" className="world-round" aria-label="연못 마을 더보기" onClick={()=>setPanel('more')}><MoreHorizontal size={20}/></button></span></div>
   {village===null&&<p className="pond-quiet world-loading" role="status"><LoaderCircle className="spin" size={15}/>연못을 살피고 있어요</p>}
   {!panel&&!asking&&!moved&&<p className="world-hint">조이스틱으로 움직이고, 화면을 옆으로 밀면 둘러볼 수 있어요</p>}
   {!panel&&!asking&&<button type="button" className="world-float" disabled={preparing||busy} onClick={()=>{setError('');setPanel('compose');}}><PenLine size={16}/>연잎 띄우기</button>}

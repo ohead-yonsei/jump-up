@@ -1,4 +1,4 @@
-import { localDay, usageSummary, validEntries, validVisits, validParticipant, recordRows, recordsHeader, toCsv, type Entry } from './records';
+import { localDay, usageSummary, validEntries, validVisits, validParticipant, recordRows, recordsHeader, toCsv, latestReview, type Entry } from './records';
 
 /** Letters and digits that are hard to mix up when read aloud or copied from paper (no 0/O, 1/I/L). */
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -93,7 +93,9 @@ export function participantSummary(p: ParticipantRecords, now = new Date()) {
     recentActiveDays: new Set(activity.map(e => koreanDay(e.at)).filter(d => d >= weekAgo)).size,
     firstCheckin: checkins[0] ?? null,
     lastCheckin: checkins.length > 1 ? checkins.at(-1)! : null,
-    notes: p.entries.filter(e => e.type === 'feedback').length,
+    // a note is something written; the 돌아보기 numbers are counted on their own
+    notes: p.entries.filter(e => e.type === 'feedback' && !!e.note).length,
+    review: latestReview(p.entries),
   };
 }
 /** The same columns as a person's own export, one block of rows per participant. */

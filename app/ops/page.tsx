@@ -16,8 +16,8 @@ async function origin(){const h=await headers();return `${h.get('x-forwarded-pro
 function People({people}:{people:ParticipantRecords[]}){
  if(!people.length)return <p className="ops-empty">아직 함께하는 사람이 없어요. 위의 참여 링크나 기수 코드를 기관 담당자에게 전해 주세요.</p>;
  const now=new Date();
- return <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>참여 코드</th><th>함께한 날</th><th>마지막으로 받은 때</th><th>연 날</th><th>활동한 날</th><th>최근 7일 활동</th><th>마음 체크 (처음→최근)</th><th>연락 버튼</th><th>한마디</th></tr></thead>
-  <tbody>{people.map(p=>{const s=participantSummary(p,now);return <tr key={p.id}><th scope="row">{p.code}</th><td>{md(seoulDay(p.joinedAt))}</td><td>{when(p.lastSyncAt)}</td><td>{s.visitDays}일</td><td>{s.activeDays}일</td><td>{s.recentActiveDays}일</td><td className="ops-mind">{mind(s)}</td><td>{s.contactTaps}번</td><td>{s.notes}개</td></tr>;})}</tbody></table></div>;
+ return <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>참여 코드</th><th>함께한 날</th><th>마지막으로 받은 때</th><th>연 날</th><th>활동한 날</th><th>최근 7일 활동</th><th>마음 체크 (처음→최근)</th><th>연락 버튼</th><th>한마디</th><th title="가장 최근 답. 써보니 · 돌보고 싶은 마음 · 마음의 변화(3이 그대로), 1~5">돌아보기 (써보니·돌봄·마음)</th></tr></thead>
+  <tbody>{people.map(p=>{const s=participantSummary(p,now);return <tr key={p.id}><th scope="row">{p.code}</th><td>{md(seoulDay(p.joinedAt))}</td><td>{when(p.lastSyncAt)}</td><td>{s.visitDays}일</td><td>{s.activeDays}일</td><td>{s.recentActiveDays}일</td><td className="ops-mind">{mind(s)}</td><td>{s.contactTaps}번</td><td>{s.notes}개</td><td>{Object.values(s.review).some(v=>v!==null)?Object.values(s.review).map(v=>v??'-').join(' · '):'-'}</td></tr>;})}</tbody></table></div>;
 }
 /** Who floated each pad shows only here, by participant code, so staff can check in with that person in their own way. */
 function Pads({pads,people}:{pads:Pad[];people:ParticipantRecords[]}){

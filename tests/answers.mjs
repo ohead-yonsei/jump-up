@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['answers','journey','records']){
+for(const name of ['answers','journey','records','usage']){
  const src=await fs.readFile(new URL(`../lib/${name}.ts`,import.meta.url),'utf8');
- await fs.writeFile(new URL(`${name}.js`,out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+ await fs.writeFile(new URL(`${name}.js`,out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));
 }
 const a=await import(new URL('answers.js',out));const j=await import(new URL('journey.js',out));const r=await import(new URL('records.js',out));let n=0;
 const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};

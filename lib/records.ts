@@ -1,4 +1,5 @@
 import type { Energy } from './content';
+import { usageRows, usageTotals, type Usage } from './usage';
 export type Entry = {
   id: string; at: string; type: 'step' | 'rest' | 'practice' | 'feedback' | 'checkin' | 'contact';
   missionId?: string; goal?: string; springStage?: number;
@@ -20,6 +21,32 @@ export const checkinQuestions = [
   { key: 'talk', short: '대화의 편안함', label: '짧은 대화를 나누는 일은 얼마나 편한가요?', low: '아직 어려워요', high: '편하게 할 수 있어요' },
   { key: 'outside', short: '바깥의 편안함', label: '집 밖에 나가는 일은 얼마나 편한가요?', low: '아직 어려워요', high: '편하게 할 수 있어요' },
 ] as const;
+/**
+ * 돌아보기(0.47.0): three numbers about the app itself — how it was to use, wanting to keep caring for the friend, and how the mind
+ * felt meanwhile. Second-round feedback asked for a numeric measure, ‘even something as simple as positive’.
+ * Each answer is a `feedback` record with a `rating` (1-5) and the question's id in `missionId`, so nothing new is stored on the server.
+ * The third question is two-sided: 3 means no change, below it heavier, above it lighter.
+ */
+export const reviewQuestions = [
+  { id: 'review-use', short: '써보니', label: '폴짝을 써보니 어땠나요?', low: '불편했어요', high: '편했어요' },
+  { id: 'review-grow', short: '돌보고 싶은 마음', label: '친구를 계속 돌보고 싶었나요?', low: '별로였어요', high: '많이 그랬어요' },
+  { id: 'review-change', short: '마음의 변화', label: '폴짝을 쓰는 동안 마음은 어땠나요?', low: '더 무거워졌어요', high: '더 가벼워졌어요' },
+] as const;
+export type ReviewId = typeof reviewQuestions[number]['id'];
+export const isReview = (e: Pick<Entry, 'type' | 'missionId' | 'rating'>) => e.type === 'feedback' && !!e.rating && reviewQuestions.some(q => q.id === e.missionId);
+export const REVIEW_AFTER_DAYS = 3, REVIEW_EVERY_DAYS = 14;
+/** Asked once the person has been here a few days, and again two weeks after the last answer. */
+export function reviewDue(entries: Entry[], togetherDays: number, now = new Date()) {
+  if (togetherDays < REVIEW_AFTER_DAYS) return false;
+  const last = [...entries].reverse().find(isReview);
+  return !last || now.getTime() - Date.parse(last.at) >= REVIEW_EVERY_DAYS * 864e5;
+}
+/** The most recent answer to each question, or null where there is none yet. */
+export function latestReview(entries: Entry[]): Record<ReviewId, number | null> {
+  const out = { 'review-use': null, 'review-grow': null, 'review-change': null } as Record<ReviewId, number | null>;
+  for (const e of entries) if (isReview(e)) out[e.missionId as ReviewId] = e.rating!;
+  return out;
+}
 export const CHECKIN_EVERY_DAYS = 7;
 export function lastCheckin(entries: Entry[]) { return [...entries].reverse().find(e => e.type === 'checkin') ?? null; }
 export function checkinDue(entries: Entry[], now = new Date()) {
@@ -100,16 +127,20 @@ export function validEntries(value: unknown): Entry[] {
   return keepEntries(kept);
 }
 export const recordsHeader = ['participant_code', 'record_id', 'date', 'type', 'title', 'energy', 'rating', 'confidence_before', 'confidence_after', 'practice_mode', 'mission_id', 'goal', 'spring_stage', 'calm', 'talk_comfort', 'outside_comfort', 'note',
-  'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps', 'energy_level'];
+  'support_id', 'contact_channel', 'first_day', 'last_day', 'span_days', 'visit_days', 'active_days', 'contact_taps', 'energy_level', 'screen', 'seconds', 'opens'];
 /** One person's rows: a summary row first, a row per record and a row per day the app was opened. Columns added later go at the end.
- * `energy` keeps the 5-level value of records made before 0.26.0 and is empty after; `energy_level` is 1-3 for every record (old values converted). */
-export function recordRows(entries: Entry[], participant = 'session-only', visits: string[] = [], dayOf: (at: string) => string = localDay): unknown[][] {
+ * `energy` keeps the 5-level value of records made before 0.26.0 and is empty after; `energy_level` is 1-3 for every record (old values converted).
+ * `usage` (0.47.0) adds the time on each screen and a few press counts, a row per day and screen or action: `screen` names it,
+ * `seconds` is the time and `opens` the count. The summary row carries the totals. A cohort's sheet has no usage, so those cells stay empty. */
+export function recordRows(entries: Entry[], participant = 'session-only', visits: string[] = [], dayOf: (at: string) => string = localDay, usage: Usage = {}): unknown[][] {
   const u = usageSummary(entries, visits, dayOf);
   const blank = (n: number) => Array<string>(n).fill('');
+  const t = usageTotals(usage); const used = t.days > 0;
   return [
-    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps, ''],
-    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6), entryEnergy(e)]),
-    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(21)]),
+    [participant, 'summary', u.lastDay, 'summary', '이용 요약', ...blank(12), ...blank(2), u.firstDay, u.lastDay, u.spanDays, u.visitDays, u.activeDays, u.contactTaps, '', used ? (t.most ?? '') : '', used ? t.seconds : '', used ? t.opens : ''],
+    ...entries.map(e => [participant, e.id, e.at, e.type, e.title, e.energy, e.rating, e.before, e.after, e.mode, e.missionId, e.goal, e.springStage, e.calm, e.talk, e.outside, e.note, e.supportId, e.channel, ...blank(6), entryEnergy(e), ...blank(3)]),
+    ...visits.map(day => [participant, 'visit-' + day, day, 'visit', '폴짝을 연 날', ...blank(24)]),
+    ...usageRows(usage).map(([day, kind, id, label, seconds, count]) => [participant, `${kind}-${day}-${id}`, day, kind, label, ...blank(21), id, seconds, count]),
   ];
 }
 export function toCsv(rows: unknown[][]) {
@@ -121,8 +152,8 @@ export function toCsv(rows: unknown[][]) {
   };
   return '\uFEFF' + rows.map(row => row.map(escape).join(',')).join('\r\n');
 }
-export function recordsCsv(entries: Entry[], participant = 'session-only', visits: string[] = []) {
-  return toCsv([recordsHeader, ...recordRows(entries, participant, visits)]);
+export function recordsCsv(entries: Entry[], participant = 'session-only', visits: string[] = [], usage: Usage = {}) {
+  return toCsv([recordsHeader, ...recordRows(entries, participant, visits, localDay, usage)]);
 }
 export function demoEntries(now = new Date()): Entry[] {
   const at = (days: number) => { const d = new Date(now); d.setDate(d.getDate() - days); d.setHours(15, 0, 0, 0); return d.toISOString(); };

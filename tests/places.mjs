@@ -61,4 +61,19 @@ await test('every mission that points to a place exists and maps to a known kind
  const ids=new Set(j.springMissions.map(m=>m.id));
  for(const [mission,kind] of Object.entries(p.missionPlaces)){assert(ids.has(mission),mission);assert(p.placeKinds.some(k=>k.id===kind));}
 });
+await test('every kind of place is a lily pad with its own name, and the real word stays beside it',()=>{
+ const pads=p.placeKinds.map(k=>k.pad);assert.equal(new Set(pads).size,4);for(const k of p.placeKinds){assert(k.pad.endsWith('연잎'),k.id);assert(k.label.length>=2&&!k.label.includes('연잎'),k.id);}
+});
+await test('stamps count visits by kind from the records, and nothing else',()=>{
+ const none=p.padStamps([]);assert.deepEqual(none,{cafe:0,park:0,library:0,store:0});
+ const got=p.padStamps([{missionId:'place-cafe'},{missionId:'place-cafe'},{missionId:'place-store'},{missionId:'outside-store'},{missionId:'place-moon'},{},{missionId:'rhythm-water'}]);assert.deepEqual(got,{cafe:2,park:0,library:0,store:1});
+});
+await test('the quiet-hour hint speaks of tendencies at every hour, never as a fact about one place',()=>{
+ const at=(d,h,m=0)=>new Date(2026,10,d,h,m);// November 2026: the 21st is a Saturday, the 24th a Tuesday
+ assert.equal(at(21,12).getDay(),6);assert.equal(at(24,12).getDay(),2);
+ assert.equal(p.quietHint('cafe',at(24,15)).calm,true);assert.equal(p.quietHint('cafe',at(24,12,30)).calm,false);assert.equal(p.quietHint('cafe',at(21,15)).calm,false);assert.equal(p.quietHint('cafe',at(21,10)).calm,true);
+ assert.equal(p.quietHint('cafe',at(24,23)).calm,false);assert.match(p.quietHint('cafe',at(24,23)).text,/여는 시간/);assert.match(p.quietHint('park',at(24,23)).text,/밝은 길/);
+ assert.equal(p.quietHint('library',at(24,14)).calm,true);assert.equal(p.quietHint('library',at(21,14)).calm,false);assert.equal(p.quietHint('store',at(24,15)).calm,true);assert.equal(p.quietHint('store',at(24,12,20)).calm,false);
+ for(const k of p.placeKinds)for(const d of [21,24])for(let h=0;h<24;h++){const hint=p.quietHint(k.id,at(d,h,30));assert(hint.text.length>=14&&hint.text.length<=60,k.id+' '+h+': '+hint.text);assert(/보통|수 있어요|많은|많아요|편일|확인|좋아요/.test(hint.text),'a tendency or a gentle option, not a promise: '+hint.text);assert(!/해야|반드시|무조건/.test(hint.text));}
+});
 console.log(`${n} place checks passed. Live Kakao calls and device location are not simulated by these tests.`);

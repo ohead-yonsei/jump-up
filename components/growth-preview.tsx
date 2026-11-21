@@ -4,7 +4,7 @@ import {EvolveScene} from './evolve-scene';
 import {ArrowLeft} from 'lucide-react';
 import {frogColors,growthStages,type CharacterGame,type FrogColor,type Growth} from '@/lib/character';
 import {Frog3D} from './frog-3d';
-const outfits:{label:string;equipped:CharacterGame['equipped']}[]=[{label:'새싹',equipped:{head:'sprout'}},{label:'그대로',equipped:{}},{label:'왕관 · 안경',equipped:{head:'crown',eyes:'round'}},{label:'후드티 · 머그',equipped:{outfit:'hoodie',hand:'mug'}}];
+const outfits:{label:string;equipped:CharacterGame['equipped']}[]=[{label:'새싹',equipped:{head:'sprout'}},{label:'그대로',equipped:{}},{label:'왕관 · 안경',equipped:{head:'crown',eyes:'round'}},{label:'꽃 · 오이팩',equipped:{head:'daisy',eyes:'cucumber'}},{label:'리본 · 선글라스',equipped:{head:'ribbon',eyes:'sunglasses'}},{label:'헤드폰',equipped:{head:'headphones'}},{label:'산책 모자',equipped:{head:'bucket'}},{label:'수면 모자',equipped:{head:'nightcap'}},{label:'뽀송 후드',equipped:{head:'fleece'}},{label:'공룡 후드',equipped:{head:'dino'}},{label:'후드티 · 머그',equipped:{outfit:'hoodie',hand:'mug'}}];
 /** Every growth stage side by side, to compare the shapes in one palette. */
 export function GrowthPreview(){
  const [color,setColor]=useState<FrogColor>('leaf');const [outfit,setOutfit]=useState(0);const [play,setPlay]=useState<Growth|null>(null);

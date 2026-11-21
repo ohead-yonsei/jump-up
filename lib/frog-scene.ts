@@ -259,8 +259,8 @@ class Frog{
   for(const h of this.hands)h.scale.set(1,.92/tall,1.05);this.feet.scale.y=1/tall;
   this.bodyMesh.visible=shape.limbs;for(const a of this.arms)a.visible=shape.limbs;this.tail.visible=growth==='tadpole';this.nub.visible=growth==='froglet';this.feet.visible=growth==='grown';this.jelly.visible=growth==='egg';
   for(const g of this.itemGroups){g.parent?.remove(g);release(g);}this.itemGroups=[];this.pose=REST;let sleeve:THREE.Material=this.tinted;
-  // the egg wears nothing yet; the tadpole has no body, so it keeps only what sits on its head
-  for(const id of growth==='egg'?[]:Object.values(look.equipped)){const build=id&&builders[id];if(!build)continue;const parts=build(pal);
+  // the baby in the egg wears what sits on its head, seen through the jelly; the tadpole has no body, so it keeps only its head things too
+  for(const [slot,id] of Object.entries(look.equipped)){if(growth==='egg'&&slot!=='head'&&slot!=='eyes')continue;const build=id&&builders[id];if(!build)continue;const parts=build(pal);
    if(parts.head){this.head.add(parts.head);this.itemGroups.push(parts.head);}if(!shape.limbs)continue;if(parts.body){this.squash.add(parts.body);this.itemGroups.push(parts.body);}if(parts.pose)this.pose=parts.pose;if(parts.sleeves)sleeve=parts.sleeves;}
   for(const s of this.sleeves)s.material=sleeve;
   this.expression=growth==='egg'?'sleepy':look.equipped.face??'smile';this.express(this.expression);

@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {Leaf,Check,ArrowRight,Phone,MessageCircleHeart,ChevronDown} from 'lucide-react';
-import {checkinQuestions,checkinDue,lastCheckin,type Entry} from '@/lib/records';
+import {checkinQuestions,checkinDue,lastCheckin,reviewQuestions,reviewDue,type Entry,type ReviewId} from '@/lib/records';
 import {needsSupport,supportiveText} from '@/lib/content';
 type Values={calm:number;talk:number;outside:number};
 const day=(at:string)=>new Date(at).toLocaleDateString('ko-KR',{month:'long',day:'numeric'});
@@ -18,6 +18,19 @@ export function MindCheck({entries,shared=false,onSave}:{entries:Entry[];shared?
   :checks.length?<><div className="mind-rows">{checkinQuestions.map(q=><div key={q.key}><span>{q.short}</span><Dots value={first?.[q.key]} label="처음"/>{checks.length>1&&<><ArrowRight size={13}/><Dots value={last?.[q.key]} label="최근"/></>}</div>)}</div>
    <p className="mind-note">처음 {day(first!.at)}{checks.length>1&&` · 최근 ${day(last!.at)}`} · {checks.length}번 살펴봤어요. 달라지지 않아도 괜찮아요. 살펴본 시간 자체가 나를 돌본 시간이에요.</p></>
   :<p className="mind-note">지금 마음을 남겨두면, 나중에 스스로 달라진 점을 살펴볼 수 있어요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'기록은 이 기기에만 남아요.'}</p>}
+ </section>
+}
+/** 돌아보기: three numbers about the app itself, offered after a few days and again two weeks later. Optional, and gone once answered. */
+export function ReviewCheck({entries,days,shared=false,onSave}:{entries:Entry[];days:number;shared?:boolean;onSave:(answers:{id:ReviewId;title:string;rating:number}[])=>void}){
+ const [open,setOpen]=useState(false);const [draft,setDraft]=useState<Partial<Record<ReviewId,number>>>({});const [done,setDone]=useState(false);const [later,setLater]=useState(false);
+ if(done)return <section className="mind-check review-check" aria-label="폴짝 돌아보기" role="status"><p className="mind-note">알려줘서 고마워요. 폴짝을 고치는 데 쓸게요.</p></section>;
+ if(later||!reviewDue(entries,days))return null;
+ const ready=reviewQuestions.every(q=>draft[q.id]);
+ return <section className="mind-check review-check" aria-label="폴짝 돌아보기">
+  <div className="mind-head"><div><span className="step-label">선택 · 1분</span><h2>폴짝, 써보니 어땠나요?</h2></div>{!open&&<button className="secondary" onClick={()=>{setDraft({});setOpen(true)}}>돌아보기</button>}</div>
+  {open?<div className="mind-form">{reviewQuestions.map(q=><fieldset key={q.id}><legend>{q.label}</legend><div className="mind-scale">{[1,2,3,4,5].map(v=><button key={v} type="button" aria-pressed={draft[q.id]===v} aria-label={`${v}점`} className={draft[q.id]===v?'selected':''} onClick={()=>setDraft(d=>({...d,[q.id]:v}))}><Leaf size={14+v*2}/></button>)}</div><div className="scale-labels"><span>{q.low}</span><span>{q.high}</span></div></fieldset>)}
+   <div className="button-row"><button className="primary" disabled={!ready} onClick={()=>{onSave(reviewQuestions.map(q=>({id:q.id,title:`돌아보기 · ${q.short}`,rating:draft[q.id]!})));setOpen(false);setDone(true)}}>남기기<Check size={16}/></button><button className="secondary" onClick={()=>{setOpen(false);setLater(true)}}>다음에 할래요</button></div><small>좋게 답하지 않아도 돼요. 불편했다는 답이 폴짝을 고쳐요.</small></div>
+  :<p className="mind-note">세 가지만 골라 주면 돼요. {shared?'함께하는 기수 운영진에게도 전달돼요.':'이 기기에만 남고, 내보내기를 해야 팀에 전달돼요.'}</p>}
  </section>
 }
 /** A short note to the team; crisis language gets support instead of being filed away. */

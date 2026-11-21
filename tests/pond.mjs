@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['records','cohort','pond','cohort-store','journey']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
+for(const name of ['records','usage','cohort','pond','cohort-store','journey']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
 const pond=await import(new URL('pond.js',out));const st=await import(new URL('cohort-store.js',out));const journey=await import(new URL('journey.js',out));
 let passed=0;const test=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 
