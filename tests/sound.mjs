@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['sound','croak','music']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"))}
-const s=await import(new URL('sound.js',out));const mu=await import(new URL('music.js',out));const list=JSON.parse(await fs.readFile(new URL('../scripts/sounds.json',import.meta.url),'utf8')).sounds;const have=new Set((await fs.readdir(new URL('../public/audio/',import.meta.url))).filter(f=>f.endsWith('.mp3')).map(f=>f.slice(0,-4)));let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
+for(const name of ['sound','croak','music','measure']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"))}
+const s=await import(new URL('sound.js',out));const mu=await import(new URL('music.js',out));const cr=await import(new URL('croak.js',out));const all=JSON.parse(await fs.readFile(new URL('../scripts/sounds.json',import.meta.url),'utf8'));const keeperHave=new Set((await fs.readdir(new URL('../public/audio/keeper/',import.meta.url))).filter(f=>f.endsWith('.mp3')).map(f=>f.slice(0,-4)));const list=JSON.parse(await fs.readFile(new URL('../scripts/sounds.json',import.meta.url),'utf8')).sounds;const have=new Set((await fs.readdir(new URL('../public/audio/',import.meta.url))).filter(f=>f.endsWith('.mp3')).map(f=>f.slice(0,-4)));let n=0;const test=(name,fn)=>{fn();n++;console.log('PASS '+name)};
 test('every sound has a recipe, and without a device to play on they are silently dropped',()=>{
  assert(s.sfxKinds.length>=14);assert.equal(new Set(s.sfxKinds).size,s.sfxKinds.length);for(const kind of s.sfxKinds)assert.doesNotThrow(()=>s.sfx(kind,{vol:.5,pan:-.3}),kind);
  const water=s.pondAmbience();assert.doesNotThrow(()=>{water.set(1);water.set(0);water.set(null);water.stop();});
@@ -41,5 +41,16 @@ test('music is quieter than the small sounds, has its own switch, and loops by o
  assert(Math.max(...Object.values(mu.tracks).map(t=>t.level))<Math.min(...Object.values(s.sampleFiles).map(e=>e.level)),'a tune never covers a sound');
  assert.equal(mu.musicOn(),true);assert.doesNotThrow(()=>{mu.playMusic('pond');mu.playMusic('village');mu.playMusic(null);});assert.equal(mu.musicPlaying(),null,'nothing plays without a device');
  assert.equal(mu.nextPassAt(10,90),10+90-mu.FADE);assert.equal(mu.nextPassAt(0,1),mu.FADE,'a file too short to overlap still moves forward');assert(mu.FADE>=1.5&&mu.FADE<=4);
+});
+test('the keeper mumbles along with its own words: a sliver of a real voice chosen by the vowel of each letter, a little raised',()=>{
+ assert.deepEqual([...cr.syllables],['a','e','i','o','u','eo']);
+ for(const [ch,want] of [['아','a'],['야','a'],['와','a'],['에','e'],['애','e'],['예','e'],['이','i'],['위','i'],['의','i'],['오','o'],['요','o'],['우','u'],['유','u'],['으','u'],['어','eo'],['여','eo'],['워','eo'],['가','a'],['녕','eo'],['반','a'],['못','o'],['힣','i']])assert.equal(cr.syllableOf(ch),want,ch);
+ for(const ch of ['A','z','7','ㅋ','。'])assert(cr.syllables.includes(cr.syllableOf(ch)),ch);assert.equal(cr.syllableOf('A'),cr.syllableOf('A'),'the same letter always gets the same sound');
+ const rates='안녕반가워요나는이연못에사는연못지기예요'.split('').map(cr.blipRate);assert(Math.min(...rates)>1.15&&Math.max(...rates)<1.45,'raised, but still a voice');assert(new Set(rates.map(r=>r.toFixed(3))).size>=4,'a sentence has a little melody');
+ assert(cr.BLIP>.064&&cr.BLIP<.12,'slivers just overlap at one every 64 ms');
+ const keys=cr.keeperVoices.map(v=>v.key);assert.equal(new Set(keys).size,keys.length);assert.deepEqual(keys,all.voices.list.map(v=>v.key),'the same voices as scripts/sounds.json');assert(cr.KEEPER_VOICE===null||keys.includes(cr.KEEPER_VOICE));
+ assert.deepEqual(Object.keys(all.voices.syllables),[...cr.syllables]);assert(all.voices.line.includes('연못지기'));
+ for(const v of cr.keeperVoices){assert(v.name.length>=1&&v.about.length>4);for(const part of [...cr.syllables,'line']){assert(keeperHave.has(`${v.key}-${part}`),`made: ${v.key}-${part}`);assert.equal(cr.keeperFile(v.key,part),`/audio/keeper/${v.key}-${part}.mp3`);}}
+ assert.doesNotThrow(()=>{cr.croak('안');cr.sayLine('안녕, 반가워요.');cr.setKeeperVoice(null);cr.croak('안');cr.setKeeperVoice(cr.KEEPER_VOICE);});assert.equal(cr.keeperVoiceReady(),false,'nothing is fetched without a browser');
 });
 console.log(`${n} sound checks passed. What it actually sounds like is checked by ear on a device.`);

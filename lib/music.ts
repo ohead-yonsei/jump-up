@@ -3,7 +3,8 @@
 // It plays through the same audio context as the small sounds, so on an iPhone the silent switch mutes it too.
 // A tune loops by overlapping its end with its beginning for a few seconds, which needs no perfect loop point in the file.
 import {audio,soundOn,soundChanged} from './croak';
-import {measure,soundUrl} from './sound';
+import {soundUrl} from './sound';
+import {measure} from './measure';
 export type Track='pond'|'village';
 export const tracks:Record<Track,{file:string;level:number;name:string}>={
  pond:{file:'bgm-pond',level:.1,name:'연못의 음악'},

@@ -78,6 +78,7 @@ Funnel로 연 주소는 인터넷 어디서나 닿기 때문에, 토큰을 확�
 - 모든 소리를 한곳에서 들어 보려면 `/sounds`를 열어요(앱에는 링크가 없는 팀용 화면).
 - 소리마다 쓴 글은 [`scripts/sounds.json`](scripts/sounds.json)에 있어요. 글을 고친 뒤 `node scripts/make-sounds.mjs --force 이름`으로 그 소리만 다시 만들어요. `.env.local`의 `ELEVENLABS_API_KEY`가 필요하고(만드는 컴퓨터에만), 배포 환경에는 필요 없어요. `--credits`는 남은 크레딧만 보여줘요.
 - 어떤 소리를 파일로 틀지는 `lib/sound.ts`의 `sampleFiles`에서 정해요. 거기서 한 줄을 지우면 그 소리는 기기에서 만드는 예전 소리로 돌아가요.
+- 연못지기의 말소리는 실제 목소리의 음절을 잘라 써요. 후보 목소리는 `scripts/sounds.json`의 `voices`에 있고, 쓰는 목소리는 `lib/croak.ts`의 `KEEPER_VOICE`에서 골라요(`/sounds`에서 비교).
 
 ## 기수 운영
 
