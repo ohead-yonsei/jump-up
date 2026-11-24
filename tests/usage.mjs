@@ -45,4 +45,31 @@ test('usage is not part of what a cohort is sent: a sync carries records and vis
  const sync=c.validSync({participant:'P07',entries:[{id:'e1',at:'2026-11-21T03:00:00.000Z',type:'step',title:'물 한 모금 마시기',energy:null}],visits:[D],usage:{[D]:{sec:{today:95}}}});
  assert.deepEqual(Object.keys(sync).sort(),['entries','participant','visits']);assert(!JSON.stringify(sync).includes('sec'));
 });
+test('a place is the tab, or what is open over it: the first talk, a chat under way, a mission card, the notebook, the help window',()=>{
+ assert.equal(u.placeOf({tab:'today'}),'today');assert.equal(u.placeOf({tab:'today',home:'mission'}),'mission');assert.equal(u.placeOf({tab:'today',home:'notes'}),'notes');
+ assert.equal(u.placeOf({tab:'journal',home:'mission'}),'journal','what was open on the home does not follow to another tab');
+ assert.equal(u.placeOf({tab:'practice',chatting:false}),'practice');assert.equal(u.placeOf({tab:'practice',chatting:true}),'chat');assert.equal(u.placeOf({tab:'places',chatting:true}),'places','a chat left half way is not counted on other tabs');
+ assert.equal(u.placeOf({tab:'practice',chatting:true,help:true}),'help');assert.equal(u.placeOf({tab:'today',home:'notes',help:true,onboarding:true}),'onboarding');
+ for(const tab of u.tabScreens)assert.equal(u.placeOf({tab}),tab);
+ for(const s of u.screens){assert(u.screenLabel[s].length>=2);assert.equal(u.addTime({},s,10,D)[D].sec[s],10);}
+ assert.equal(new Set(Object.values(u.screenLabel)).size,u.screens.length,'no two places share a name');
+ const g=u.addOpen(u.addTime({},'onboarding',75,D),'chat',D);assert.deepEqual(u.validUsage(JSON.parse(JSON.stringify(g))),g,'the new places survive a save');
+ const rows=u.usageRows(g);assert.deepEqual(rows.map(r=>[r[2],r[3],r[4],r[5]]),[['onboarding','연못지기와의 대화',75,0],['chat','대화 연습 중',0,1]]);
+});
+test('a stretch counts only while it was in view and touched in the last two minutes',()=>{
+ const t=1_800_000_000_000;assert.equal(u.stretchSeconds(t,t+30000,t+5000),30);assert.equal(u.stretchSeconds(t,t+1500,t),1.5);
+ assert.equal(u.stretchSeconds(0,t,t),0,'not in view');assert.equal(u.stretchSeconds(t,t,t),0);assert.equal(u.stretchSeconds(t,t-10,t),0,'a clock that went back counts nothing');
+ assert.equal(u.stretchSeconds(t,t+30000,t+30000-u.IDLE_MS),0,'left untouched for two minutes');assert.equal(u.stretchSeconds(t,t+30000,t+30001-u.IDLE_MS),30);
+ // a phone left open: touched once, then half-minute ticks — the first minutes count and the rest do not
+ let since=t,counted=0;for(let now=t+30000;now<=t+600000;now+=30000){counted+=u.stretchSeconds(since,now,t);since=now;}assert.equal(counted,90);
+});
+test('the view reads the same numbers: one day or all, longest first, to the second, and as text to copy',()=>{
+ let g=u.addTime(u.addTime(u.addTime({},'today',95,D),'chat',200,D),'today',30,E);g=u.addOpen(u.addOpen(u.addOpen(g,'today',D),'chat',D),'help',E);g=u.addAct(g,'frog',D);
+ assert.deepEqual(u.usageOn(g,D),{[D]:g[D]});assert.deepEqual(u.usageOn(g,'2026-01-01'),{});
+ assert.deepEqual(u.usageRanked(g).map(r=>[r.screen,r.seconds,r.opens]),[['chat',200,1],['today',125,1],['help',0,1]]);assert.deepEqual(u.usageRanked(u.usageOn(g,E)).map(r=>r.screen),['today','help']);assert.deepEqual(u.usageRanked({}),[]);
+ assert.equal(u.clockLabel(0),'0초');assert.equal(u.clockLabel(45.9),'45초');assert.equal(u.clockLabel(60),'1분');assert.equal(u.clockLabel(134),'2분 14초');assert.equal(u.clockLabel(3600),'1시간');assert.equal(u.clockLabel(3905),'1시간 5분');assert.equal(u.clockLabel(-3),'0초');assert.equal(u.clockLabel(NaN),'0초');
+ const text=u.usageSummary(g).split('\n');assert.equal(text[0],`폴짝 머문 시간 · 2일 (${D} ~ ${E})`);assert.equal(text[1],'모두 5분 25초 · 화면을 연 횟수 3번');assert.equal(text[2],'- 대화 연습 중: 3분 20초 · 1번');assert.equal(text[3],'- 연못(홈): 2분 5초 · 1번');assert.equal(text[5],'누른 것: 친구 만지기 1번');
+ assert.equal(u.usageSummary(u.usageOn(g,E)).split('\n')[0],`폴짝 머문 시간 · 1일 (${E})`);assert(u.usageSummary({}).includes('아직'));
+ assert(!/\d{2}:\d{2}/.test(u.usageSummary(g)),'no time of day in what is copied');
+});
 console.log(`${n} usage checks passed. The timer itself (screens, background, sleep) is checked in the browser.`);
