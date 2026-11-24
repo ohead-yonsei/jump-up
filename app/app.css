@@ -597,3 +597,17 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .usage-buttons button:disabled{opacity:.45}
 .usage-buttons .danger{border-color:#eec3c3!important;color:#b4403f!important}
 .usage-copy{width:100%;min-height:150px;margin-top:12px;padding:12px;border:1px solid var(--sky-2);border-radius:12px;background:#eae9e5;font:11.5px/1.8 ui-monospace,monospace;color:#404e61}
+/* 0.50.0 — 테스트 기간: one plain line under the start screens saying what is sent; nothing to press */
+.app-root .onboarding-test-note{margin:10px 0 0;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.82);font-size:12px;line-height:1.65;color:#4f5b6a}
+/* 0.51.0 — practice lives on 가볼 곳 and 도움받기: two screens in the switch, and a short list of things to rehearse on each */
+.app-root .help-switch.hub-switch{grid-template-columns:1fr 1fr}
+.practice-here{margin:22px 0 4px}
+.practice-here>.step-label{margin-bottom:4px;color:var(--accent)}
+.app-root .practice-here>h3{margin:0 0 12px;font-size:16px!important;line-height:1.45!important;letter-spacing:-.4px!important;font-weight:700!important;color:#303a47}
+.practice-here .practice-row{min-height:72px;padding:13px 14px}
+.practice-here-note{display:flex;align-items:center;gap:6px;margin:10px 2px 0;font-size:12px;color:#7e8999}
+.practice-here-note svg{flex:none;color:var(--accent)}
+.place-area+.practice-here,.place-maps+.practice-here{margin-top:20px}
+.practice-here+.place-visit{margin-top:22px}
+.practice-here+.urgent-strip{margin-top:22px}
+.practice-intro .practice-mode-switch{display:flex;width:fit-content;margin:8px auto 0;min-height:40px;align-items:center;font-size:13px;color:#6a7687;text-decoration:underline;text-underline-offset:3px}

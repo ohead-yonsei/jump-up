@@ -24,7 +24,7 @@ function People({people}:{people:ParticipantRecords[]}){
 /** Where the cohort's time went (0.49.0): everyone's seconds by place added up, longest first. Only people whose membership sends the numbers are in it. */
 function Dwell({people}:{people:ParticipantRecords[]}){
  const d=cohortDwell(people);
- if(!d.rows.length)return <p className="ops-empty">아직 받은 숫자가 없어요. 0.49.0부터 함께한 사람과, 숫자도 보내기로 한 사람의 머문 시간이 여기에 모여요.</p>;
+ if(!d.rows.length)return <p className="ops-empty">아직 받은 숫자가 없어요. 함께하는 사람이 폴짝을 쓰면 1분 안에 머문 시간이 여기에 모여요.</p>;
  return <>
   <p className="ops-dwell-total"><strong>{clockLabel(d.seconds)}</strong><span>{d.members}명의 숫자를 모두 더했어요 · 한 사람 평균 {clockLabel(Math.round(d.seconds/Math.max(1,d.members)))}</span></p>
   <div className="ops-table-wrap"><table className="ops-table ops-dwell"><thead><tr><th>곳</th><th>머문 시간(합계)</th><th>전체에서</th><th>머문 사람</th><th>한 사람 평균</th><th>연 횟수</th></tr></thead>
@@ -53,7 +53,7 @@ function CohortView({cohort,people,pads,frogs,link,admin,test}:{cohort:Cohort;pe
   <section className="ops-invite" aria-label="참여 안내">
    <div><span>기수 코드</span><strong>{formatCode(cohort.joinCode)}</strong><CopyButton text={formatCode(cohort.joinCode)}/></div>
    <div><span>참여 링크</span><code>{link}</code><CopyButton text={link}/></div>
-   <p>링크를 열면 앱의 ‘기록’ 탭에 기수 코드가 채워져 있어요. 참여자가 무엇이 전달되는지 읽고 동의해야 참여가 시작돼요.{test&&' 이 기수는 테스트 기간의 기본 기수예요. 폴짝을 시작하는 사람은 안내를 본 뒤 코드 없이 여기에 함께해요.'}</p>
+   <p>링크를 열면 앱의 ‘기록’ 탭에 기수 코드가 채워져 있어요. 참여자가 무엇이 전달되는지 읽고 동의해야 참여가 시작돼요.{test&&' 이 기수는 테스트 기간의 기본 기수예요. 폴짝을 쓰기 시작한 사람은 코드 없이 저절로 여기에 함께해요.'}</p>
   </section>
   <section className="ops-people"><div className="ops-section-top"><h2>함께하는 사람 {people.length}명</h2>{people.length>0&&<a className="secondary" href={`/api/ops/cohorts?id=${cohort.id}`}>CSV 내려받기</a>}</div>
    <People people={people}/>

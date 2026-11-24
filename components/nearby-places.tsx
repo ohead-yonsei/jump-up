@@ -11,7 +11,8 @@ function MapLinks({kind,near,lead}:{kind:PlaceKind;near?:string|null;lead:string
  return <div className="place-maps"><span>{lead}</span><div><a href={links.kakao} target="_blank" rel="noopener noreferrer">카카오맵<ArrowUpRight size={14}/></a><a href={links.naver} target="_blank" rel="noopener noreferrer">네이버 지도<ArrowUpRight size={14}/></a></div></div>
 }
 /** Cafes, parks, libraries and convenience stores near the person, nearest first. The search point lives only in this screen. */
-export function NearbyPlaces({kind,onKind,onPractice,onVisit,stamps}:{kind:PlaceKind;onKind:(k:PlaceKind)=>void;onPractice:()=>void;onVisit:(k:PlaceKind,arrived:boolean)=>void;stamps?:Record<PlaceKind,number>}){
+/** `practice` is the list of things to say that can be rehearsed first; it sits between the places and the stamps (0.51.0). */
+export function NearbyPlaces({kind,onKind,practice,onVisit,stamps}:{kind:PlaceKind;onKind:(k:PlaceKind)=>void;practice?:React.ReactNode;onVisit:(k:PlaceKind,arrived:boolean)=>void;stamps?:Record<PlaceKind,number>}){
  const [configured,setConfigured]=useState<boolean|null>(null);
  const [status,setStatus]=useState<'idle'|'locating'|'loading'|'done'|'error'>('idle');
  const [places,setPlaces]=useState<Place[]>([]);const [near,setNear]=useState<string|null>(null);const [message,setMessage]=useState('');
@@ -61,7 +62,7 @@ export function NearbyPlaces({kind,onKind,onPractice,onVisit,stamps}:{kind:Place
    <p className="place-credit">장소 정보 카카오 · 문을 열었는지와 쉬는 날은 지도에서 한 번 더 확인해 주세요.</p>
   </section>}
   {configured&&(status==='done'||status==='error')&&<MapLinks kind={kind} near={typedNear} lead="지도 앱에서 더 찾아보기"/>}
-  {kind==='cafe'&&<button className="teaser place-practice" onClick={onPractice}><span className="round-icon"><MessageCircle size={23}/></span><div><span className="step-label">가기 전에 한 번</span><h3>주문, 미리 연습해볼까요?</h3><p>“아메리카노 한 잔 주세요”부터 천천히.</p></div><ArrowRight size={19}/></button>}
+  {practice}
   <section className="place-visit"><h3>다녀왔다면, 연잎에 도장을 찍어요</h3><p>문 앞까지만 가봤어도 충분한 한 걸음이에요. 어느 곳에 갔는지는 남기지 않아요.</p>
    {stamps&&<ul className="place-stamps" aria-label="내가 건너온 연잎">{placeKinds.map(k=>{const KindIcon=kindIcons[k.id];const n=stamps[k.id];return <li key={k.id} className={n?'got':''} aria-label={`${k.pad}(${k.label}), ${n?n+'번 다녀왔어요':'아직 건너가지 않았어요'}`}><Pad kind={k.id} size={46}><KindIcon size={18}/></Pad><span aria-hidden="true">{k.pad}</span><small aria-hidden="true">{n?`${n}번`:k.label}</small></li>})}</ul>}
    {stamps&&<p className="place-stamps-note">{hopped?`지금까지 연잎을 ${hopped}번 건너왔어요.`:'폴짝의 개구리들은 멀리 뛰지 않고, 가까운 연잎으로 한 번씩 건너가요.'}</p>}

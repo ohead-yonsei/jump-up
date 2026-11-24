@@ -1,6 +1,7 @@
 // 테스트 기간(0.49.0): everyone who starts joins the same cohort, so the team can check the app with real numbers on the operator page.
 // Server only. The app asks GET /api/cohort whether a test cohort is open and joins it with POST {test:true}; it never needs the code.
-// The person is told before anything is sent (the start screen, or a one-time window for people already using the app) and can say no or leave.
+// 0.50.0: joining is not a choice in a test period. The app joins by itself the first time the person touches it, and says so in plain
+// lines (start screen, 이용 안내, the records tab) without asking for anything. Leaving on the records tab still works and is not undone.
 // To end the test period: set `on` to false here and deploy, set TEST_COHORT=off in the deployment, or end the cohort on the operator page.
 import { cohortEnded, normalizeCode, validJoinCode } from './cohort';
 import { DuplicateCode, type Cohort, type CohortStore } from './cohort-store';

@@ -2,8 +2,8 @@
 // Second-round feedback: for an app the numbers matter (time spent, what gets pressed), because what people say tends to sound alike.
 // It holds no text and no times of day — only day, screen or action, and a number. It stays on the device with the other records
 // and goes into the person's own CSV export.
-// 0.49.0: it is also sent to a cohort, but only for a membership that agreed to it (`Membership.usage`): the consent names it,
-// whole days are sent again when their numbers grow, and the operator page adds them up by place (`cohortDwell`).
+// 0.49.0: it is also sent to the cohort the person is in: whole days are sent again when their numbers grow, and the operator
+// page adds them up by place (`cohortDwell`). 0.50.0: every membership sends it, and in a test period everyone is in the test cohort.
 // 0.48.0: a place is a tab or something open over it that is worth telling apart (the first talk with the keeper, a practice
 // chat under way, an open mission card, the notebook, the urgent-help window), and 메뉴 › 머문 시간 보기 shows the numbers as they stand.
 export const tabScreens = ['today', 'practice', 'resources', 'places', 'journal', 'closet', 'pond'] as const;
