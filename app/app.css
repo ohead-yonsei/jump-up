@@ -597,3 +597,5 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .usage-buttons button:disabled{opacity:.45}
 .usage-buttons .danger{border-color:#eec3c3!important;color:#b4403f!important}
 .usage-copy{width:100%;min-height:150px;margin-top:12px;padding:12px;border:1px solid var(--sky-2);border-radius:12px;background:#eae9e5;font:11.5px/1.8 ui-monospace,monospace;color:#404e61}
+/* 0.50.0 — 테스트 기간: one plain line under the start screens saying what is sent; nothing to press */
+.app-root .onboarding-test-note{margin:10px 0 0;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.82);font-size:12px;line-height:1.65;color:#4f5b6a}

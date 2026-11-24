@@ -41,16 +41,17 @@ test('the export gets a row per day and screen or action at the end, totals on t
  const none=r.recordRows([entry],'P07',[D]);assert.equal(none.length,3);assert.deepEqual(none[0].slice(-3),['','','']);
  const csv=r.recordsCsv([entry],'P07',[D],g);assert(csv.includes('"usage"')&&csv.includes('"친구 만지기"'));
 });
-test('a cohort gets the numbers only from a membership that agreed, from the joining day on, and a day goes again only when it grew',()=>{
+test('a cohort gets the numbers from every membership, from the joining day on, and a day goes again only when it grew',()=>{
  const info={name:'테스트 기수',org:'폴짝 팀',startsOn:'2026-11-01',endsOn:'2026-12-31'};const token='A'.repeat(43);const joined=new Date(2026,10,22,15,0,0);
  let g=u.addTime(u.addTime({},'today',95,D),'onboarding',40,E);g=u.addAct(u.addOpen(g,'today',E),'frog',E);
- const old=c.startMembership(info,token,'P07',[],[],joined);assert.equal(old.usage,undefined);assert.deepEqual(c.pendingUsageSync(g,old),{},'a membership from before the new consent sends none');
- const m=c.startMembership(info,token,'P07',[],[],joined,true);assert.equal(m.usage,true);assert.deepEqual(m.usageSent,{});
+ const m=c.startMembership(info,token,'P07',[],[],joined);assert.deepEqual(m.usageSent,{});assert.equal('usage' in m,false,'sending the numbers is not a separate switch');
  assert.deepEqual(c.pendingUsageSync(g,m),{[E]:g[E]},'the day before joining stays on the device; the whole joining day goes');
  const after=c.afterUsageSync(m,{[E]:g[E]},g);assert.deepEqual(after.usageSent,{[E]:u.usageMark(g[E])});assert.deepEqual(c.pendingUsageSync(g,after),{});assert(after.lastSync);
  const grown=u.addTime(g,'chat',30,E);assert.deepEqual(Object.keys(c.pendingUsageSync(grown,after)),[E]);assert.equal(c.pendingUsageSync(grown,after)[E].sec.chat,30);
  const next=u.addOpen(grown,'journal','2026-11-23');assert.deepEqual(Object.keys(c.pendingUsageSync(next,c.afterUsageSync(after,{[E]:grown[E]},grown))),['2026-11-23']);
- assert.deepEqual(c.validMembership(JSON.parse(JSON.stringify(after))),after);assert.equal(c.validMembership({...after,usage:'yes'}).usage,undefined);assert.deepEqual(c.validMembership({...after,usageSent:{[E]:5,'bad-day':3,'2026-11-23':-1,'2026-11-24':1.5}}).usageSent,{[E]:5});
+ assert.deepEqual(c.validMembership(JSON.parse(JSON.stringify(after))),after);assert.deepEqual(c.validMembership({...after,usageSent:{[E]:5,'bad-day':3,'2026-11-23':-1,'2026-11-24':1.5}}).usageSent,{[E]:5});
+ // a membership saved by an earlier version has no marks yet: it reads back with none, and then sends like any other
+ const {usageSent:_,...older}=m;const read=c.validMembership({...older,usage:true});assert.deepEqual(read.usageSent,{});assert.equal('usage' in read,false);assert.deepEqual(c.pendingUsageSync(g,read),{[E]:g[E]});
  assert.equal(u.usageMark({sec:{today:10,chat:5},open:{today:2},act:{frog:1}}),18);assert.deepEqual(u.pendingUsage({[D]:{sec:{},open:{},act:{}}},{}),{},'an empty day is not sent');
  assert.deepEqual(u.sentUsage({[D]:7,'2026-01-01':3},{[E]:g[E]},g),{[D]:7,[E]:u.usageMark(g[E])},'marks of days no longer on the device are dropped');
 });
