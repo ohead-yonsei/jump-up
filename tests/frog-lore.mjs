@@ -20,6 +20,19 @@ test('the pond has four promises taken from frog life, and the friend has someth
  assert.equal(l.pondPromises.length,4);for(const p of l.pondPromises){assert(p.rule.endsWith('요')&&p.means.endsWith('요.'),p.rule);assert(p.from.length>=2);assert(!/해야|왜 안|더 열심히|실패|게으|한심/.test(p.rule+p.means));}
  for(const stage of stages){assert(l.frogSays[stage].length>=2,stage);for(const line of l.frogSays[stage]){assert(line.length<=16,line);assert(!/요[.!?]?$/.test(line),'the friend speaks casually: '+line);}}
 });
+test('what the friend says when touched is comfort in plain words: no baby talk, no push, short enough to read in a glance',()=>{
+ const kinds=['jump','pat','hug','spin','cheer'];const baby=/헤헤|간질|간지러|쿨쿨|새근|꼼지락|데굴|파닥|흔들흔들|퐁당|살랑|짜잔|포옥|쓰담|꿈틀|빙글/;const push=/힘내|해야|할 수 있|더 열심|노력|분발|이겨|극복|왜 |남들|다른 사람/;
+ const all=[];const check=(line,where)=>{all.push(line);assert(line.length>=4&&line.length<=14,where+': '+line);assert(!baby.test(line),'baby talk in '+where+': '+line);assert(!push.test(line),'a push in '+where+': '+line);assert(!/요[.!?]?$/.test(line),'the friend speaks casually: '+line);assert(!/[!?]{2,}|ㅋ|ㅎ/.test(line),line);};
+ assert.deepEqual(Object.keys(l.touchLines).sort(),[...kinds].sort());
+ for(const k of kinds){assert(l.touchLines[k].length>=2,k);for(const line of l.touchLines[k])check(line,k);}
+ assert.deepEqual(Object.keys(l.youngTouchLines).sort(),['egg','tadpole'],'only the stages that cannot hop or hug answer differently');
+ for(const [stage,set] of Object.entries(l.youngTouchLines)){assert.deepEqual(Object.keys(set).sort(),[...kinds].sort(),stage);for(const k of kinds){assert(set[k].length>=1,stage+' '+k);for(const line of set[k])check(line,stage+' '+k);}}
+ for(const stage of stages)for(const k of kinds){const pool=l.touchPool(stage,k);assert(pool.length>=1);assert.equal(pool,(l.youngTouchLines[stage]??l.touchLines)[k]);}
+ for(const stage of stages)for(const line of l.frogSays[stage]){assert(!baby.test(line),'baby talk: '+line);assert(!push.test(line),line);}
+ for(const stage of stages){const intro=l.introLines('든든한 폴짝이',stage);assert.equal(intro.length,3);assert(intro[0].includes('든든한 폴짝이'));for(const line of intro.slice(1))check(line,'intro '+stage);}
+ // the heart of it is said somewhere: glad you came, your pace, resting is fine, I am here
+ const said=all.join(' ');for(const word of ['와줘서','속도','충분해','고마워','괜찮아','천천히','옆에 있을게'])assert(said.includes(word),word);
+});
 test('the keeper and the friend repeat only what the notebook can back up',()=>{
  const facts=l.frogStories.map(s=>s.fact).join(' ');
  assert(v.KEEPER_LINES.some(x=>x.includes('연못 바닥'))&&facts.includes('연못 바닥'));assert(v.KEEPER_LINES.some(x=>x.includes('꼬리'))&&facts.includes('꼬리'));assert(v.KEEPER_LINES.some(x=>x.includes('함께 울어'))&&facts.includes('함께 울어'));
