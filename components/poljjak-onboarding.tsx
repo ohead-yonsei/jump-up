@@ -13,7 +13,7 @@ import {outsideOptions,goals,springStages,profileFromChoices,pickMission,WAVE,ty
 import {scaleItems,scaleResult,validScale,levelLines,connectionFromLevel} from '@/lib/loneliness';
 import {readAnswer,type ReadKind} from '@/lib/chat-read';
 import {KEEPER} from '@/lib/village-map';
-import {croak,setSound,soundOn,wakeSound,loadKeeperVoice} from '@/lib/croak';
+import {croak,setSound,soundOn,wakeSound} from '@/lib/croak';
 type Props={initialCharacter:Character|null;initialProfile:JourneyProfile|null;initialEnergy:Energy|null;initialSave:boolean;growth?:Growth;startAtQuestions?:boolean;demo?:boolean;testCohort?:string|null;onComplete:(profile:JourneyProfile,energy:Energy,save:boolean,character:Character)=>void;onBrowse:()=>void;onHelp:()=>void};
 // The talk with the keeper: where I am comfortable (0), the six scale items (1–6), what I hope for (7), today's energy (8).
 const SCALE_FROM=1,GOAL_AT=SCALE_FROM+scaleItems.length,ENERGY_AT=GOAL_AT+1,TURNS=ENERGY_AT+1;
@@ -51,7 +51,7 @@ export function PoljjakOnboarding({initialCharacter,initialProfile,initialEnergy
  const [line,setLine]=useState(0);const [shown,setShown]=useState(0);const whole=greeting[line].length;
  useEffect(()=>{if(step!==0||creating)return;if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){setShown(whole);return;}setShown(0);const id=setInterval(()=>setShown(n=>{if(n>=whole){clearInterval(id);return n;}return n+1;}),32);return ()=>clearInterval(id);},[line,step,creating,whole]);
  // The keeper croaks as it talks: every other letter while the greeting types, a short run when a chat line appears.
- const [sound,setSoundState]=useState(true);useEffect(()=>{setSoundState(soundOn());if(soundOn())void loadKeeperVoice();},[]);
+ const [sound,setSoundState]=useState(true);useEffect(()=>{setSoundState(soundOn());},[]);
  useEffect(()=>{if(sound&&step===0&&!creating&&shown>0&&shown<whole&&shown%2===1)croak(greeting[line][shown-1]);},[shown,line,step,creating,whole,sound]);
  // after the last line: meet the friend first (once), then the talk
  const afterGreeting=()=>met?setStep(1):setCreating(true);

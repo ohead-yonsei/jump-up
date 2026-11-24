@@ -1,5 +1,5 @@
 {
-  "note": "What each sound file is and the words it was made from. `node scripts/make-sounds.mjs` makes the missing ones with ElevenLabs (ELEVENLABS_API_KEY); `--force id` makes one again. Files land in public/audio/<id>.mp3. `voices` are the keeper's candidate voices: for each, six short syllables (the talking sound is cut from them) and one line read aloud, in public/audio/keeper/<key>-<name>.mp3.",
+  "note": "What each sound file is and the words it was made from. `node scripts/make-sounds.mjs` makes the missing ones with ElevenLabs (ELEVENLABS_API_KEY); `--force id` makes one again. Files land in public/audio/<id>.mp3.",
   "sounds": [
     {
       "id": "jump",
@@ -126,49 +126,5 @@
       "seconds": 80,
       "text": "A gentle, friendly instrumental for a little frog village around a pond. Light pizzicato strings, ukulele, soft marimba and a wooden guiro that sounds a little like frogs croaking. Slow bouncy rhythm around 88 BPM, cozy and playful but calm, no heavy drums, no vocals. A simple cheerful repeating motif that can loop without a big ending. Soft dynamics throughout, nothing sudden."
     }
-  ],
-  "voices": {
-    "model": "eleven_multilingual_v2",
-    "syllables": {
-      "a": "아.",
-      "e": "에.",
-      "i": "이.",
-      "o": "오.",
-      "u": "우.",
-      "eo": "어."
-    },
-    "line": "안녕, 반가워요. 나는 이 연못에 사는 연못지기예요.",
-    "list": [
-      {
-        "key": "rumi",
-        "id": "AiutpBawf78dyoTpoaHl",
-        "name": "루미",
-        "about": "차분하고 맑은 여성 목소리"
-      },
-      {
-        "key": "hyunmin",
-        "id": "Ml2fm7pJDDTZqQkeGpRM",
-        "name": "현민",
-        "about": "부드럽고 느긋한 남성 목소리"
-      },
-      {
-        "key": "han",
-        "id": "AdcQV41LYGWog0GhBtnU",
-        "name": "한",
-        "about": "깊고 따뜻한 남성 내레이터"
-      },
-      {
-        "key": "harry",
-        "id": "BNr4zvrC1bGIdIstzjFQ",
-        "name": "해리 킴",
-        "about": "어린이 이야기를 읽어 주는 목소리"
-      },
-      {
-        "key": "namchun",
-        "id": "5ON5Fnz24cnOozEQfGAm",
-        "name": "할아버지 남천",
-        "about": "이야기를 들려주는 할아버지"
-      }
-    ]
-  }
+  ]
 }
