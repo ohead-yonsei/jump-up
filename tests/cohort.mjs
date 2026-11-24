@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import ts from 'typescript';
 const out=new URL('../.test-build/',import.meta.url);await fs.mkdir(out,{recursive:true});
-for(const name of ['records','usage','request-origin','cohort','cohort-server','pond','cohort-store']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
-const j=await import(new URL('records.js',out));const c=await import(new URL('cohort.js',out));const srv=await import(new URL('cohort-server.js',out));const st=await import(new URL('cohort-store.js',out));
+for(const name of ['records','usage','request-origin','cohort','cohort-server','pond','cohort-store','test-cohort']){const src=await fs.readFile(new URL('../lib/'+name+'.ts',import.meta.url),'utf8');await fs.writeFile(new URL(name+'.js',out),ts.transpileModule(src,{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '\.\/([\w-]+)'/g,"from './$1.js'"));}
+const j=await import(new URL('records.js',out));const c=await import(new URL('cohort.js',out));const srv=await import(new URL('cohort-server.js',out));const st=await import(new URL('cohort-store.js',out));const tc=await import(new URL('test-cohort.js',out));const us=await import(new URL('usage.js',out));
 let passed=0;const test=async(name,fn)=>{await fn();passed++;console.log('PASS '+name)};
 const token='A'.repeat(43);const step=(id,at,extra={})=>({id,at,type:'step',title:'창밖 보기',energy:2,...extra});
 await test('codes avoid look-alike characters and survive spaces, dashes and lower case',()=>{
@@ -84,6 +84,9 @@ await test('the local file store applies requests one at a time, so none overwri
  const [a,b]=await Promise.all([store.addParticipant({cohortId:cohort.id,code:'A',tokenHash:'ta'}),store.addParticipant({cohortId:cohort.id,code:'B',tokenHash:'tb'})]);
  await Promise.all(Array.from({length:20},(_,i)=>store.saveRecords(i%2?a.id:b.id,'',[step('r'+i,'2026-11-03T03:00:00.000Z')],[])));
  const people=await store.cohortRecords(cohort.id);assert.deepEqual(people.map(p=>p.entries.length),[10,10]);
+ // the numbers by place go through the file too, and a file written before they existed still opens
+ const dayUse={sec:{today:60},open:{today:1},act:{}};await store.saveRecords(b.id,'',[],[],{'2026-11-03':dayUse});assert.deepEqual((await store.cohortRecords(cohort.id)).find(p=>p.id===b.id).usage,{'2026-11-03':dayUse});
+ const saved=JSON.parse(await fs.readFile(file,'utf8'));assert.deepEqual(saved.usage[b.id],{'2026-11-03':dayUse});delete saved.usage;await fs.writeFile(file,JSON.stringify(saved));assert.deepEqual((await store.cohortRecords(cohort.id)).map(p=>p.usage),[{},{}]);
  await Promise.all([store.saveRecords(a.id,'',[step('late','2026-11-03T04:00:00.000Z')],[]),store.removeParticipant(a.id)]);assert.deepEqual((await store.cohortRecords(cohort.id)).map(p=>p.code),['B']);await fs.rm(file,{force:true});
 });
 await test('Supabase calls use the server key, never read hashes back, cap and add without overwriting, and page by a unique order',async()=>{
@@ -118,5 +121,49 @@ await test('Supabase calls use the server key, never read hashes back, cap and a
  const legacy=[];await st.supabaseStore('https://example.supabase.co','eyJhbGciOi.legacy',async(url,init)=>{legacy.push(init);return Response.json([])}).cohortByJoinCode('7K3QPW2M');assert.equal(legacy[0].headers.Authorization,'Bearer eyJhbGciOi.legacy');
  assert.equal(await st.storeFromEnv({NODE_ENV:'production'}),null);assert.equal(await st.storeFromEnv({NODE_ENV:'production',SUPABASE_URL:'http://insecure.example',SUPABASE_SECRET_KEY:'k'}),null);
  assert.equal((await st.storeFromEnv({NODE_ENV:'production',SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'k'})).kind,'supabase');
+});
+await test('time-by-place numbers are stored by day: a day sent again replaces that day, and they leave with the person',async()=>{
+ const store=st.memoryStore();const cohort=await store.createCohort({name:'1기',org:'',startsOn:'2026-11-01',endsOn:'2026-12-01',joinCode:'7K3QPW2M',operatorHash:'h'});
+ const a=await store.addParticipant({cohortId:cohort.id,code:'A',tokenHash:'ta'});const b=await store.addParticipant({cohortId:cohort.id,code:'B',tokenHash:'tb'});
+ const day1={sec:{today:60},open:{today:1},act:{}},day1b={sec:{today:90,chat:30},open:{today:2,chat:1},act:{frog:1}},day2={sec:{journal:20},open:{journal:1},act:{}};
+ await store.saveRecords(a.id,'A',[],[],{'2026-11-03':day1});await store.saveRecords(a.id,'A',[step('e1','2026-11-03T03:00:00.000Z')],['2026-11-03'],{'2026-11-03':day1b,'2026-11-04':day2});await store.saveRecords(a.id,'A',[],[]);
+ let [first,second]=await store.cohortRecords(cohort.id);assert.deepEqual(first.usage,{'2026-11-03':day1b,'2026-11-04':day2});assert.deepEqual(second.usage,{});assert.equal(first.entries.length,1);
+ await store.saveRecords(b.id,'B',[],[],{'2026-11-03':{sec:{today:10,moon:5},open:{},act:{},note:'x'}});[first,second]=await store.cohortRecords(cohort.id);assert.deepEqual(second.usage,{'2026-11-03':{sec:{today:10},open:{},act:{}}},'only known places are kept');
+ assert.equal(us.cohortDwell([first,second]).seconds,150);
+ await store.removeParticipant(a.id);const left=await store.cohortRecords(cohort.id);assert.deepEqual(left.map(p=>p.code),['B']);
+ const again=await store.addParticipant({cohortId:cohort.id,code:'A',tokenHash:'ta2'});assert.deepEqual((await store.cohortRecords(cohort.id)).find(p=>p.id===again.id).usage,{},'nothing of the person who left comes back');
+});
+await test('on Supabase a day of numbers is one row in entries that is replaced, apart from the records and their limit',async()=>{
+ const pid='22222222-2222-4222-8222-222222222222',cid='11111111-1111-4111-8111-111111111111';const calls=[];const day={sec:{today:95},open:{today:2},act:{frog:1}};
+ const fake=async(url,init)=>{calls.push({url,init});const u=new URL(url);const path=u.pathname.split('/').at(-1);const offset=u.searchParams.get('offset');const method=init.method??'GET';
+  if(method==='GET'&&path==='entries'&&init.headers.Prefer==='count=exact')return new Response('[]',{headers:{'content-range':'0-0/3'}});
+  if(method==='GET'&&path==='participants')return Response.json(offset==='0'?[{id:pid,cohort_id:cid,code:'P01',joined_at:'2026-11-02T00:00:00Z',last_sync_at:null}]:[]);
+  if(method==='GET'&&path==='entries')return Response.json(offset==='0'?[{participant_id:pid,id:'e1',type:'step',data:step('e1','2026-11-02T04:00:00.000Z')},{participant_id:pid,id:'usage-2026-11-02',type:'usage',data:day},{participant_id:pid,id:'usage-2026-11-03',type:'usage',data:{sec:{moon:4},open:{},act:{}}},{participant_id:pid,id:'usage-bad',type:'usage',data:day}]:[]);
+  if(method==='GET')return Response.json([]);
+  return new Response(null,{status:method==='POST'?201:204});};
+ const store=st.supabaseStore('https://example.supabase.co/','sb_secret_test',fake);
+ await store.saveRecords(pid,'',[],[],{'2026-11-02':day,'nope':day});
+ const post=calls.find(c=>c.init.method==='POST');const url=new URL(post.url);assert.equal(url.pathname,'/rest/v1/entries');assert.equal(url.searchParams.get('on_conflict'),'participant_id,id');assert.match(post.init.headers.Prefer,/resolution=merge-duplicates/);
+ assert.deepEqual(JSON.parse(post.init.body),[{participant_id:pid,id:'usage-2026-11-02',at:'2026-11-02T00:00:00.000Z',type:'usage',data:day}]);
+ assert.equal(calls.filter(c=>c.init.method==='POST').length,1,'no records and no visits means no other insert');assert(calls.some(c=>c.init.method==='PATCH'),'the last time something was received is still marked');
+ calls.length=0;await store.saveRecords(pid,'',[step('e2','2026-11-02T05:00:00.000Z')],[]);
+ const count=calls.find(c=>c.init.headers?.Prefer==='count=exact');assert(decodeURIComponent(count.url).includes('type=neq.usage'),'the record limit does not count the rows of numbers');
+ assert(calls.filter(c=>c.init.method==='POST').every(c=>/ignore-duplicates/.test(c.init.headers.Prefer)),'a send without numbers never overwrites anything');
+ const [person]=await store.cohortRecords(cid);assert.deepEqual(person.entries.map(e=>e.id),['e1']);assert.deepEqual(person.usage,{'2026-11-02':day});
+});
+await test('in a test period there is one cohort everyone can join without a code: opened on the first join, never twice, and closed by a switch or its last day',async()=>{
+ assert(c.validJoinCode(tc.TEST_COHORT.code));assert(c.validDay(tc.TEST_COHORT.startsOn)&&c.validDay(tc.TEST_COHORT.endsOn)&&tc.TEST_COHORT.endsOn>=tc.TEST_COHORT.startsOn);assert(c.validCohortInput(tc.TEST_COHORT));
+ assert.equal(tc.testCohortCode({}),tc.TEST_COHORT.code);assert.equal(tc.testCohortCode({TEST_COHORT:'off'}),null);assert.equal(tc.testCohortCode({TEST_COHORT:' OFF '}),null);
+ assert.equal(tc.testCohortCode({TEST_COHORT_CODE:'7k3q-pw2m'}),'7K3QPW2M');assert.equal(tc.testCohortCode({TEST_COHORT_CODE:'short'}),tc.TEST_COHORT.code);
+ const store=st.memoryStore();const day=tc.TEST_COHORT.startsOn;
+ assert.deepEqual(await tc.openTestCohort(store,{},day),{name:tc.TEST_COHORT.name},'not opened yet still counts as open');assert.equal(await tc.testCohort(store,{}),null,'looking does not open it');assert.equal((await store.listCohorts()).length,0);
+ const [one,two]=await Promise.all([tc.testCohort(store,{},true),tc.testCohort(store,{},true)]);assert.equal(one.id,two.id);assert.equal((await store.listCohorts()).length,1);assert.equal(one.name,tc.TEST_COHORT.name);assert.equal(one.joinCode,tc.TEST_COHORT.code);assert.equal('operatorHash' in one,false);
+ assert.equal((await tc.testCohort(store,{},true)).id,one.id);assert.equal(await tc.testCohort(store,{TEST_COHORT:'off'},true),null);assert.equal(await tc.openTestCohort(store,{TEST_COHORT:'off'},day),null);
+ await store.setEndsOn(one.id,'2026-11-25');assert.deepEqual(await tc.openTestCohort(store,{},'2026-11-25'),{name:tc.TEST_COHORT.name});assert.equal(await tc.openTestCohort(store,{},'2026-11-26'),null,'ending it on the operator page closes it');
+ assert.equal(await tc.openTestCohort(st.memoryStore(),{},'2099-01-01'),null,'after the built-in last day nothing opens');
+ // a cohort the team already runs can be the test cohort; a code that matches nothing opens nothing
+ const own=st.memoryStore();const mine=await own.createCohort({name:'팀 테스트',org:'',startsOn:'2026-11-01',endsOn:'2026-12-31',joinCode:'7K3QPW2M',operatorHash:'h'});
+ assert.equal((await tc.testCohort(own,{TEST_COHORT_CODE:'7K3QPW2M'},true)).id,mine.id);assert.deepEqual(await tc.openTestCohort(own,{TEST_COHORT_CODE:'7K3QPW2M'},'2026-11-24'),{name:'팀 테스트'});
+ assert.equal(await tc.testCohort(own,{TEST_COHORT_CODE:'ABCDEFGH'},true),null);assert.equal(await tc.openTestCohort(own,{TEST_COHORT_CODE:'ABCDEFGH'},'2026-11-24'),null);assert.equal((await own.listCohorts()).length,1);
 });
 console.log(`${passed} cohort checks passed. Live Supabase and the operator pages are checked by hand (README).`);

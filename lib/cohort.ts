@@ -1,4 +1,5 @@
 import { localDay, usageSummary, validEntries, validVisits, validParticipant, recordRows, recordsHeader, toCsv, latestReview, type Entry } from './records';
+import { validUsage, pendingUsage, sentUsage, usageTotals, type Usage } from './usage';
 
 /** Letters and digits that are hard to mix up when read aloud or copied from paper (no 0/O, 1/I/L). */
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -34,7 +35,14 @@ export function cohortStage(cohort: CohortInfo, today = seoulDay()) {
 /** What the device keeps after joining: the cohort as shown to the person, and which records and days it has already sent
  * (or chose not to send, for everything from before joining). Tracking ids rather than a time keeps a wrong device clock from skipping records. */
 /** `showFrog` is the person's answer to whether their frog shows in the pond village; unset until they have been asked. */
-export type Membership = CohortInfo & { token: string; joinedAt: string; sent: string[]; sentVisits: string[]; code: string; lastSync: string; showFrog?: boolean };
+/** `usage` is true when the consent they agreed to names the time-by-place numbers (0.49.0 on); memberships from before stay without it
+ * until the person turns it on. `usageSent` keeps a mark per day already sent, so a day goes out again only when its numbers grew. */
+export type Membership = CohortInfo & { token: string; joinedAt: string; sent: string[]; sentVisits: string[]; code: string; lastSync: string; showFrog?: boolean; usage?: boolean; usageSent?: Record<string, number> };
+const marks = (value: unknown): Record<string, number> => {
+  const out: Record<string, number> = {}; if (!value || typeof value !== 'object' || Array.isArray(value)) return out;
+  for (const [day, n] of Object.entries(value as Record<string, unknown>).slice(0, 400)) if (validDay(day) && Number.isInteger(n) && Number(n) > 0) out[day] = Number(n);
+  return out;
+};
 const time = (value: unknown): value is string => typeof value === 'string' && value.length <= 40 && !Number.isNaN(Date.parse(value));
 const strings = (value: unknown, max: number, ok: (s: string) => boolean): value is string[] => Array.isArray(value) && value.length <= max && value.every(s => typeof s === 'string' && ok(s));
 export function validMembership(value: unknown): Membership | null {
@@ -44,13 +52,17 @@ export function validMembership(value: unknown): Membership | null {
   const token = v.token, joinedAt = v.joinedAt, sent = v.sent, sentVisits = v.sentVisits, code = v.code, lastSync = v.lastSync;
   // Without the sent lists there is no telling which records are from before joining, so the device has to join again.
   if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token) || !time(joinedAt) || !strings(sent, 4000, s => s.length <= 100) || !strings(sentVisits, 2000, validDay)) return null;
-  return { ...info, token, joinedAt, sent, sentVisits, code: typeof code === 'string' && validParticipant(code) ? code : '', lastSync: time(lastSync) ? lastSync : '', ...(typeof v.showFrog === 'boolean' ? { showFrog: v.showFrog } : {}) };
+  return { ...info, token, joinedAt, sent, sentVisits, code: typeof code === 'string' && validParticipant(code) ? code : '', lastSync: time(lastSync) ? lastSync : '', ...(typeof v.showFrog === 'boolean' ? { showFrog: v.showFrog } : {}), ...(v.usage === true ? { usage: true, usageSent: marks(v.usageSent) } : {}) };
 }
 /** Everything already on the device counts as handled, except today's visit, so only what comes after joining is sent. */
-export function startMembership(cohort: CohortInfo, token: string, code: string, entries: Entry[], visits: string[], now = new Date()): Membership {
+export function startMembership(cohort: CohortInfo, token: string, code: string, entries: Entry[], visits: string[], now = new Date(), shareUsage = false): Membership {
   const today = localDay(now);
-  return { ...cohort, token, code, joinedAt: now.toISOString(), sent: entries.map(e => e.id), sentVisits: visits.filter(d => d !== today), lastSync: '' };
+  return { ...cohort, token, code, joinedAt: now.toISOString(), sent: entries.map(e => e.id), sentVisits: visits.filter(d => d !== today), lastSync: '', ...(shareUsage ? { usage: true, usageSent: {} } : {}) };
 }
+/** The days of time-by-place numbers this membership still has to send: none unless it agreed to, and only from the day of joining on
+ * (the whole joining day, so the first talk with the keeper is in it). */
+export const pendingUsageSync = (usage: Usage, m: Membership): Usage => m.usage ? pendingUsage(usage, m.usageSent, localDay(new Date(m.joinedAt))) : {};
+export const afterUsageSync = (m: Membership, days: Usage, usage: Usage, now = new Date()): Membership => ({ ...m, lastSync: now.toISOString(), usageSent: sentUsage(m.usageSent, days, usage) });
 
 export const MAX_SYNC_ENTRIES = 500;
 export const MAX_SYNC_BYTES = 400_000;
@@ -72,17 +84,19 @@ export function storedEntry(e: Entry): Entry {
   for (const key of ENTRY_KEYS) if (e[key] !== undefined) kept[key] = e[key];
   return { ...kept, at: new Date(e.at).toISOString() } as Entry;
 }
-export function validSync(value: unknown): { participant: string; entries: Entry[]; visits: string[] } | null {
+/** `usage` is the time-by-place numbers by day (lib/usage.ts): read strictly, so only known days, places, actions and sane numbers get through.
+ * Record ids starting with ‘usage-’ are turned away: the Supabase store keeps a day's numbers under that id. */
+export function validSync(value: unknown): { participant: string; entries: Entry[]; visits: string[]; usage: Usage } | null {
   if (!value || typeof value !== 'object') return null;
   const v = value as Record<string, unknown>;
   if (!Array.isArray(v.entries) || v.entries.length > MAX_SYNC_ENTRIES || !Array.isArray(v.visits) || v.visits.length > 730) return null;
   const participant = typeof v.participant === 'string' && validParticipant(v.participant) ? v.participant : '';
-  const entries = validEntries(v.entries).filter(e => /^[A-Za-z0-9-]{1,64}$/.test(e.id)).map(storedEntry);
-  return { participant, entries, visits: validVisits(v.visits).filter(validDay) };
+  const entries = validEntries(v.entries).filter(e => /^[A-Za-z0-9-]{1,64}$/.test(e.id) && !e.id.startsWith('usage-')).map(storedEntry);
+  return { participant, entries, visits: validVisits(v.visits).filter(validDay), usage: validUsage(v.usage) };
 }
 
 /** One person's records as the operator pages see them: a pseudonymous code, never a name. */
-export type ParticipantRecords = { id: string; code: string; joinedAt: string; lastSyncAt: string | null; entries: Entry[]; visits: string[] };
+export type ParticipantRecords = { id: string; code: string; joinedAt: string; lastSyncAt: string | null; entries: Entry[]; visits: string[]; usage?: Usage };
 const koreanDay = (at: string) => seoulDay(at);
 export function participantSummary(p: ParticipantRecords, now = new Date()) {
   const weekAgo = seoulDay(new Date(now.getTime() - 6 * 864e5));
@@ -96,9 +110,11 @@ export function participantSummary(p: ParticipantRecords, now = new Date()) {
     // a note is something written; the 돌아보기 numbers are counted on their own
     notes: p.entries.filter(e => e.type === 'feedback' && !!e.note).length,
     review: latestReview(p.entries),
+    // time by place, for people whose membership sends it: all the seconds and where most of them went
+    dwell: (t => ({ seconds: t.seconds, most: t.most }))(usageTotals(p.usage ?? {})),
   };
 }
 /** The same columns as a person's own export, one block of rows per participant. */
 export function cohortCsv(people: ParticipantRecords[]) {
-  return toCsv([recordsHeader, ...people.flatMap(p => recordRows(p.entries, p.code, p.visits, koreanDay))]);
+  return toCsv([recordsHeader, ...people.flatMap(p => recordRows(p.entries, p.code, p.visits, koreanDay, p.usage ?? {}))]);
 }

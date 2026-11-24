@@ -24,7 +24,7 @@ const goalIcons={rhythm:Sun,outside:Footprints,connect:MessageCircle};
 let seenGrowth:Growth|null=null;
 /** What fills the home's one cohort slot when the person is not in a cohort yet: a short label, a title and where it leads. */
 export type CohortEntry={label:string;title:string;onOpen:()=>void};
-type Props={game:CharacterGame;profile:JourneyProfile|null;onProfile:(p:JourneyProfile)=>void;energy:Energy|null;onEnergy:(e:Energy)=>void;onRecord:(type:Entry['type'],title:string,extra?:Partial<Entry>)=>void;onStartCheck:()=>void;onNavigate:(tab:'practice'|'resources'|'places'|'journal'|'closet',place?:PlaceKind)=>void;onClaimReturn:()=>void;onNotice:(text:string)=>void;demoScene?:number;cohort?:CohortEntry|null;onPond?:()=>void;onFloat?:(text:string)=>void;onUse?:(action:'frog'|'mission'|'shuffle'|'notes')=>void};
+type Props={game:CharacterGame;profile:JourneyProfile|null;onProfile:(p:JourneyProfile)=>void;energy:Energy|null;onEnergy:(e:Energy)=>void;onRecord:(type:Entry['type'],title:string,extra?:Partial<Entry>)=>void;onStartCheck:()=>void;onNavigate:(tab:'practice'|'resources'|'places'|'journal'|'closet',place?:PlaceKind)=>void;onClaimReturn:()=>void;onNotice:(text:string)=>void;demoScene?:number;cohort?:CohortEntry|null;onPond?:()=>void;onFloat?:(text:string)=>void;onUse?:(action:'frog'|'mission'|'shuffle'|'notes')=>void;onPlace?:(place:'mission'|'notes'|null)=>void};
 /** A short list of tiny missions that sit beside the main journey (rest rhythm, bedtime). Opens in a sheet from a chip on the pond. */
 function CareCard({kind,icon,label,title,body,missions,done,onDone}:{kind:string;icon:React.ReactNode;label:string;title:React.ReactNode;body:string;missions:Mission[];done:string;onDone:(m:Mission)=>void}){
  const [open,setOpen]=useState<Mission|null>(null);
@@ -39,12 +39,15 @@ function Sheet({label,onClose,children}:{label:string;onClose:()=>void;children:
  useEffect(()=>{const d=ref.current;if(d&&!d.open)d.showModal();return ()=>{if(d?.open)d.close();};},[]);
  return <dialog ref={ref} className="home-sheet" aria-label={label} onCancel={e=>{e.preventDefault();onClose()}} onClick={e=>{if(e.target===ref.current)onClose()}}><div className="dialog-content"><button className="icon-button close" aria-label="닫기" onClick={onClose}><X size={21}/></button>{children}</div></dialog>;
 }
-export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,onNavigate,onStartCheck,onClaimReturn,onNotice,demoScene,cohort,onPond,onFloat,onUse}:Props){
+export function PoljjakJourney({game,profile,onProfile,energy,onEnergy,onRecord,onNavigate,onStartCheck,onClaimReturn,onNotice,demoScene,cohort,onPond,onFloat,onUse,onPlace}:Props){
  const [offset,setOffset]=useState(0);const [mission,setMission]=useState<SpringMission|null>(null);const [completed,setCompleted]=useState('');const [isRest,setIsRest]=useState(false);const [confirmJump,setConfirmJump]=useState(false);const [autoClose,setAutoClose]=useState(false);
  // What the person chose to leave with the open mission, and what was kept when it was finished.
  const [answer,setAnswer]=useState('');const [kept,setKept]=useState('');
  const [sheet,setSheet]=useState<'journey'|'night'|'wave'|'notes'|null>(null);const [notesSeen,setNotesSeen]=useState(Infinity);
  useEffect(()=>{try{setNotesSeen(Number(localStorage.getItem(NOTES_SEEN_KEY))||0);}catch{}},[]);
+ // Tells the shell what is open over the home, so time with a mission card or the notebook is counted apart from the pond (lib/usage.ts).
+ useEffect(()=>{onPlace?.(sheet==='notes'?'notes':mission?'mission':null);},[sheet,mission]);// eslint-disable-line react-hooks/exhaustive-deps
+ useEffect(()=>()=>onPlace?.(null),[]);// eslint-disable-line react-hooks/exhaustive-deps
  const detailRef=useRef<HTMLDivElement>(null);const frog=useRef<Frog3DHandle>(null);const [careDone,setCareDone]=useState('');const [cheer,setCheer]=useState('');
  // The pond takes whatever height one screen leaves it. While a mission or its result is open the screen may scroll, so the pond keeps the height it had and the friend does not jump.
  const stageRef=useRef<HTMLElement>(null);const [held,setHeld]=useState<number|null>(null);const opened=!!mission||!!completed;

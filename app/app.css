@@ -568,3 +568,32 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .place-stamps small{font-size:10.5px;color:#7e8999}
 .place-stamps li.got small{color:var(--accent);font-weight:700}
 .place-visit>p.place-stamps-note{margin-top:10px;font-size:12px!important;text-align:center}
+/* 0.48.0 — 머문 시간 보기: the usage numbers as rows with a bar, for checking the counter and seeing exactly what is recorded */
+.usage-panel>p{font-size:13px;line-height:1.8;color:#606b7b;margin-bottom:16px}
+.usage-range{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin:0 0 16px;border-radius:16px;background:var(--soft)}
+.usage-range button{min-height:40px;border-radius:12px;font-size:13.5px;font-weight:700;color:#6b7684}
+.usage-range button[aria-pressed=true]{background:#fff;color:var(--brand-ink);box-shadow:0 2px 8px #2b344114}
+.usage-panel>p.usage-total{display:flex;align-items:baseline;gap:10px;margin:0 0 6px;font-size:12.5px;color:#6b7684}
+.usage-total strong{font-size:26px;font-weight:800;letter-spacing:-.6px;color:var(--brand-ink);font-variant-numeric:tabular-nums}
+.dialog-content .usage-rows,.dialog-content .usage-acts{list-style:none;padding:0;margin:0;line-height:1.5}
+.dialog-content .usage-rows li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:baseline;margin:0;padding:11px 0;border-bottom:1px solid #eae9e5}
+.usage-name{font-size:14px;font-weight:700;color:#35404f}
+.usage-time{font-size:14px;font-weight:700;color:var(--brand-ink);font-variant-numeric:tabular-nums}
+.usage-bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--soft);overflow:hidden}
+.usage-bar i{display:block;height:100%;min-width:3px;border-radius:3px;background:var(--accent)}
+.usage-rows small{grid-column:1/-1;font-size:11.5px;color:#7e8999}
+.usage-panel h3{margin:18px 0 8px;font-size:14px}
+.dialog-content .usage-acts{display:flex;flex-wrap:wrap;gap:6px}
+.dialog-content .usage-acts li{margin:0;padding:6px 11px;border-radius:999px;background:var(--sky);font-size:12.5px;color:#3f4c5f}
+.usage-acts b{margin-left:6px;color:var(--brand-ink)}
+.usage-panel>p.usage-empty{margin-bottom:0;padding:18px 14px;border-radius:16px;background:var(--soft);text-align:center}
+.usage-panel>p.usage-note{margin:12px 0 0;padding:8px 11px;border-radius:11px;background:#fbf2e2;font-size:12px;color:#7a5a22}
+.usage-how{margin-top:14px;font-size:12.5px;color:#616c7c}
+.usage-how summary{cursor:pointer;padding:9px 0}
+.dialog-content .usage-how ul{font-size:12.5px;line-height:1.8}
+.dialog-content .usage-how li{margin-bottom:3px}
+.usage-buttons{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.usage-buttons button{min-height:46px!important;padding:8px 10px!important;font-size:13.5px!important;gap:6px}
+.usage-buttons button:disabled{opacity:.45}
+.usage-buttons .danger{border-color:#eec3c3!important;color:#b4403f!important}
+.usage-copy{width:100%;min-height:150px;margin-top:12px;padding:12px;border:1px solid var(--sky-2);border-radius:12px;background:#eae9e5;font:11.5px/1.8 ui-monospace,monospace;color:#404e61}

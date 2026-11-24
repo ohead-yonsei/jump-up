@@ -28,6 +28,8 @@ create table if not exists participants (
 create index if not exists participants_cohort_id on participants (cohort_id);
 
 -- 기록 한 줄은 기기의 기록(Entry)과 같은 모양이에요. 한 번 받은 기록은 바꾸지 않아요.
+-- 0.49.0부터 화면별로 머문 시간과 누른 횟수도 이 표에 담아요: 날짜마다 한 줄, type='usage', id='usage-YYYY-MM-DD',
+-- data는 {sec, open, act} 숫자뿐이에요. 이 줄만은 같은 날 것이 다시 오면 바꿔 넣어요. 표를 새로 만들지 않아서 이 파일을 다시 실행할 필요는 없어요.
 create table if not exists entries (
   participant_id uuid not null references participants(id) on delete cascade,
   id text not null,

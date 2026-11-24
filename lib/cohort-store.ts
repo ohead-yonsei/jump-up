@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Entry } from './records';
+import { validUsage, type Usage } from './usage';
 import type { CohortInfo, ParticipantRecords } from './cohort';
 import { MAX_PADS_PER_PERSON, type Pad, type FrogCard, type VillageFrog, type Cheer, type CheerKind } from './pond';
 
@@ -27,8 +28,9 @@ export interface CohortStore {
   memberCount(cohortId: string): Promise<number>;
   addParticipant(p: { cohortId: string; code: string; tokenHash: string }): Promise<Participant>;
   participantByToken(hash: string): Promise<{ participant: Participant; cohort: Cohort } | null>;
-  /** Adds records not seen before; a record already stored is never changed. */
-  saveRecords(id: string, code: string, entries: Entry[], visits: string[]): Promise<void>;
+  /** Adds records not seen before; a record already stored is never changed.
+   * `usage` is time-by-place numbers by day: unlike records, a day sent again replaces what was stored for that day. */
+  saveRecords(id: string, code: string, entries: Entry[], visits: string[], usage?: Usage): Promise<void>;
   /** Removes the person and everything they sent, lily pad photos included. */
   removeParticipant(id: string): Promise<void>;
   cohortRecords(cohortId: string): Promise<ParticipantRecords[]>;
@@ -84,8 +86,8 @@ export function folderShelf(dir: string): PhotoShelf {
   };
 }
 
-type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; pads: Pad[]; frogs: VillageFrog[]; cheers: Cheer[] };
-const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, pads: [], frogs: [], cheers: [] });
+type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; usage: Record<string, Usage>; pads: Pad[]; frogs: VillageFrog[]; cheers: Cheer[] };
+const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, usage: {}, pads: [], frogs: [], cheers: [] });
 /** Keeps everything in one object, for tests and, through `fileStore`, local development. Photos sit on their own shelf. */
 export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise<void> = async () => {}, kind: 'memory' | 'file' = 'memory', shelf: PhotoShelf = memoryShelf()): CohortStore {
   const cohort = ({ operatorHash: _, ...c }: Data['cohorts'][number]): Cohort => c;
@@ -115,8 +117,9 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
       const p = d.participants.find(x => x.tokenHash === hash); const c = p && d.cohorts.find(x => x.id === p.cohortId);
       return p && c ? { participant: person(p), cohort: cohort(c) } : null;
     },
-    async saveRecords(id, code, entries, visits) {
+    async saveRecords(id, code, entries, visits, usage) {
       const p = d.participants.find(x => x.id === id); if (!p) return;
+      if (usage && Object.keys(usage).length) d.usage[id] = validUsage({ ...(d.usage[id] ?? {}), ...usage });
       const kept = d.entries[id] ??= []; const known = new Set(kept.map(e => e.id));
       const added = entries.filter(e => !known.has(e.id));
       if (kept.length + added.length > MAX_STORED_ENTRIES) throw new TooManyRecords();
@@ -130,13 +133,13 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
       const mine = d.pads.filter(p => p.participantId === id);
       await shelf.remove(mine.filter(p => p.kind === 'photo').map(photoKey));
       const gone = new Set(mine.map(p => 'pad:' + p.id));
-      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; d.pads = d.pads.filter(p => p.participantId !== id);
+      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; delete d.usage[id]; d.pads = d.pads.filter(p => p.participantId !== id);
       // Their frog goes, and so do the cheers they sent and received.
       d.frogs = d.frogs.filter(f => f.participantId !== id); d.cheers = d.cheers.filter(c => c.fromId !== id && c.toId !== id && !gone.has(c.target));
       await persist(d);
     },
     async cohortRecords(cohortId) {
-      return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [] }));
+      return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [], usage: d.usage[p.id] ?? {} }));
     },
     async addPad(p) {
       if (d.pads.filter(x => x.participantId === p.participantId).length >= MAX_PADS_PER_PERSON) throw new TooManyPads();
@@ -197,7 +200,7 @@ export function fileStore(file: string): CohortStore {
     memberCount: cohortId => run(s => s.memberCount(cohortId)),
     addParticipant: p => run(s => s.addParticipant(p)),
     participantByToken: hash => run(s => s.participantByToken(hash)),
-    saveRecords: (id, code, entries, visits) => run(s => s.saveRecords(id, code, entries, visits)),
+    saveRecords: (id, code, entries, visits, usage) => run(s => s.saveRecords(id, code, entries, visits, usage)),
     removeParticipant: id => run(s => s.removeParticipant(id)),
     cohortRecords: cohortId => run(s => s.cohortRecords(cohortId)),
     addPad: p => run(s => s.addPad(p)),
@@ -287,8 +290,11 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       rows.push(...page);
     }
   }
+  // Time-by-place numbers live in `entries` as one row a day (type 'usage', id 'usage-<day>'), so no new table is needed.
+  // They are not records: they are replaced when the day is sent again, and they do not count toward the record limit.
+  const USAGE = 'usage';
   async function storedCount(id: string, table: 'entries' | 'pads' = 'entries') {
-    const response = await fetcher(`${base}${table}?select=id&participant_id=${eq(id)}&limit=1`, { headers: { ...auth, Prefer: 'count=exact' }, cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const response = await fetcher(`${base}${table}?select=id&participant_id=${eq(id)}${table === 'entries' ? '&type=neq.' + USAGE : ''}&limit=1`, { headers: { ...auth, Prefer: 'count=exact' }, cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('supabase_' + response.status);
     return Number(response.headers.get('content-range')?.split('/')[1]) || 0;
   }
@@ -321,8 +327,10 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       const r = rows[0];
       return r?.cohort ? { participant: toParticipant(r), cohort: toCohort(r.cohort) } : null;
     },
-    async saveRecords(id, code, entries, visits) {
+    async saveRecords(id, code, entries, visits, usage) {
       const prefer = 'resolution=ignore-duplicates,return=minimal';
+      const days = Object.entries(validUsage(usage));
+      if (days.length) await call('entries?on_conflict=participant_id,id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: days.map(([day, data]) => ({ participant_id: id, id: `${USAGE}-${day}`, at: day + 'T00:00:00.000Z', type: USAGE, data })) });
       if (entries.length) {
         if (await storedCount(id) + entries.length > MAX_STORED_ENTRIES) throw new TooManyRecords();
         await call('entries?on_conflict=participant_id,id', { method: 'POST', prefer, body: entries.map(e => ({ participant_id: id, id: e.id, at: e.at, type: e.type, data: e })) });
@@ -345,10 +353,14 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       // Filter through the participant instead of listing every id, so a large cohort does not make an over-long URL.
       const inCohort = `participants!inner(cohort_id)&participants.cohort_id=${eq(cohortId)}`;
       const [entries, visits] = await Promise.all([
-        pages<{ participant_id: string; data: Entry }>(`entries?select=participant_id,data,${inCohort}&order=participant_id.asc,at.asc,id.asc`),
+        pages<{ participant_id: string; id: string; type: string; data: Entry }>(`entries?select=participant_id,id,type,data,${inCohort}&order=participant_id.asc,at.asc,id.asc`),
         pages<{ participant_id: string; day: string }>(`visits?select=participant_id,day,${inCohort}&order=participant_id.asc,day.asc`),
       ]);
-      return people.map(p => ({ ...toParticipant(p), entries: entries.filter(e => e.participant_id === p.id).map(e => e.data), visits: visits.filter(v => v.participant_id === p.id).map(v => v.day) }));
+      return people.map(p => {
+        const mine = entries.filter(e => e.participant_id === p.id);
+        const usage = validUsage(Object.fromEntries(mine.filter(e => e.type === USAGE).map(e => [e.id.slice(USAGE.length + 1), e.data])));
+        return { ...toParticipant(p), entries: mine.filter(e => e.type !== USAGE).map(e => e.data), visits: visits.filter(v => v.participant_id === p.id).map(v => v.day), usage };
+      });
     },
     async addPad(p) {
       if (await storedCount(p.participantId, 'pads') >= MAX_PADS_PER_PERSON) throw new TooManyPads();
