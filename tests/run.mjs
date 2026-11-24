@@ -38,4 +38,12 @@ await test('suggested lines are asked for after the reply, for a history that en
  assert.equal(api.validateHints(ok).messages.length,3);assert.equal(api.validateHints({...ok,messages:ok.messages.slice(0,2)}),null);assert.equal(api.validateHints({...ok,consent:false}),null);assert.equal(api.validateHints({...ok,messages:[...ok.messages.slice(0,2),{role:'assistant',content:'x'.repeat(601)}]}),null);
  assert.match(api.systemPrompt('hello'),/왜 힘들었는지/);assert.match(api.systemPrompt('cafe'),/이유나 사정은 묻지 마/);
 });
+await test('every practice has one home — 가볼 곳 or 도움받기 — and a mission opens the practice it talks about',()=>{
+ assert.deepEqual(Object.keys(c.practiceHome).sort(),c.scenarios.map(s=>s.id).sort(),'none is left without a screen to open it from');
+ for(const home of Object.values(c.practiceHome))assert(['places','resources'].includes(home));
+ assert.deepEqual(c.practicesAt('places').map(s=>s.id),['cafe','interview','hello']);assert.deepEqual(c.practicesAt('resources').map(s=>s.id),['appointment','support']);
+ assert.equal(c.practicesAt('places').length+c.practicesAt('resources').length,c.scenarios.length);
+ assert.equal(c.practiceForMission('connect-callprep'),'appointment');for(const id of ['connect-practice','outside-store','outside-takeout','connect-order','anything-else'])assert.equal(c.practiceForMission(id),'cafe');
+ for(const id of ['connect-callprep','connect-practice'])assert(c.isScenarioId(c.practiceForMission(id)));
+});
 console.log(`${passed} checks passed. Provider responses in unit tests are mocked; live model is not verified.`);
