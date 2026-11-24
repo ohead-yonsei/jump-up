@@ -1,7 +1,10 @@
 // The small sounds of the pond: a drop for a touch, a hop, a chime for a finished mission, water and croaks in the village.
-// All of them are made on the device with Web Audio, like the keeper's voice in croak.ts — there are no sound files.
+// Each has a recipe made on the device with Web Audio, like the keeper's voice in croak.ts.
+// 0.53.0: some also have a recorded-sounding file (public/audio, made with ElevenLabs from scripts/sounds.json). Once the files
+// are in, those kinds play the file; until then, or if a file is missing, the recipe plays, so nothing ever goes silent.
 // Nothing is heard until the first touch (browsers require it) or when sound is switched off; those calls are silently dropped.
 import {audio,soundOn} from './croak';
+import {measure} from './measure';
 export type Sfx='tap'|'pick'|'jump'|'pat'|'hug'|'spin'|'cheer'|'leaf'|'done'|'rest'|'splash'|'hop'|'paddle'|'open'|'float'|'ribbit';
 export const sfxKinds:Sfx[]=['tap','pick','jump','pat','hug','spin','cheer','leaf','done','rest','splash','hop','paddle','open','float','ribbit'];
 type Out={c:AudioContext;to:AudioNode;t:number;vol:number};
@@ -47,10 +50,34 @@ const play:Record<Sfx,(o:Out)=>void>={
   g.gain.setValueAtTime(0,t+at);g.gain.linearRampToValueAtTime(.05*vol,t+at+.02);g.gain.exponentialRampToValueAtTime(.0006,t+at+.14);
   trem.frequency.value=42;tg.gain.value=.03*vol;trem.connect(tg).connect(g.gain);osc.connect(lp).connect(g).connect(to);osc.start(t+at);trem.start(t+at);osc.stop(t+at+.17);trem.stop(t+at+.17);});},
 };
-/** Plays one sound. `vol` (0–1) and `pan` (−1 left … 1 right) place it in the pond: far frogs are quiet and off to one side. */
-export function sfx(kind:Sfx,{vol=1,pan=0}:{vol?:number;pan?:number}={}){
+/** The kinds that have sound files, and how loud each plays (`level`: its loudest moment, 0–1). Several files are takes of one sound, picked at random.
+ * A kind that is not here keeps its recipe: the tiny touch sounds are sharper made on the device, and the takes for a pat and a hop came out too faint to use. */
+export const sampleFiles:Partial<Record<Sfx,{files:string[];level:number}>>={
+ jump:{files:['jump'],level:.2},hug:{files:['hug'],level:.17},cheer:{files:['cheer'],level:.2},done:{files:['done'],level:.22},leaf:{files:['leaf'],level:.2},rest:{files:['rest'],level:.17},
+ open:{files:['open'],level:.14},float:{files:['float'],level:.2},splash:{files:['splash'],level:.2},paddle:{files:['paddle'],level:.14},ribbit:{files:['ribbit-1','ribbit-2','ribbit-3'],level:.2},
+};
+/** The water and frogs heard in the pond village, as one long take that loops. */
+export const AMBIENCE_FILE='amb-pond';
+export const soundUrl=(file:string)=>`/audio/${file}.mp3`;
+export {measure,MAX_BOOST} from './measure';
+type Sample={buffer:AudioBuffer;from:number;to:number;gain:number};
+const samples=new Map<string,Sample>();let asked=false;
+async function fetchSample(c:AudioContext,file:string,level:number){
+ try{const r=await fetch(soundUrl(file));if(!r.ok)return;const buffer=await c.decodeAudioData(await r.arrayBuffer());
+  const m=measure(Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),buffer.sampleRate,level);if(m.gain>0)samples.set(file,{buffer,...m});}catch{}
+}
+/** Fetches the sound files once, after the first sound was asked for (so nothing is downloaded before a touch). The long ambience waits until the village asks. */
+function loadSamples(c:AudioContext){if(asked)return;asked=true;for(const s of Object.values(sampleFiles))for(const file of s!.files)void fetchSample(c,file,s!.level);}
+const sampleFor=(kind:Sfx)=>{const s=sampleFiles[kind];if(!s)return null;const ready=s.files.map(f=>samples.get(f)).filter((x):x is Sample=>!!x);return ready.length?ready[Math.floor(Math.random()*ready.length)]:null;};
+/** For the listening page: how many of the files are in. */
+export const samplesReady=()=>samples.size;
+/** Plays one sound. `vol` (0–1) and `pan` (−1 left … 1 right) place it in the pond: far frogs are quiet and off to one side.
+ * `recipe` plays the on-device version even when a file exists (the listening page compares the two). */
+export function sfx(kind:Sfx,{vol=1,pan=0,recipe=false}:{vol?:number;pan?:number;recipe?:boolean}={}){
  if(!soundOn()||vol<=.01)return;const c=audio();if(!c)return;
- try{let to:AudioNode=c.destination;if(pan&&typeof c.createStereoPanner==='function'){const p=c.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));p.connect(c.destination);to=p;}
+ try{loadSamples(c);let to:AudioNode=c.destination;if(pan&&typeof c.createStereoPanner==='function'){const p=c.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));p.connect(c.destination);to=p;}
+  const s=recipe?null:sampleFor(kind);
+  if(s){const src=c.createBufferSource(),g=c.createGain();src.buffer=s.buffer;g.gain.value=s.gain*Math.min(1,vol);src.connect(g).connect(to);src.start(c.currentTime,s.from,Math.max(.05,s.to-s.from));return;}
   play[kind]({c,to,t:c.currentTime,vol:Math.min(1,vol)});}catch{}
 }
 /** How loud something `distance` away sounds, 1 beside you and fading to nothing by `far`. */
@@ -61,14 +88,22 @@ export type Ambience={set:(water:number|null)=>void;stop:()=>void};
 /** The pond's own sound while the village is open: water lapping, louder the nearer you are to it. */
 export function pondAmbience():Ambience{
  let src:AudioBufferSourceNode|null=null,gain:GainNode|null=null,lfo:OscillatorNode|null=null,level=0,stopped=false;
+ // The recorded pond (water, reeds, frogs now and then) lies under the recipe once its file is in, and follows the same nearness to the water.
+ let bed:AudioBufferSourceNode|null=null,bedGain:GainNode|null=null,bedLevel=0,bedAsked=false;
+ const startBed=(c:AudioContext)=>{if(bed||stopped)return;const s=samples.get(AMBIENCE_FILE);
+  if(!s){if(!bedAsked){bedAsked=true;void fetchSample(c,AMBIENCE_FILE,.16).then(()=>{if(!stopped)apply();});}return;}
+  try{bed=c.createBufferSource();bed.buffer=s.buffer;bed.loop=true;bed.loopStart=.03;bed.loopEnd=Math.max(1,s.buffer.duration-.03);bedLevel=s.gain;bedGain=c.createGain();bedGain.gain.value=0;bed.connect(bedGain).connect(c.destination);bed.start(c.currentTime,Math.random()*Math.max(1,s.buffer.duration-1));}catch{bed=null;}};
+ const apply=()=>{const c=audio();if(!c||stopped)return;startBed(c);if(bedGain)bedGain.gain.setTargetAtTime(soundOn()?bedLevel*(.35+level*.65):0,c.currentTime,.5);
+  // with the recording in, the hiss of the recipe steps back to a trace
+  if(gain)gain.gain.setTargetAtTime(soundOn()?(.006+level*.03)*(bed?.25:1):0,c.currentTime,.4);};
  const start=()=>{if(src||stopped||!soundOn())return;const c=audio();if(!c)return;
   try{src=c.createBufferSource();src.buffer=noiseOf(c);src.loop=true;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=620;f.Q.value=.5;const swell=c.createGain();swell.gain.value=.7;
    lfo=c.createOscillator();lfo.frequency.value=.23;const depth=c.createGain();depth.gain.value=.3;lfo.connect(depth).connect(swell.gain);
    gain=c.createGain();gain.gain.value=0;src.connect(f).connect(swell).connect(gain).connect(c.destination);src.start();lfo.start();}catch{src=null;}};
  return {
   // `null` is silence (the page went to the background); a number is how close the water is, 0 far … 1 in it.
-  set(water){if(water===null){const c=audio();if(gain&&c)gain.gain.setTargetAtTime(0,c.currentTime,.1);return;}
-   level=Math.max(0,Math.min(1,water));start();const c=audio();if(!gain||!c)return;gain.gain.setTargetAtTime(soundOn()?.006+level*.03:0,c.currentTime,.4);},
-  stop(){stopped=true;try{src?.stop();lfo?.stop();}catch{}src=null;gain=null;lfo=null;},
+  set(water){if(water===null){const c=audio();if(c){if(gain)gain.gain.setTargetAtTime(0,c.currentTime,.1);if(bedGain)bedGain.gain.setTargetAtTime(0,c.currentTime,.1);}return;}
+   level=Math.max(0,Math.min(1,water));start();apply();},
+  stop(){stopped=true;try{src?.stop();lfo?.stop();bed?.stop();}catch{}src=null;gain=null;lfo=null;bed=null;bedGain=null;},
  };
 }

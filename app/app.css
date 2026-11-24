@@ -611,3 +611,18 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .practice-here+.place-visit{margin-top:22px}
 .practice-here+.urgent-strip{margin-top:22px}
 .practice-intro .practice-mode-switch{display:flex;width:fit-content;margin:8px auto 0;min-height:40px;align-items:center;font-size:13px;color:#6a7687;text-decoration:underline;text-underline-offset:3px}
+/* 0.53.0 — the music switch under the sound switch, dimmed while sound is off */
+.menu-list>button:disabled{opacity:.45}
+.sound-board{max-width:560px;margin:0 auto;padding:24px 18px 60px;color:#303a47}
+.sound-board h1{margin:14px 0 8px;font-size:24px;font-weight:700;letter-spacing:-.6px}
+.sound-board h2{margin:26px 0 8px;font-size:16px;font-weight:700}
+.sound-board>p{font-size:13px;line-height:1.75;color:#606b7b}
+.sound-board ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.sound-board li{display:flex;align-items:center;gap:8px;padding:11px 12px;border:1px solid #dddcd6;border-radius:14px;background:#fff}
+.sound-board li>div{flex:1;min-width:0;display:grid;gap:2px}
+.sound-board li strong{font-size:14px}
+.sound-board li small{font-size:11.5px;color:#7e8999;line-height:1.5}
+.sound-board li button,.sound-board li a{display:inline-flex;align-items:center;gap:5px;flex:none;min-height:38px;padding:0 11px;border-radius:11px;background:#e9f9fd;font-size:12.5px;font-weight:600;color:#2f6f8f}
+.sound-board li button.quiet,.sound-board li a{background:#eae9e5;color:#4f5864}
+.sound-board li button[aria-pressed=true]{background:#2f6f8f;color:#fff}
+.sound-board .sound-board-note{margin-top:22px;font-size:12px}
