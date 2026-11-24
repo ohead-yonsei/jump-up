@@ -1,7 +1,8 @@
 'use client';
 import {useCallback,useEffect,useState} from 'react';
-import {setSound,soundOn,wakeSound} from '@/lib/croak';
+import {setSound,soundOn,wakeSound,SOUND_CHANGED as CHANGED} from '@/lib/croak';
 import {sfx} from '@/lib/sound';
+import {musicOn,setMusic,playMusic,type Track} from '@/lib/music';
 // What counts as something to press. Text fields and plain labels are left alone.
 const TAPPABLE='button,a[href],[role="button"],[role="tab"],[role="switch"],summary,label.consent,input[type="checkbox"]';
 /**
@@ -29,10 +30,27 @@ export function useTouchFeedback(){
   return()=>{document.removeEventListener('pointerdown',down,{capture:true});document.removeEventListener('pointerup',wakeSound,{capture:true});};
  },[]);
 }
-/** The one sound switch (the keeper's voice, touches, the pond). Remembered on the device. */
+/** The one sound switch (the keeper's voice, touches, the pond, and with it the music). Remembered on the device. */
 export function useSoundSwitch():[boolean,()=>void]{
  const [on,setOn]=useState(true);
- useEffect(()=>{setOn(soundOn());},[]);
+ useEffect(()=>{const read=()=>setOn(soundOn());read();window.addEventListener(CHANGED,read);return()=>window.removeEventListener(CHANGED,read);},[]);
  const toggle=useCallback(()=>{const next=!soundOn();setSound(next);setOn(next);if(next){wakeSound();setTimeout(()=>sfx('pick'),60);}},[]);
  return [on,toggle];
+}
+/** The music switch, under the sound switch: music plays only while both are on. Remembered on the device. */
+export function useMusicSwitch():[boolean,()=>void]{
+ const [on,setOn]=useState(true);
+ useEffect(()=>{const read=()=>setOn(musicOn());read();window.addEventListener(CHANGED,read);return()=>window.removeEventListener(CHANGED,read);},[]);
+ const toggle=useCallback(()=>{const next=!musicOn();setMusic(next);setOn(next);if(next)wakeSound();},[]);
+ return [on,toggle];
+}
+/** Keeps the right tune playing for the screen: `track` while the page is in view, none in the background.
+ * Browsers allow sound only after a touch, so it also asks again on every touch until the tune has started; asking is cheap. */
+export function useMusic(track:Track|null){
+ useEffect(()=>{
+  const sync=()=>playMusic(document.visibilityState==='visible'?track:null);
+  sync();document.addEventListener('visibilitychange',sync);document.addEventListener('pointerdown',sync,{passive:true});document.addEventListener('keydown',sync);window.addEventListener(CHANGED,sync);
+  return()=>{document.removeEventListener('visibilitychange',sync);document.removeEventListener('pointerdown',sync);document.removeEventListener('keydown',sync);window.removeEventListener(CHANGED,sync);};
+ },[track]);
+ useEffect(()=>()=>playMusic(null),[]);
 }

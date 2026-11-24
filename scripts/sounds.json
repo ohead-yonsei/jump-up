@@ -1,0 +1,130 @@
+{
+  "note": "What each sound file is and the words it was made from. `node scripts/make-sounds.mjs` makes the missing ones with ElevenLabs (ELEVENLABS_API_KEY); `--force id` makes one again. Files land in public/audio/<id>.mp3.",
+  "sounds": [
+    {
+      "id": "jump",
+      "kind": "sfx",
+      "seconds": 0.7,
+      "influence": 0.6,
+      "text": "A small cartoon frog hop: a soft bouncy boing followed by a tiny water plip. Cute, gentle, quiet, no voice, no music."
+    },
+    {
+      "id": "pat",
+      "kind": "sfx",
+      "seconds": 1.0,
+      "influence": 0.6,
+      "text": "A single soft kalimba note plucked once, warm and round, clearly audible, recorded close, then it fades quickly. No background, no voice."
+    },
+    {
+      "id": "hug",
+      "kind": "sfx",
+      "seconds": 1.5,
+      "influence": 0.5,
+      "text": "A warm soft pad chord swelling gently and fading, cozy and comforting, like a quiet hug. No melody, no voice."
+    },
+    {
+      "id": "cheer",
+      "kind": "sfx",
+      "seconds": 1.6,
+      "influence": 0.6,
+      "text": "A short happy reward jingle: three clear rising kalimba notes, then a soft sparkle. Bright but gentle, clearly audible, cozy mobile game style, no voice."
+    },
+    {
+      "id": "done",
+      "kind": "sfx",
+      "seconds": 2.0,
+      "influence": 0.6,
+      "text": "A warm gentle success chime: two clear soft marimba notes rising one after the other, then a small shimmer that fades. Calm, cozy and reassuring, clearly audible, no voice."
+    },
+    {
+      "id": "leaf",
+      "kind": "sfx",
+      "seconds": 1.2,
+      "influence": 0.6,
+      "text": "A handful of small dry leaves rustling softly as they land, followed by one gentle glassy chime note. Clearly audible, pleasant, recorded close."
+    },
+    {
+      "id": "rest",
+      "kind": "sfx",
+      "seconds": 1.8,
+      "influence": 0.5,
+      "text": "One soft low warm bell tone that fades slowly, calming, like a slow deep breath. No melody."
+    },
+    {
+      "id": "open",
+      "kind": "sfx",
+      "seconds": 1.0,
+      "influence": 0.6,
+      "text": "A paper notebook page being turned once: a soft crisp paper rustle, clearly audible, recorded close, no background."
+    },
+    {
+      "id": "float",
+      "kind": "sfx",
+      "seconds": 1.2,
+      "influence": 0.6,
+      "text": "A lily pad leaf gently set down on calm pond water: a soft plop and tiny ripples. Close, quiet, no background."
+    },
+    {
+      "id": "splash",
+      "kind": "sfx",
+      "seconds": 1.0,
+      "influence": 0.6,
+      "text": "A small frog slipping into a calm pond: one soft gentle water splash, close, quiet, no background."
+    },
+    {
+      "id": "paddle",
+      "kind": "sfx",
+      "seconds": 0.6,
+      "influence": 0.6,
+      "text": "One gentle swim stroke in calm water, a soft short swish, quiet, no background."
+    },
+    {
+      "id": "hop",
+      "kind": "sfx",
+      "seconds": 0.8,
+      "influence": 0.6,
+      "text": "One small soft thump of a little animal landing on grass: a short muffled thud with a faint grass rustle. Clearly audible, recorded close, no background."
+    },
+    {
+      "id": "ribbit-1",
+      "kind": "sfx",
+      "seconds": 0.8,
+      "influence": 0.7,
+      "text": "A single small frog croak, one short ribbit, close and clean, no background, no other animals."
+    },
+    {
+      "id": "ribbit-2",
+      "kind": "sfx",
+      "seconds": 1.0,
+      "influence": 0.7,
+      "text": "A small tree frog calling twice, two short soft croaks, close and clean, no background."
+    },
+    {
+      "id": "ribbit-3",
+      "kind": "sfx",
+      "seconds": 0.7,
+      "influence": 0.7,
+      "text": "A tiny young frog making one short high gentle peep-like croak, cute, close and clean, no background."
+    },
+    {
+      "id": "amb-pond",
+      "kind": "sfx",
+      "seconds": 30,
+      "loop": true,
+      "influence": 0.5,
+      "text": "Night pond ambience recorded close: water lapping gently at the bank, reeds moving in a light breeze, frogs croaking at an easy pace, crickets. Clearly audible and steady, peaceful, no people, no music, no sudden sounds."
+    },
+    {
+      "id": "bgm-pond",
+      "kind": "music",
+      "seconds": 90,
+      "text": "Calm, warm, cozy instrumental for resting beside a small quiet pond in early spring. Slow tempo around 70 BPM. Soft felt piano, gentle kalimba and marimba, a warm pad, a few acoustic guitar harmonics. No drums, no percussion hits, no vocals. Peaceful, safe and unhurried, a simple tender repeating motif that can loop without a big ending. Soft dynamics throughout, nothing sudden."
+    },
+    {
+      "id": "bgm-village",
+      "kind": "music",
+      "seconds": 80,
+      "text": "A gentle, friendly instrumental for a little frog village around a pond. Light pizzicato strings, ukulele, soft marimba and a wooden guiro that sounds a little like frogs croaking. Slow bouncy rhythm around 88 BPM, cozy and playful but calm, no heavy drums, no vocals. A simple cheerful repeating motif that can loop without a big ending. Soft dynamics throughout, nothing sudden."
+    }
+  ]
+}

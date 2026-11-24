@@ -4,7 +4,10 @@
 const KEY='poljjak-sound';
 let ctx:AudioContext|null=null;
 export function soundOn():boolean{if(typeof window==='undefined')return true;try{return localStorage.getItem(KEY)!=='off';}catch{return true;}}
-export function setSound(on:boolean){try{localStorage.setItem(KEY,on?'on':'off');}catch{}}
+/** Sent on the window whenever the sound or the music switch changes, wherever it was pressed, so the music and every switch on screen follow at once. */
+export const SOUND_CHANGED='poljjak-sound-changed';
+export const soundChanged=()=>{try{window.dispatchEvent(new Event(SOUND_CHANGED));}catch{}};
+export function setSound(on:boolean){try{localStorage.setItem(KEY,on?'on':'off');}catch{}soundChanged();}
 /** The one audio context every sound shares, or null until a tap has allowed sound. */
 export function audio():AudioContext|null{
  if(typeof window==='undefined')return null;
