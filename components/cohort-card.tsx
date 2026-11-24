@@ -7,7 +7,7 @@ const period=(c:CohortInfo)=>`${md(c.startsOn)} ~ ${md(c.endsOn)}`;
 const when=(at:string)=>new Date(at).toLocaleString('ko-KR',{month:'long',day:'numeric',hour:'numeric',minute:'2-digit'});
 const failed=(e:unknown)=>e instanceof TypeError?'인터넷 연결을 확인해 주세요.':(e as Error).message;
 /** Joining a cohort is the one place records leave the device, so what is shared sits right next to the button. */
-export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave,onPond,opened=0}:{opened?:number;membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>;onPond:()=>void}){
+export function CohortCard({membership,members,invite,participant,save,onJoin,onLeave,onPond,onUsage,opened=0}:{opened?:number;onUsage?:()=>void;membership:Membership|null;members:number|null;invite:string;participant:string;save:boolean;onJoin:(joined:{cohort:CohortInfo;token:string;participant:string;members:number|null})=>void;onLeave:()=>Promise<string|null>;onPond:()=>void}){
  const [code,setCode]=useState(invite?formatCode(invite):'');const [consent,setConsent]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [leaving,setLeaving]=useState(false);
  // Folded to one line until someone taps it; it opens by itself for a code from the organisation or a ‘join’ button elsewhere.
  const [open,setOpen]=useState(!!invite);useEffect(()=>{if(opened)setOpen(true);},[opened]);
@@ -22,6 +22,8 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   <div className="cohort-head"><span className="cohort-icon"><Users size={20}/></span><div><span className="step-label">{membership.org||'함께하는 기수'}</span><h2>{membership.name}</h2></div></div>
   <p>{period(membership)} · {members&&members>1?`나를 포함해 ${members}명이 같은 시간을 지나고 있어요.`:'같은 기수의 사람들과 같은 시간을 지나고 있어요.'}</p>
   <p className="cohort-meta">{membership.lastSync?`마지막으로 보낸 때 ${when(membership.lastSync)}`:'아직 보낸 기록이 없어요'}</p>
+  {/* Memberships from before 0.49.0 agreed to a text without the time-by-place numbers, so those are sent only once the person says so. */}
+  {membership.usage?<p className="cohort-meta">남기는 기록과 화면별로 머문 시간(숫자)이 운영진에게 전달돼요.</p>:onUsage&&<p className="cohort-meta">화면별로 머문 시간(숫자)은 아직 보내지 않아요. <button className="text-button" onClick={onUsage}>숫자도 함께 보내기</button></p>}
   <button className="cohort-pond-link" onClick={onPond}><span><strong>연못 마을</strong><small>오늘 다녀간 개구리들과 연잎을 둘러보는 곳</small></span><ArrowRight size={17}/></button>
   {leaving?<div className="cohort-leave"><p>기수에서 나가면 운영진에게 보낸 기록, 내가 띄운 연잎, 연못 마을의 내 개구리와 응원도 지워요. 이 기기의 기록은 그대로 남아요.</p><div className="button-row"><button className="secondary" disabled={busy} onClick={()=>{setLeaving(false);setError('')}}>계속 함께하기</button><button className="primary" disabled={busy} onClick={leave}>{busy&&<LoaderCircle className="spin" size={16}/>}기수에서 나가기</button></div></div>
   :<button className="text-button" onClick={()=>setLeaving(true)}>기수에서 나가기</button>}
@@ -33,7 +35,7 @@ export function CohortCard({membership,members,invite,participant,save,onJoin,on
   <p>같은 기수의 사람들과 한 달쯤 같은 시간을 지나요. 기관 담당자가 함께 지켜봐요.</p>
   <label className="sr-only" htmlFor="cohort-code">기수 코드</label>
   <input id="cohort-code" value={code} maxLength={12} autoComplete="off" autoCapitalize="characters" placeholder="기수 코드 (예: 7K3Q-PW2M)" onChange={e=>{setCode(e.target.value);setError('')}}/>
-  <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>함께하는 동안 남기는 기록(작은 행동, 연습, 마음 체크, 폴짝을 연 날, 연락 버튼, 폴짝에게 한마디와 돌아보기 답)이 기수 운영진(기관 담당자와 폴짝 팀)에게 전달되는 것에 동의해요. 대화 내용은 보내지 않고, 기수에서 나가면 보낸 기록도 지워요.{!save&&' 이 기기에 기록 저장도 함께 켜져요.'}</span></label>
+  <label className="consent"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>함께하는 동안 남기는 기록(작은 행동, 연습, 마음 체크, 폴짝을 연 날, 연락 버튼, 폴짝에게 한마디와 돌아보기 답)과 화면별로 머문 시간·누른 횟수(숫자)가 기수 운영진(기관 담당자와 폴짝 팀)에게 전달되는 것에 동의해요. 대화 내용은 보내지 않고, 기수에서 나가면 보낸 기록도 지워요.{!save&&' 이 기기에 기록 저장도 함께 켜져요.'}</span></label>
   <button className="primary" disabled={!validJoinCode(normalized)||!consent||busy} onClick={join}>{busy?<LoaderCircle className="spin" size={17}/>:null}함께하기<ArrowRight size={17}/></button>
   {error&&<p className="error" role="alert">{error}</p>}
   </>}

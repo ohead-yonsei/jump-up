@@ -41,9 +41,33 @@ test('the export gets a row per day and screen or action at the end, totals on t
  const none=r.recordRows([entry],'P07',[D]);assert.equal(none.length,3);assert.deepEqual(none[0].slice(-3),['','','']);
  const csv=r.recordsCsv([entry],'P07',[D],g);assert(csv.includes('"usage"')&&csv.includes('"친구 만지기"'));
 });
-test('usage is not part of what a cohort is sent: a sync carries records and visit days only',()=>{
- const sync=c.validSync({participant:'P07',entries:[{id:'e1',at:'2026-11-21T03:00:00.000Z',type:'step',title:'물 한 모금 마시기',energy:null}],visits:[D],usage:{[D]:{sec:{today:95}}}});
- assert.deepEqual(Object.keys(sync).sort(),['entries','participant','visits']);assert(!JSON.stringify(sync).includes('sec'));
+test('a cohort gets the numbers only from a membership that agreed, from the joining day on, and a day goes again only when it grew',()=>{
+ const info={name:'테스트 기수',org:'폴짝 팀',startsOn:'2026-11-01',endsOn:'2026-12-31'};const token='A'.repeat(43);const joined=new Date(2026,10,22,15,0,0);
+ let g=u.addTime(u.addTime({},'today',95,D),'onboarding',40,E);g=u.addAct(u.addOpen(g,'today',E),'frog',E);
+ const old=c.startMembership(info,token,'P07',[],[],joined);assert.equal(old.usage,undefined);assert.deepEqual(c.pendingUsageSync(g,old),{},'a membership from before the new consent sends none');
+ const m=c.startMembership(info,token,'P07',[],[],joined,true);assert.equal(m.usage,true);assert.deepEqual(m.usageSent,{});
+ assert.deepEqual(c.pendingUsageSync(g,m),{[E]:g[E]},'the day before joining stays on the device; the whole joining day goes');
+ const after=c.afterUsageSync(m,{[E]:g[E]},g);assert.deepEqual(after.usageSent,{[E]:u.usageMark(g[E])});assert.deepEqual(c.pendingUsageSync(g,after),{});assert(after.lastSync);
+ const grown=u.addTime(g,'chat',30,E);assert.deepEqual(Object.keys(c.pendingUsageSync(grown,after)),[E]);assert.equal(c.pendingUsageSync(grown,after)[E].sec.chat,30);
+ const next=u.addOpen(grown,'journal','2026-11-23');assert.deepEqual(Object.keys(c.pendingUsageSync(next,c.afterUsageSync(after,{[E]:grown[E]},grown))),['2026-11-23']);
+ assert.deepEqual(c.validMembership(JSON.parse(JSON.stringify(after))),after);assert.equal(c.validMembership({...after,usage:'yes'}).usage,undefined);assert.deepEqual(c.validMembership({...after,usageSent:{[E]:5,'bad-day':3,'2026-11-23':-1,'2026-11-24':1.5}}).usageSent,{[E]:5});
+ assert.equal(u.usageMark({sec:{today:10,chat:5},open:{today:2},act:{frog:1}}),18);assert.deepEqual(u.pendingUsage({[D]:{sec:{},open:{},act:{}}},{}),{},'an empty day is not sent');
+ assert.deepEqual(u.sentUsage({[D]:7,'2026-01-01':3},{[E]:g[E]},g),{[D]:7,[E]:u.usageMark(g[E])},'marks of days no longer on the device are dropped');
+});
+test('what is sent is read strictly on the server: known days, places and numbers, and no record may take a usage id',()=>{
+ const sync=c.validSync({participant:'P07',entries:[{id:'e1',at:'2026-11-21T03:00:00.000Z',type:'step',title:'물 한 모금 마시기',energy:null},{id:'usage-2026-11-21',at:'2026-11-21T03:00:00.000Z',type:'step',title:'가짜',energy:null}],visits:[D],usage:{[D]:{sec:{today:95,moon:9,chat:-1},open:{today:2},act:{frog:1,hack:3},note:'글'},'not-a-day':{sec:{today:5}}}});
+ assert.deepEqual(Object.keys(sync).sort(),['entries','participant','usage','visits']);assert.deepEqual(sync.usage,{[D]:{sec:{today:95},open:{today:2},act:{frog:1}}});assert.deepEqual(sync.entries.map(e=>e.id),['e1']);assert(!JSON.stringify(sync).includes('글'));
+ assert.deepEqual(c.validSync({participant:'P07',entries:[],visits:[]}).usage,{},'a send without numbers is still a send');assert.deepEqual(c.validSync({participant:'P07',entries:[],visits:[],usage:'x'}).usage,{});
+});
+test('the operator page adds a cohort up by place: longest first, share of all the time, how many people, and the average for those who were there',()=>{
+ const a={usage:u.addOpen(u.addTime(u.addTime({},'today',300,D),'chat',100,E),'today',D)};const b={usage:u.addAct(u.addOpen(u.addTime({},'today',100,D),'notes',D),'frog',D)};const none={usage:{}};const legacy={};
+ const d=u.cohortDwell([a,b,none,legacy]);assert.equal(d.seconds,500);assert.equal(d.members,2,'people without numbers are not counted');
+ assert.deepEqual(d.rows.map(r=>[r.screen,r.seconds,r.opens,r.members,r.perMember,Math.round(r.share*100)]),[['today',400,1,2,200,80],['chat',100,0,1,100,20],['notes',0,1,1,0,0]]);
+ assert.deepEqual(d.actions,[{action:'frog',count:1,members:1}]);
+ const empty=u.cohortDwell([none,legacy]);assert.equal(empty.seconds,0);assert.equal(empty.members,0);assert.deepEqual(empty.rows,[]);assert.deepEqual(u.cohortDwell([]).rows,[]);
+ const s=c.participantSummary({id:'p',code:'P07',joinedAt:'2026-11-21T00:00:00.000Z',lastSyncAt:null,entries:[],visits:[],usage:a.usage});assert.deepEqual(s.dwell,{seconds:400,most:'today'});
+ assert.deepEqual(c.participantSummary({id:'p',code:'P07',joinedAt:'2026-11-21T00:00:00.000Z',lastSyncAt:null,entries:[],visits:[]}).dwell,{seconds:0,most:null});
+ const csv=c.cohortCsv([{id:'p',code:'P07',joinedAt:'2026-11-21T00:00:00.000Z',lastSyncAt:null,entries:[],visits:[D],usage:a.usage}]);assert(csv.includes(`"usage-${D}-today"`)&&csv.includes('"대화 연습 중"'),'the cohort CSV carries the rows by day and place');
 });
 test('a place is the tab, or what is open over it: the first talk, a chat under way, a mission card, the notebook, the help window',()=>{
  assert.equal(u.placeOf({tab:'today'}),'today');assert.equal(u.placeOf({tab:'today',home:'mission'}),'mission');assert.equal(u.placeOf({tab:'today',home:'notes'}),'notes');
@@ -68,8 +92,8 @@ test('the view reads the same numbers: one day or all, longest first, to the sec
  assert.deepEqual(u.usageOn(g,D),{[D]:g[D]});assert.deepEqual(u.usageOn(g,'2026-01-01'),{});
  assert.deepEqual(u.usageRanked(g).map(r=>[r.screen,r.seconds,r.opens]),[['chat',200,1],['today',125,1],['help',0,1]]);assert.deepEqual(u.usageRanked(u.usageOn(g,E)).map(r=>r.screen),['today','help']);assert.deepEqual(u.usageRanked({}),[]);
  assert.equal(u.clockLabel(0),'0초');assert.equal(u.clockLabel(45.9),'45초');assert.equal(u.clockLabel(60),'1분');assert.equal(u.clockLabel(134),'2분 14초');assert.equal(u.clockLabel(3600),'1시간');assert.equal(u.clockLabel(3905),'1시간 5분');assert.equal(u.clockLabel(-3),'0초');assert.equal(u.clockLabel(NaN),'0초');
- const text=u.usageSummary(g).split('\n');assert.equal(text[0],`폴짝 머문 시간 · 2일 (${D} ~ ${E})`);assert.equal(text[1],'모두 5분 25초 · 화면을 연 횟수 3번');assert.equal(text[2],'- 대화 연습 중: 3분 20초 · 1번');assert.equal(text[3],'- 연못(홈): 2분 5초 · 1번');assert.equal(text[5],'누른 것: 친구 만지기 1번');
- assert.equal(u.usageSummary(u.usageOn(g,E)).split('\n')[0],`폴짝 머문 시간 · 1일 (${E})`);assert(u.usageSummary({}).includes('아직'));
- assert(!/\d{2}:\d{2}/.test(u.usageSummary(g)),'no time of day in what is copied');
+ const text=u.usageText(g).split('\n');assert.equal(text[0],`폴짝 머문 시간 · 2일 (${D} ~ ${E})`);assert.equal(text[1],'모두 5분 25초 · 화면을 연 횟수 3번');assert.equal(text[2],'- 대화 연습 중: 3분 20초 · 1번');assert.equal(text[3],'- 연못(홈): 2분 5초 · 1번');assert.equal(text[5],'누른 것: 친구 만지기 1번');
+ assert.equal(u.usageText(u.usageOn(g,E)).split('\n')[0],`폴짝 머문 시간 · 1일 (${E})`);assert(u.usageText({}).includes('아직'));
+ assert(!/\d{2}:\d{2}/.test(u.usageText(g)),'no time of day in what is copied');
 });
 console.log(`${n} usage checks passed. The timer itself (screens, background, sleep) is checked in the browser.`);

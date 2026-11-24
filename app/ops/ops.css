@@ -65,3 +65,11 @@
 .ops-frogs strong{font-size:15px;color:#35404f;overflow-wrap:anywhere}
 .ops-frogs li.is-hidden strong{opacity:.55}
 .ops-frogs .secondary{min-height:38px;padding:6px 12px;font-size:13px;width:100%}
+
+/* 0.49.0 — where the cohort's time went */
+.ops-dwell-total{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 10px;font-size:13px;color:#6c798a}
+.ops-dwell-total strong{font-size:24px;font-weight:750;letter-spacing:-.5px;color:#1f2a37;font-variant-numeric:tabular-nums}
+.ops-bar-cell{display:inline-block;width:88px;height:7px;margin-right:8px;border-radius:4px;background:#eeede8;overflow:hidden;vertical-align:middle}
+.ops-bar-cell i{display:block;height:100%;min-width:2px;border-radius:4px;background:#5bb5e3}
+.ops-acts{margin-top:10px}
+.ops-tag{margin-left:8px;padding:2px 8px;border-radius:999px;background:#e9f9fd;font-size:11px;font-weight:600;color:#2f7ea8}
