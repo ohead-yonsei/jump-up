@@ -33,11 +33,32 @@ export const pondPromises=[
  {rule:'한 번에 하나씩 자라요',from:'뒷다리 먼저',means:'미션은 한 장씩만 보여요.'},
  {rule:'지나온 것은 힘이 돼요',from:'꼬리',means:'모은 것은 줄어들지 않아요.'},
 ] as const;
-/** Things the friend says about itself when touched, by stage — real frog habits in its own voice. */
+/** Things the friend says about itself when touched, by stage — a real frog habit turned toward the person (0.52.0):
+ * not ‘my hind legs tickle’ but what that habit says to someone taking their time. Each line leans on a story in the notebook above. */
 export const frogSays:Record<Growth,string[]>={
- egg:['젤리 속은 포근해','톡, 누가 불렀어?'],
- tadpole:['아직은 아가미로 숨 쉬어','뒷다리가 간질간질해'],
- froglet:['꼬리가 힘이 되는 중이야','물은 피부로 마셔!'],
- frog:['촉촉한 게 좋아','개굴, 같이 울어줄래?'],
- grown:['웅크렸다가, 폴짝!','따뜻한 날엔 노래가 빨라져'],
+ egg:['젤리 속에서도 자라는 중이야','깨어나는 날은 저마다 달라'],
+ tadpole:['뒷다리부터, 한 번에 하나씩','숨 쉬는 법도 천천히 배워'],
+ froglet:['지나온 꼬리가 힘이 돼','가만히 있어도 채워져'],
+ frog:['겨울엔 나도 가만히 쉬어','멈췄다가도 다시 뛸 수 있어'],
+ grown:['웅크린 건 뛰려는 준비야','날마다 박자가 달라도 돼'],
 };
+/** What the friend says when it is touched: a tap (jump), a stroke on the head (pat), a long press (hug), a turn (spin), and after something done (cheer).
+ * 0.52.0, from feedback that ‘간질간질’ and ‘헤헤, 좋아’ read oddly: no baby talk and no sound words. Short words of comfort for someone who has
+ * kept to themselves — glad you came, your pace is enough, resting is fine, I am here. Never a push (‘힘내’, ‘할 수 있어’) and never a comparison. */
+export type Touch='jump'|'pat'|'hug'|'spin'|'cheer';
+export const touchLines:Record<Touch,string[]>={
+ jump:['와줘서 반가워','네 속도면 충분해','오늘도 만났네'],
+ pat:['곁에 있어줘서 고마워','오늘 하루도 애썼어','그냥 와도 좋아'],
+ hug:['여기 있어줘서 고마워','내가 옆에 있을게','천천히 숨 쉬자'],
+ spin:['돌아가도 괜찮아','천천히 봐도 돼'],
+ cheer:['해본 것만으로 충분해','작은 폴짝도 대단해','오늘의 너, 고마워'],
+};
+/** The egg and the tadpole cannot hop or hug yet, so they answer in their own way: growing unseen, a little at a time. */
+export const youngTouchLines:Partial<Record<Growth,Record<Touch,string[]>>>={
+ egg:{jump:['천천히 자라는 중이야','서두르지 않을게'],pat:['네 손이 따뜻해','와줘서 고마워'],hug:['같이 있으니 포근해','여기서 기다릴게'],spin:['안에 있어도 자라고 있어'],cheer:['네 덕분에 자라고 있어','천천히, 곧 만나']},
+ tadpole:{jump:['조금씩이면 충분해','오늘도 와줬구나'],pat:['네가 와서 반가워','곁에 있어줘서 좋아'],hug:['같이 있자, 천천히','고마워, 든든해'],spin:['돌아가도 괜찮아'],cheer:['한 번이면 충분해','오늘의 너, 고마워']},
+};
+/** The line for a touch at this stage. */
+export const touchPool=(growth:Growth,kind:Touch)=>(youngTouchLines[growth]??touchLines)[kind];
+/** What the friend says while it is being made: its name first, then a welcome. */
+export const introLines=(name:string,growth:Growth)=>growth==='egg'?[`안녕, 나는 ${name}`,'천천히 만나자','와줘서 고마워']:[`안녕, 나는 ${name}`,'만나서 반가워','네 속도로 가자'];

@@ -13,7 +13,7 @@
 .burst i:nth-child(3n){color:#f2b3a6}.burst i:nth-child(3n+1){color:#f0cf62}
 .burst-pat i,.burst-hug i{color:#f39b9b!important;font-size:19px}
 @keyframes burst{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-62px) scale(1.1)}}
-.frog3d-bubble{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:#fff;color:#384455;font-size:13px;font-weight:650;letter-spacing:-.2px;padding:8px 14px;border-radius:16px;box-shadow:0 8px 22px #35404f1f;white-space:nowrap;pointer-events:none;animation:bubble 1.9s ease forwards;z-index:2}
+.frog3d-bubble{position:absolute;left:50%;top:4%;transform:translateX(-50%);background:#fff;color:#384455;font-size:13px;font-weight:650;letter-spacing:-.2px;padding:8px 14px;border-radius:16px;box-shadow:0 8px 22px #35404f1f;white-space:nowrap;pointer-events:none;animation:bubble 2.6s ease forwards;z-index:2}
 .frog3d-bubble:after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);border-radius:0 0 3px 0}
 @keyframes bubble{0%{opacity:0;transform:translate(-50%,8px) scale(.85)}12%{opacity:1;transform:translate(-50%,0) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-6px)}}
 .frog-still{position:relative;display:block;width:100%;aspect-ratio:1;border-radius:inherit}
