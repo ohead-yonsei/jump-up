@@ -90,12 +90,12 @@ export function validSync(value: unknown): { participant: string; entries: Entry
   const v = value as Record<string, unknown>;
   if (!Array.isArray(v.entries) || v.entries.length > MAX_SYNC_ENTRIES || !Array.isArray(v.visits) || v.visits.length > 730) return null;
   const participant = typeof v.participant === 'string' && validParticipant(v.participant) ? v.participant : '';
-  const entries = validEntries(v.entries).filter(e => /^[A-Za-z0-9-]{1,64}$/.test(e.id) && !e.id.startsWith('usage-')).map(storedEntry);
+  const entries = validEntries(v.entries).filter(e => /^[A-Za-z0-9-]{1,64}$/.test(e.id) && !e.id.startsWith('usage-') && !e.id.startsWith('ops-')).map(storedEntry);
   return { participant, entries, visits: validVisits(v.visits).filter(validDay), usage: validUsage(v.usage) };
 }
 
 /** One person's records as the operator pages see them: a pseudonymous code, never a name. */
-export type ParticipantRecords = { id: string; code: string; joinedAt: string; lastSyncAt: string | null; entries: Entry[]; visits: string[]; usage?: Usage };
+export type ParticipantRecords = { id: string; code: string; joinedAt: string; lastSyncAt: string | null; entries: Entry[]; visits: string[]; usage?: Usage; skipDwell?: boolean };
 const koreanDay = (at: string) => seoulDay(at);
 export function participantSummary(p: ParticipantRecords, now = new Date()) {
   const weekAgo = seoulDay(new Date(now.getTime() - 6 * 864e5));

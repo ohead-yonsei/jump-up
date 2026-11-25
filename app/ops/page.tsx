@@ -6,7 +6,7 @@ import {opsKey,readSession,stillValid,OPS_COOKIE} from '@/lib/cohort-server';
 import {testCohortCode} from '@/lib/test-cohort';
 import type {Pad,VillageFrog} from '@/lib/pond';
 import {cohortDwell,clockLabel,screenLabel,actionLabel} from '@/lib/usage';
-import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,ChangeEndDate,CopyButton,PadToggle,FrogToggle} from '@/components/ops-forms';
+import {OpsLogin,LogoutButton,CreateCohort,RotateOperatorCode,ChangeEndDate,CopyButton,PadToggle,FrogToggle,DwellToggle} from '@/components/ops-forms';
 import './ops.css';
 export const dynamic='force-dynamic';
 export const metadata:Metadata={title:'폴짝 운영',robots:{index:false,follow:false}};
@@ -15,17 +15,18 @@ const when=(at:string|null)=>at?new Date(at).toLocaleString('ko-KR',{timeZone:'A
 const mind=(p:ReturnType<typeof participantSummary>)=>{const f=p.firstCheckin,l=p.lastCheckin;if(!f)return '아직 없음';const pair=(a?:number,b?:number)=>l?`${a??'-'}→${b??'-'}`:`${a??'-'}`;return `편안함 ${pair(f.calm,l?.calm)} · 대화 ${pair(f.talk,l?.talk)} · 바깥 ${pair(f.outside,l?.outside)}`;};
 function Shell({children,role}:{children:React.ReactNode;role?:string}){return <div className="ops"><header className="ops-bar"><a href="/ops" className="ops-brand">폴짝 운영</a>{role&&<span className="ops-role">{role}</span>}{role&&<LogoutButton/>}</header><main className="ops-main">{children}</main></div>;}
 async function origin(){const h=await headers();return `${h.get('x-forwarded-proto')??'http'}://${h.get('x-forwarded-host')??h.get('host')}`;}
-function People({people}:{people:ParticipantRecords[]}){
+function People({people,cohort}:{people:ParticipantRecords[];cohort:string}){
  if(!people.length)return <p className="ops-empty">아직 함께하는 사람이 없어요. 위의 참여 링크나 기수 코드를 기관 담당자에게 전해 주세요.</p>;
  const now=new Date();
- return <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>참여 코드</th><th>함께한 날</th><th>마지막으로 받은 때</th><th>연 날</th><th>활동한 날</th><th>최근 7일 활동</th><th>마음 체크 (처음→최근)</th><th>연락 버튼</th><th>한마디</th><th title="가장 최근 답. 써보니 · 돌보고 싶은 마음 · 마음의 변화(3이 그대로), 1~5">돌아보기 (써보니·돌봄·마음)</th><th title="화면이 보이고 최근 2분 안에 누른 적이 있을 때만 센 시간이에요">머문 시간</th><th>가장 오래 머문 곳</th></tr></thead>
-  <tbody>{people.map(p=>{const s=participantSummary(p,now);return <tr key={p.id}><th scope="row">{p.code}</th><td>{md(seoulDay(p.joinedAt))}</td><td>{when(p.lastSyncAt)}</td><td>{s.visitDays}일</td><td>{s.activeDays}일</td><td>{s.recentActiveDays}일</td><td className="ops-mind">{mind(s)}</td><td>{s.contactTaps}번</td><td>{s.notes}개</td><td>{Object.values(s.review).some(v=>v!==null)?Object.values(s.review).map(v=>v??'-').join(' · '):'-'}</td><td>{s.dwell.seconds?clockLabel(s.dwell.seconds):'-'}</td><td>{s.dwell.most?screenLabel[s.dwell.most]:'-'}</td></tr>;})}</tbody></table></div>;
+ return <div className="ops-table-wrap"><table className="ops-table"><thead><tr><th>참여 코드</th><th>함께한 날</th><th>마지막으로 받은 때</th><th>연 날</th><th>활동한 날</th><th>최근 7일 활동</th><th>마음 체크 (처음→최근)</th><th>연락 버튼</th><th>한마디</th><th title="가장 최근 답. 써보니 · 돌보고 싶은 마음 · 마음의 변화(3이 그대로), 1~5">돌아보기 (써보니·돌봄·마음)</th><th title="화면이 보이고 최근 2분 안에 누른 적이 있을 때만 센 시간이에요">머문 시간</th><th>가장 오래 머문 곳</th><th title="테스트로 써 본 사람이나 운영진처럼, 기수 전체 머문 시간에 넣지 않을 사람을 빼요. 보낸 기록은 지워지지 않아요">머문 시간 집계</th></tr></thead>
+  <tbody>{people.map(p=>{const s=participantSummary(p,now);return <tr key={p.id} className={p.skipDwell?'is-skipped':undefined}><th scope="row">{p.code}{p.skipDwell&&<span className="ops-tag">집계 제외</span>}</th><td>{md(seoulDay(p.joinedAt))}</td><td>{when(p.lastSyncAt)}</td><td>{s.visitDays}일</td><td>{s.activeDays}일</td><td>{s.recentActiveDays}일</td><td className="ops-mind">{mind(s)}</td><td>{s.contactTaps}번</td><td>{s.notes}개</td><td>{Object.values(s.review).some(v=>v!==null)?Object.values(s.review).map(v=>v??'-').join(' · '):'-'}</td><td>{s.dwell.seconds?clockLabel(s.dwell.seconds):'-'}</td><td>{s.dwell.most?screenLabel[s.dwell.most]:'-'}</td><td><DwellToggle cohort={cohort} participant={p.id} skip={!!p.skipDwell}/></td></tr>;})}</tbody></table></div>;
 }
-/** Where the cohort's time went (0.49.0): everyone's seconds by place added up, longest first. Only people whose membership sends the numbers are in it. */
+/** Where the cohort's time went (0.49.0): everyone's seconds by place added up, longest first. People an operator left out (0.56.0) are not in it. */
 function Dwell({people}:{people:ParticipantRecords[]}){
- const d=cohortDwell(people);
- if(!d.rows.length)return <p className="ops-empty">아직 받은 숫자가 없어요. 함께하는 사람이 폴짝을 쓰면 1분 안에 머문 시간이 여기에 모여요.</p>;
- return <>
+ const skipped=people.filter(p=>p.skipDwell);const d=cohortDwell(people.filter(p=>!p.skipDwell));
+ const left=skipped.length>0&&<p className="ops-note">집계에서 뺀 {skipped.length}명({skipped.map(p=>p.code).join(', ')})의 숫자는 아래에 넣지 않았어요. 위 표의 ‘머문 시간 집계’에서 다시 넣을 수 있어요.</p>;
+ if(!d.rows.length)return <>{left}<p className="ops-empty">{skipped.length?'집계에 넣을 숫자가 아직 없어요.':'아직 받은 숫자가 없어요. 함께하는 사람이 폴짝을 쓰면 1분 안에 머문 시간이 여기에 모여요.'}</p></>;
+ return <>{left}
   <p className="ops-dwell-total"><strong>{clockLabel(d.seconds)}</strong><span>{d.members}명의 숫자를 모두 더했어요 · 한 사람 평균 {clockLabel(Math.round(d.seconds/Math.max(1,d.members)))}</span></p>
   <div className="ops-table-wrap"><table className="ops-table ops-dwell"><thead><tr><th>곳</th><th>머문 시간(합계)</th><th>전체에서</th><th>머문 사람</th><th>한 사람 평균</th><th>연 횟수</th></tr></thead>
    <tbody>{d.rows.map(r=><tr key={r.screen}><th scope="row">{screenLabel[r.screen]}</th><td>{clockLabel(r.seconds)}</td><td><span className="ops-bar-cell"><i style={{width:`${Math.round(r.share*100)}%`}}/></span>{Math.round(r.share*100)}%</td><td>{r.members}명</td><td>{clockLabel(r.perMember)}</td><td>{r.opens}번</td></tr>)}</tbody></table></div>
@@ -42,7 +43,7 @@ function Pads({pads,people}:{pads:Pad[];people:ParticipantRecords[]}){
 }
 function Frogs({frogs,people,cohort}:{frogs:VillageFrog[];people:ParticipantRecords[];cohort:string}){
  const shown=frogs.filter(f=>f.card);
- if(!shown.length)return <p className="ops-empty">아직 연못 마을에 모습을 보이기로 한 개구리가 없어요.</p>;
+ if(!shown.length)return <p className="ops-empty">아직 연못 마을에 다녀간 개구리가 없어요.</p>;
  const code=new Map(people.map(p=>[p.id,p.code]));
  return <ul className="ops-frogs">{shown.map(f=><li key={f.participantId} className={f.hidden?'is-hidden':undefined}><div><strong>{f.card!.name}</strong><span>{code.get(f.participantId)??'-'} · {f.seenOn} 다녀감</span></div>{f.hidden&&<span className="ops-pad-state">내려둠 · 본인만 봐요</span>}<FrogToggle id={f.participantId} cohort={cohort} hidden={f.hidden}/></li>)}</ul>;
 }
@@ -56,13 +57,13 @@ function CohortView({cohort,people,pads,frogs,link,admin,test}:{cohort:Cohort;pe
    <p>링크를 열면 앱의 ‘기록’ 탭에 기수 코드가 채워져 있어요. 참여자가 무엇이 전달되는지 읽고 동의해야 참여가 시작돼요.{test&&' 이 기수는 테스트 기간의 기본 기수예요. 폴짝을 쓰기 시작한 사람은 코드 없이 저절로 여기에 함께해요.'}</p>
   </section>
   <section className="ops-people"><div className="ops-section-top"><h2>함께하는 사람 {people.length}명</h2>{people.length>0&&<a className="secondary" href={`/api/ops/cohorts?id=${cohort.id}`}>CSV 내려받기</a>}</div>
-   <People people={people}/>
+   <People people={people} cohort={cohort.id}/>
    <p className="ops-note">참여자는 가명인 참여 코드로만 보여요. 실제 참여자와 참여 코드는 기관에서 따로 이어서 관리해 주세요. 기수에서 나간 사람의 기록은 바로 지워져요. 날짜는 한국 시간 기준이에요.</p></section>
-  <section className="ops-people"><h2>머문 시간</h2><p className="ops-note">어느 곳에 오래 머물렀는지 기수 전체로 본 숫자예요. 화면이 보이고 마지막으로 누른 지 2분이 지나지 않았을 때만 센 시간이라 실제보다 짧게 잡혀요. 절대값보다 곳 사이의 비율로 읽어 주세요. 사람별 합계는 위 표에, 날짜별·곳별 숫자는 CSV에 있어요(<code>usage</code>·<code>action</code> 줄).</p>
+  <section className="ops-people"><h2>머문 시간</h2><p className="ops-note">어느 곳에 오래 머물렀는지 기수 전체로 본 숫자예요. 화면이 보이고 마지막으로 누른 지 2분이 지나지 않았을 때만 센 시간이라 실제보다 짧게 잡혀요. 절대값보다 곳 사이의 비율로 읽어 주세요. 사람별 합계는 위 표에, 날짜별·곳별 숫자는 CSV에 있어요(<code>usage</code>·<code>action</code> 줄). 테스트로 써 본 사람이나 운영진은 위 표의 ‘빼기’로 이 집계에서 뺄 수 있어요. 빼도 그 사람의 기록과 CSV 숫자는 그대로예요.</p>
    <Dwell people={people}/></section>
   <section className="ops-people"><h2>연못 마을의 연잎</h2><p className="ops-note">참여자가 기수 연못에 띄우기로 고른 사진과 한 줄 글이에요. 다른 참여자에게는 연잎과 날짜만 보이고, 누가 띄웠는지는 이 화면에서만 보여요. 연못에 맞지 않는 연잎은 ‘내려두기’로 숨겨요. 띄운 사람에게는 ‘운영진이 잠시 내려두었어요’로 보이고, 다시 띄울 수도 있어요. 걱정되는 연잎이라면 기관의 방식으로 그 참여자에게 먼저 안부를 물어봐 주세요.</p>
    <Pads pads={pads} people={people}/></section>
-  <section className="ops-people"><h2>연못 마을의 개구리</h2><p className="ops-note">모습을 보이기로 고른 참여자의 개구리 이름이에요. 같은 기수 사람들에게는 다녀간 날에만 개구리와 이름이 보여요. 이름이 연못에 맞지 않으면 ‘내려두기’로 숨겨요. 본인에게는 ‘운영진이 잠시 내려두었어요’로 보여요. 주고받은 응원은 이 화면에도 보이지 않아요.</p>
+  <section className="ops-people"><h2>연못 마을의 개구리</h2><p className="ops-note">연못 마을에 다녀간 참여자의 개구리 이름이에요. 같은 기수 사람들에게는 다녀간 날에만 개구리와 이름이 보여요. 이름이 연못에 맞지 않으면 ‘내려두기’로 숨겨요. 본인에게는 ‘운영진이 잠시 내려두었어요’로 보여요. 주고받은 응원은 이 화면에도 보이지 않아요.</p>
    <Frogs frogs={frogs} people={people} cohort={cohort.id}/></section>
   <section className="ops-people"><h2>기간</h2><p className="ops-note">한 달 해보고 더 하고 싶은 사람이 많다면 연장해요. 마치는 날이 지나면 새로 들어올 수 없고, 이미 함께하는 사람은 계속 기록을 보내요.</p><ChangeEndDate id={cohort.id} startsOn={cohort.startsOn} endsOn={cohort.endsOn}/></section>
   {admin&&<section className="ops-people"><h2>운영자 코드</h2><p className="ops-note">기관 담당자는 운영자 코드로 이 기수만 볼 수 있어요. 코드를 잃어버렸다면 새로 만들어 주세요.</p><RotateOperatorCode id={cohort.id}/></section>}

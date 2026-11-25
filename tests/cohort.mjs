@@ -73,6 +73,11 @@ await test('a cohort keeps each record once, counts Korean days and forgets peop
  const rated=c.participantSummary({...first,entries:[...first.entries,{id:'r1',at:'2026-11-03T03:00:00.000Z',type:'feedback',title:'돌아보기 · 써보니',energy:null,missionId:'review-use',rating:4}]},new Date('2026-11-04T00:00:00Z'));assert.equal(rated.notes,1,'a rating is not a note');assert.equal(rated.review['review-use'],4);
  const csv=c.cohortCsv([first,second]);const lines=csv.split('\r\n');
  assert.equal(lines.filter(l=>l.includes('participant_code')).length,1);assert(lines.some(l=>l.startsWith('"P02","summary"')));assert(csv.includes(`"'=좋아요"`));
+ // 0.56.0: an operator can leave a person out of 머문 시간; only within their own cohort, and leaving clears the mark.
+ assert.equal(first.skipDwell,false);assert.equal(await store.setDwellSkip(cohort.id,a.id,true),true);assert.equal((await store.cohortRecords(cohort.id)).find(p=>p.id===a.id).skipDwell,true);
+ assert.equal(await store.setDwellSkip('other-cohort',a.id,true),false);assert.equal(await store.setDwellSkip(cohort.id,'nobody',true),false);
+ await store.setDwellSkip(cohort.id,a.id,false);assert.equal((await store.cohortRecords(cohort.id)).find(p=>p.id===a.id).skipDwell,false);
+ assert.equal(c.validSync({participant:'P07',entries:[{...entries[0],id:'ops-skip'}],visits:[]}).entries.length,0,'members cannot send the operator mark');
  assert.equal((await store.listCohorts())[0].participants,2);assert.equal(await store.memberCount(cohort.id),2);
  await store.setEndsOn(cohort.id,'2026-12-31');assert.equal((await store.cohort(cohort.id)).endsOn,'2026-12-31');
  await assert.rejects(()=>store.saveRecords(a.id,'P01',Array.from({length:st.MAX_STORED_ENTRIES},(_,i)=>step('bulk'+i,'2026-11-03T03:00:00.000Z')),[]),st.TooManyRecords);
@@ -93,7 +98,7 @@ await test('Supabase calls use the server key, never read hashes back, cap and a
  const pid='22222222-2222-4222-8222-222222222222',cid='11111111-1111-4111-8111-111111111111';const calls=[];let stored=3;
  const fake=async(url,init)=>{calls.push({url,init});const u=new URL(url);const path=u.pathname.split('/').at(-1);const offset=u.searchParams.get('offset');const method=init.method??'GET';
   if(method==='GET'&&path==='entries'&&init.headers.Prefer==='count=exact')return new Response('[]',{headers:{'content-range':`0-0/${stored}`}});
-  if(method==='GET'&&path==='participants')return Response.json(offset==='0'?[{id:pid,cohort_id:cid,code:'P01',joined_at:'2026-11-02T00:00:00Z',last_sync_at:null}]:[]);
+  if(method==='GET'&&path==='participants')return Response.json(offset==='0'||u.searchParams.get('select')==='id'?[{id:pid,cohort_id:cid,code:'P01',joined_at:'2026-11-02T00:00:00Z',last_sync_at:null}]:[]);
   if(method==='GET'&&path==='entries')return Response.json(offset==='0'?Array.from({length:1000},(_,i)=>({participant_id:pid,data:step('e'+i,'2026-11-02T04:00:00.000Z')})):offset==='1000'?[{participant_id:pid,data:step('last','2026-11-03T04:00:00.000Z')}]:[]);
   if(method==='GET'&&path==='visits')return Response.json(offset==='0'?[{participant_id:pid,day:'2026-11-02'}]:[]);
   if(method==='GET')return Response.json([]);
@@ -116,6 +121,11 @@ await test('Supabase calls use the server key, never read hashes back, cap and a
  assert.equal(await store.cohort('not-a-uuid'),null);assert.deepEqual(await store.cohortRecords('not-a-uuid'),[]);assert.equal(await store.memberCount('not-a-uuid'),0);
  await store.setEndsOn(cid,'2026-12-31');const period=calls.at(-1);assert.equal(period.init.method,'PATCH');assert.deepEqual(JSON.parse(period.init.body),{ends_on:'2026-12-31'});
  await store.memberCount(cid);assert.match(decodeURIComponent(calls.at(-1).url),/cohorts\?select=participants\(count\)&id=eq\./);
+ // 0.56.0: the 머문 시간 mark is checked against the cohort, then written as one 'ops-skip' row or deleted.
+ calls.length=0;assert.equal(await store.setDwellSkip(cid,pid,true),true);assert.match(decodeURIComponent(calls[0].url),new RegExp(`participants\\?select=id&id=eq\\.${pid}&cohort_id=eq\\.${cid}`));
+ assert.deepEqual({...JSON.parse(calls[1].init.body),at:0},{participant_id:pid,id:'ops-skip',at:0,type:'ops-skip',data:{}});assert.match(calls[1].init.headers.Prefer,/merge-duplicates/);
+ await store.setDwellSkip(cid,pid,false);assert.equal(calls.at(-1).init.method,'DELETE');assert.match(decodeURIComponent(calls.at(-1).url),/entries\?participant_id=eq\.[^&]+&id=eq\.ops-skip$/);
+ assert.equal(await store.setDwellSkip('not-a-uuid',pid,true),false);
  await store.ping();assert.equal(calls.at(-1).url,'https://example.supabase.co/rest/v1/cohorts?select=id&limit=1','the keep-alive is one small read');assert.equal(calls.at(-1).init.method,'GET');await st.memoryStore().ping();
  assert(calls.every(c=>!/select=[^&]*(operator_hash|token_hash)/.test(decodeURIComponent(c.url))));
  const legacy=[];await st.supabaseStore('https://example.supabase.co','eyJhbGciOi.legacy',async(url,init)=>{legacy.push(init);return Response.json([])}).cohortByJoinCode('7K3QPW2M');assert.equal(legacy[0].headers.Authorization,'Bearer eyJhbGciOi.legacy');
