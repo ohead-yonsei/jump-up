@@ -13,12 +13,12 @@ const REACH=84;const PANORAMA='/art/pond-village-pano.webp';
  * among the frogs that came by today, the floating pads and the village keeper. Frogs whose owners are here right now move as they
  * steer; the others drift on their own. Both look the same, so the pond does not say who is online.
  * lib/pond-scene.ts draws it; this component decides who is where each frame and keeps the name labels (real buttons) over the canvas. */
-export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,changed=0,onChanged,onOpen,onUnknown,onMoved}:{changed?:number;onChanged?:()=>void;frogs:FrogView[];pads:PadView[];mine:FrogCard|null;showFrog:boolean;live:Live|null;token:string;busy:boolean;
+export function PondMap({frogs,pads,mine,live,token,busy,picture,changed=0,onChanged,onOpen,onUnknown,onMoved}:{changed?:number;onChanged?:()=>void;frogs:FrogView[];pads:PadView[];mine:FrogCard|null;live:Live|null;token:string;busy:boolean;
  picture:(card:FrogCard,angle:number)=>Promise<string>;onOpen:(near:Near)=>void;onUnknown:()=>void;onMoved?:()=>void}){
  const viewRef=useRef<HTMLDivElement>(null);const canvasRef=useRef<HTMLCanvasElement>(null);const stickRef=useRef<HTMLDivElement>(null);const knobRef=useRef<HTMLSpanElement>(null);
  const sceneRef=useRef<PondScene|null>(null);const [ready,setReady]=useState(false);const [failed,setFailed]=useState(false);
  const labels=useRef(new Map<string,HTMLElement>());const spots=useRef(new Map<string,Point>());const liveAt=useRef(new Map<string,Move&{at:number}>());
- const myFrog=frogs.find(f=>f.mine);const myId=showFrog&&myFrog&&!myFrog.hidden?myFrog.id:null;
+ const myFrog=frogs.find(f=>f.mine);const myId=myFrog&&!myFrog.hidden?myFrog.id:null;
  const others=useMemo(()=>frogs.filter(f=>!f.mine),[frogs]);const othersRef=useRef(others);othersRef.current=others;
  const padSpots=useMemo(()=>pads.map((p,i)=>({pad:p,...padSpot(p.id,i)})),[pads]);const padSpotsRef=useRef(padSpots);padSpotsRef.current=padSpots;
  const me=useRef<Point|null>(null);const dir=useRef<Point>({x:0,y:0});const keys=useRef(new Set<string>());const goal=useRef<Point|null>(null);const movedRef=useRef(false);
@@ -139,7 +139,7 @@ export function PondMap({frogs,pads,mine,showFrog,live,token,busy,picture,change
   <div className={'map-labels'+(failed?' as-list':'')}>
    <button ref={setLabel(KEEPER.id)} type="button" className="village-name keeper-name world-label" aria-label={`${KEEPER.name}, 마을에 사는 개구리`} onClick={()=>onOpen({kind:'keeper'})}>{KEEPER.name}</button>
    {drawn.map(f=><button key={f.id} ref={setLabel(f.id)} type="button" className="village-name world-label" aria-label={`${f.name}, 오늘 다녀간 개구리`} onClick={()=>onOpen({kind:'frog',frog:f})}>{f.name}</button>)}
-   {mine&&<button ref={setLabel('me')} type="button" className="village-name world-label is-me" aria-label={`${mine.name}, 내 개구리${showFrog?'':'. 다른 사람에게는 보이지 않아요'}`} onClick={()=>myFrog&&onOpen({kind:'frog',frog:myFrog})}>{mine.name}</button>}
+   {mine&&<button ref={setLabel('me')} type="button" className="village-name world-label is-me" aria-label={`${mine.name}, 내 개구리`} onClick={()=>myFrog&&onOpen({kind:'frog',frog:myFrog})}>{mine.name}</button>}
   </div>
   {/* The pads are drawn in 3D; this list gives each one a real button for screen readers and keyboards. */}
   <ul className={failed?'map-pad-list':'sr-only'} aria-label="연못에 떠 있는 연잎">{pads.map(p=><li key={p.id}><button type="button" onClick={()=>onOpen({kind:'pad',pad:p})}>{padName(p)}{p.mine?', 내 연잎':''}</button></li>)}</ul>

@@ -54,6 +54,12 @@ export function FrogToggle({id,cohort,hidden}:{id:string;cohort:string;hidden:bo
  async function toggle(){setBusy(true);setError('');try{await send('/api/ops/pond',{frog:id,cohort,hidden:!hidden});router.refresh();}catch(e){setError(failed(e));}finally{setBusy(false);}}
  return <><button className="secondary" disabled={busy} onClick={toggle}>{busy&&<LoaderCircle className="spin" size={14}/>}{hidden?'다시 보이기':'내려두기'}</button>{error&&<p className="ops-error" role="alert">{error}</p>}</>;
 }
+/** Leaves one person out of the cohort's 머문 시간 numbers (a test run, a staff member), or counts them again. Nothing they sent is removed. */
+export function DwellToggle({cohort,participant,skip}:{cohort:string;participant:string;skip:boolean}){
+ const router=useRouter();const [busy,setBusy]=useState(false);const [error,setError]=useState('');
+ async function toggle(){setBusy(true);setError('');try{await send('/api/ops/cohorts',{action:'dwell',id:cohort,participant,skip:!skip});router.refresh();}catch(e){setError(failed(e));}finally{setBusy(false);}}
+ return <><button className="secondary ops-small" disabled={busy} onClick={toggle}>{busy&&<LoaderCircle className="spin" size={14}/>}{skip?'다시 넣기':'빼기'}</button>{error&&<p className="ops-error" role="alert">{error}</p>}</>;
+}
 /** Takes one lily pad down from the cohort's pond, or floats it again. Nothing is deleted; the person who floated it still sees it. */
 export function PadToggle({id,hidden}:{id:string;hidden:boolean}){
  const router=useRouter();const [busy,setBusy]=useState(false);const [error,setError]=useState('');

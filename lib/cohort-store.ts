@@ -50,6 +50,9 @@ export interface CohortStore {
   cohortFrogs(cohortId: string): Promise<VillageFrog[]>;
   /** An operator taking a frog out of the village, or putting it back. */
   setFrogHidden(participantId: string, hidden: boolean): Promise<void>;
+  /** An operator leaving one person (a test run, a staff member) out of the cohort's time-by-place numbers, or putting them back.
+   * Nothing they sent is removed. False when the person is not in that cohort. */
+  setDwellSkip(cohortId: string, participantId: string, skip: boolean): Promise<boolean>;
   /** One cheer per sender, target and day; sending again that day changes nothing. */
   addCheer(c: { cohortId: string; fromId: string; toId: string; target: string; kind: CheerKind; day: string }): Promise<void>;
   /** The cheers this person received, and the ones they sent (so the screen can show what is already sent today). */
@@ -86,8 +89,8 @@ export function folderShelf(dir: string): PhotoShelf {
   };
 }
 
-type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; usage: Record<string, Usage>; pads: Pad[]; frogs: VillageFrog[]; cheers: Cheer[] };
-const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, usage: {}, pads: [], frogs: [], cheers: [] });
+type Data = { cohorts: (Cohort & { operatorHash: string })[]; participants: (Participant & { tokenHash: string })[]; entries: Record<string, Entry[]>; visits: Record<string, string[]>; usage: Record<string, Usage>; dwellSkip: string[]; pads: Pad[]; frogs: VillageFrog[]; cheers: Cheer[] };
+const emptyData = (): Data => ({ cohorts: [], participants: [], entries: {}, visits: {}, usage: {}, dwellSkip: [], pads: [], frogs: [], cheers: [] });
 /** Keeps everything in one object, for tests and, through `fileStore`, local development. Photos sit on their own shelf. */
 export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise<void> = async () => {}, kind: 'memory' | 'file' = 'memory', shelf: PhotoShelf = memoryShelf()): CohortStore {
   const cohort = ({ operatorHash: _, ...c }: Data['cohorts'][number]): Cohort => c;
@@ -133,13 +136,13 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
       const mine = d.pads.filter(p => p.participantId === id);
       await shelf.remove(mine.filter(p => p.kind === 'photo').map(photoKey));
       const gone = new Set(mine.map(p => 'pad:' + p.id));
-      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; delete d.usage[id]; d.pads = d.pads.filter(p => p.participantId !== id);
+      d.participants = d.participants.filter(p => p.id !== id); delete d.entries[id]; delete d.visits[id]; delete d.usage[id]; d.dwellSkip = d.dwellSkip.filter(x => x !== id); d.pads = d.pads.filter(p => p.participantId !== id);
       // Their frog goes, and so do the cheers they sent and received.
       d.frogs = d.frogs.filter(f => f.participantId !== id); d.cheers = d.cheers.filter(c => c.fromId !== id && c.toId !== id && !gone.has(c.target));
       await persist(d);
     },
     async cohortRecords(cohortId) {
-      return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [], usage: d.usage[p.id] ?? {} }));
+      return d.participants.filter(p => p.cohortId === cohortId).map(p => ({ ...person(p), entries: d.entries[p.id] ?? [], visits: d.visits[p.id] ?? [], usage: d.usage[p.id] ?? {}, skipDwell: d.dwellSkip.includes(p.id) }));
     },
     async addPad(p) {
       if (d.pads.filter(x => x.participantId === p.participantId).length >= MAX_PADS_PER_PERSON) throw new TooManyPads();
@@ -164,6 +167,11 @@ export function memoryStore(d: Data = emptyData(), persist: (d: Data) => Promise
     },
     async cohortFrogs(cohortId) { return d.frogs.filter(f => f.cohortId === cohortId).map(f => ({ ...f, card: f.card && { ...f.card, equipped: { ...f.card.equipped } } })); },
     async setFrogHidden(participantId, hidden) { const f = d.frogs.find(x => x.participantId === participantId); if (f) { f.hidden = hidden; await persist(d); } },
+    async setDwellSkip(cohortId, participantId, skip) {
+      if (!d.participants.some(p => p.id === participantId && p.cohortId === cohortId)) return false;
+      d.dwellSkip = d.dwellSkip.filter(x => x !== participantId); if (skip) d.dwellSkip.push(participantId);
+      await persist(d); return true;
+    },
     async addCheer(c) {
       if (d.cheers.some(x => x.fromId === c.fromId && x.target === c.target && x.day === c.day)) return;
       d.cheers.push({ ...c, at: new Date().toISOString() }); await persist(d);
@@ -182,6 +190,7 @@ export function fileStore(file: string): CohortStore {
       let data = emptyData();
       try { data = { ...data, ...JSON.parse(await fs.readFile(file, 'utf8')) }; } catch {}
       // Pads floated before text pads existed are all photos.
+      data.dwellSkip ??= [];
       data.pads = data.pads.map(p => ({ ...p, kind: p.kind ?? 'photo', text: p.text ?? '' }));
       return work(memoryStore(data, async d => { await fs.mkdir(path.dirname(file), { recursive: true }); await fs.writeFile(file, JSON.stringify(d, null, 1)); }, 'file', shelf));
     });
@@ -212,6 +221,7 @@ export function fileStore(file: string): CohortStore {
     arrive: a => run(s => s.arrive(a)),
     cohortFrogs: cohortId => run(s => s.cohortFrogs(cohortId)),
     setFrogHidden: (participantId, hidden) => run(s => s.setFrogHidden(participantId, hidden)),
+    setDwellSkip: (cohortId, participantId, skip) => run(s => s.setDwellSkip(cohortId, participantId, skip)),
     addCheer: c => run(s => s.addCheer(c)),
     cheersOf: participantId => run(s => s.cheersOf(participantId)),
     ping: async () => {},
@@ -293,6 +303,8 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
   // Time-by-place numbers live in `entries` as one row a day (type 'usage', id 'usage-<day>'), so no new table is needed.
   // They are not records: they are replaced when the day is sent again, and they do not count toward the record limit.
   const USAGE = 'usage';
+  // An operator's ‘leave out of 머문 시간’ mark is one more such row (type and id 'ops-skip'); members cannot send an id starting with 'ops-'.
+  const SKIP = 'ops-skip';
   async function storedCount(id: string, table: 'entries' | 'pads' = 'entries') {
     const response = await fetcher(`${base}${table}?select=id&participant_id=${eq(id)}${table === 'entries' ? '&type=neq.' + USAGE : ''}&limit=1`, { headers: { ...auth, Prefer: 'count=exact' }, cache: 'no-store', signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error('supabase_' + response.status);
@@ -359,7 +371,7 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
       return people.map(p => {
         const mine = entries.filter(e => e.participant_id === p.id);
         const usage = validUsage(Object.fromEntries(mine.filter(e => e.type === USAGE).map(e => [e.id.slice(USAGE.length + 1), e.data])));
-        return { ...toParticipant(p), entries: mine.filter(e => e.type !== USAGE).map(e => e.data), visits: visits.filter(v => v.participant_id === p.id).map(v => v.day), usage };
+        return { ...toParticipant(p), entries: mine.filter(e => e.type !== USAGE && e.type !== SKIP).map(e => e.data), visits: visits.filter(v => v.participant_id === p.id).map(v => v.day), usage, skipDwell: mine.some(e => e.type === SKIP && e.id === SKIP) };
       });
     },
     async addPad(p) {
@@ -391,6 +403,14 @@ export function supabaseStore(url: string, key: string, fetcher: typeof fetch = 
     async cohortFrogs(cohortId) {
       if (!uuid(cohortId)) return [];
       return (await pages<FrogRow>(`frogs?select=${frogColumns}&cohort_id=${eq(cohortId)}&order=participant_id.asc`)).map(toFrog);
+    },
+    async setDwellSkip(cohortId, participantId, skip) {
+      if (!uuid(cohortId) || !uuid(participantId)) return false;
+      const found = await call<{ id: string }[]>(`participants?select=id&id=${eq(participantId)}&cohort_id=${eq(cohortId)}&limit=1`);
+      if (!found.length) return false;
+      if (skip) await call('entries?on_conflict=participant_id,id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: { participant_id: participantId, id: SKIP, at: new Date().toISOString(), type: SKIP, data: {} } });
+      else await call(`entries?participant_id=${eq(participantId)}&id=${eq(SKIP)}`, { method: 'DELETE', prefer: 'return=minimal' });
+      return true;
     },
     async setFrogHidden(participantId, hidden) { if (uuid(participantId)) await call('frogs?participant_id=' + eq(participantId), { method: 'PATCH', prefer: 'return=minimal', body: { hidden } }); },
     async addCheer(c) {
