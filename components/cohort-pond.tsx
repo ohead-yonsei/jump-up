@@ -74,7 +74,7 @@ const same=<T,>(a:T,b:T):T=>JSON.stringify(a)===JSON.stringify(b)?a:b;
 /** 연못 마을: the cohort's shared pond, drawn as a small map (PondMap) where the member steers their own frog among the frogs that
  * came by today and the pads people floated. Pads never say who floated them; a frog shows only when its owner chose to. No counts,
  * and nothing marks who is here right now; cheers are set phrases that only the receiver sees. */
-export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onToast,onBack,onJoin,leaves,onHelp}:{leaves:number;onHelp:()=>void;token:string|null;game:CharacterGame;showFrog:boolean|undefined;onShowFrog:(show:boolean)=>void;draft?:string;onDraftUsed?:()=>void;onToast:(text:string)=>void;onBack:()=>void;onJoin:()=>void}){
+export function CohortPond({token,game,draft,onDraftUsed,onToast,onBack,onJoin,leaves,onHelp}:{leaves:number;onHelp:()=>void;token:string|null;game:CharacterGame;draft?:string;onDraftUsed?:()=>void;onToast:(text:string)=>void;onBack:()=>void;onJoin:()=>void}){
  const [sound,toggleSound]=useSoundSwitch();
  const [village,setVillage]=useState<Village|null>(null);const [photos,setPhotos]=useState<Record<string,string>>({});const owned=useRef<string[]>([]);
  const [error,setError]=useState('');const [picked,setPicked]=useState<{blob:Blob;url:string}|null>(null);const [preparing,setPreparing]=useState(false);const [busy,setBusy]=useState(false);
@@ -82,7 +82,7 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  const [open,setOpen]=useState<Open|null>(null);const [removing,setRemoving]=useState(false);const [again,setAgain]=useState(0);const [panel,setPanel]=useState<'more'|'compose'|null>(null);const [host,setHost]=useState<Element|null>(null);
  useEffect(()=>{setHost(document.querySelector('.app-root'));},[]);const [moved,setMoved]=useState(false);
  const fileRef=useRef<HTMLInputElement>(null);const sheetRef=useRef<HTMLDialogElement>(null);const confirmRef=useRef<HTMLElement>(null);
- const mine=frogCard(game);const cardKey=showFrog&&mine?JSON.stringify(mine):'';
+ const mine=frogCard(game);const cardKey=mine?JSON.stringify(mine):'';
  const pads=village?.pads??null;const setPads=(change:(list:PadView[])=>PadView[])=>setVillage(v=>v&&{...v,pads:change(v.pads)});
  const keep=(url:string)=>{owned.current.push(url);return url;};
  const seq=useRef(0);const refresh=useRef<()=>void>(()=>{});const [changed,setChanged]=useState(0);const told=()=>{seq.current++;setChanged(n=>n+1);};
@@ -134,26 +134,20 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
  const padButton=(p:PadView,size?:number)=><LilyPad id={p.id} photo={photos[p.id]} text={p.kind==='text'?p.text:undefined} size={size} label={padLabel(p)} onClick={()=>{setOpen({pad:p});setRemoving(false);}}>{p.hidden?<span className="pad-tag quiet"><EyeOff size={11}/>내려둠</span>:p.mine?<span className="pad-tag">내 연잎</span>:null}</LilyPad>;
  const target=!open||open.keeper?'':open.pad?'pad:'+open.pad.id:'frog:'+open.frog.id;const isMine=!open||open.keeper?true:(open.pad??open.frog).mine;const cheered=!!target&&!!village?.sent.includes(target);
  const composing=!!picked||writing;
- const closePanel=()=>{cancel();setPanel(null);};const asking=showFrog===undefined&&!!mine;
+ const closePanel=()=>{cancel();setPanel(null);};
  // The village takes the whole screen: the app's own header and tabs stay underneath until the member steps out.
  // It is mounted on the app's root so that no scrolling or animated parent can clip it.
  if(!host)return null;
  return createPortal(<div className="pond-screen">
   <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={choose}/>
-  <PondMap frogs={frogs} pads={scenePads} mine={mine} showFrog={!!showFrog} live={village?.live??null} token={token} busy={busy} picture={pondPicture} changed={changed} onChanged={()=>refresh.current()}
+  <PondMap frogs={frogs} pads={scenePads} mine={mine} live={village?.live??null} token={token} busy={busy} picture={pondPicture} changed={changed} onChanged={()=>refresh.current()}
    onOpen={n=>{sfx(n.kind==='pad'?'open':'ribbit',{vol:.8});setRemoving(false);setOpen(n.kind==='frog'?{frog:n.frog}:n.kind==='pad'?{pad:n.pad}:{keeper:true});}} onUnknown={()=>setAgain(n=>n+1)} onMoved={()=>setMoved(true)}/>
   <div className="world-top"><button type="button" className="world-round" aria-label="연못 마을에서 나가기" onClick={onBack}><LogOut size={18}/></button><span className="world-title"><strong>폴짝</strong><i aria-hidden="true"/>연못 마을</span>
    <span className="world-top-right"><span className="world-leaves" role="img" aria-label={`모은 잎 ${leaves}잎`}><Leaf size={14}/><strong>{leaves}</strong></span><button type="button" className="world-round help" aria-label="지금 도움이 필요해요" onClick={onHelp}><Heart size={18}/></button><button type="button" className="world-round" role="switch" aria-checked={sound} aria-label="연못 소리" onClick={toggleSound}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button type="button" className="world-round" aria-label="연못 마을 더보기" onClick={()=>setPanel('more')}><MoreHorizontal size={20}/></button></span></div>
   {village===null&&<p className="pond-quiet world-loading" role="status"><LoaderCircle className="spin" size={15}/>연못을 살피고 있어요</p>}
-  {!panel&&!asking&&!moved&&<p className="world-hint">조이스틱으로 움직이고, 화면을 옆으로 밀면 둘러볼 수 있어요</p>}
-  {!panel&&!asking&&<button type="button" className="world-float" disabled={preparing||busy} onClick={()=>{setError('');setPanel('compose');}}><PenLine size={16}/>연잎 띄우기</button>}
+  {!panel&&!moved&&<p className="world-hint">조이스틱으로 움직이고, 화면을 옆으로 밀면 둘러볼 수 있어요</p>}
+  {!panel&&<button type="button" className="world-float" disabled={preparing||busy} onClick={()=>{setError('');setPanel('compose');}}><PenLine size={16}/>연잎 띄우기</button>}
   {error&&!panel&&<p className="error world-error" role="alert">{error}</p>}
-  {asking&&<div className="world-panel world-ask">
-  {showFrog===undefined&&mine&&<section className="village-ask" aria-label="내 개구리 보여주기"><span className="village-ask-frog"><VillageFrog card={mine}/></span>
-   <h3>{mine.name}도 마을에 보여줄까요?</h3>
-   <ul><li>개구리 이름과 모습이 같은 기수 사람들에게 ‘오늘 다녀간 개구리’로 보여요.</li><li>참여 코드, 기록, 내가 띄운 연잎이 누구 것인지는 보이지 않아요.</li><li>구경만 해도 괜찮고, 아래에서 언제든 바꿀 수 있어요.</li></ul>
-   <div className="button-row"><button className="secondary" onClick={()=>onShowFrog(false)}>구경만 할게요</button><button className="primary" onClick={()=>{onShowFrog(true);haptic(10);}}>보여줄게요</button></div></section>}
-  </div>}
   {panel==='compose'&&<div className="world-panel" role="dialog" aria-label="연잎 띄우기"><button className="icon-button close" aria-label="닫기" onClick={closePanel}><X size={21}/></button>
    {!composing&&<><h3 className="world-panel-title">연잎 한 장 띄우기</h3><p className="world-panel-note">띄운 연잎은 같은 기수 사람들이 눌러 볼 수 있어요. 누가 띄웠는지는 보이지 않아요.</p>
     <div className="village-float"><button className="secondary" disabled={preparing||busy} onClick={()=>fileRef.current?.click()}>{preparing?<LoaderCircle className="spin" size={17}/>:<Camera size={17}/>}사진 연잎</button><button className="secondary" disabled={preparing||busy} onClick={()=>{setError('');setWriting(true);}}><PenLine size={17}/>글 연잎</button></div></>}
@@ -174,10 +168,9 @@ export function CohortPond({token,game,showFrog,onShowFrog,draft,onDraftUsed,onT
   {!!village?.cheers.length&&<section className="village-cheers" aria-label="내게 온 응원"><div className="village-cheers-top"><h3>내게 온 응원</h3><span><Lock size={11}/>나만 봐요</span></div>
    <ul>{village.cheers.map((c,i)=><li key={i}><span aria-hidden="true">{cheerOf(c.kind).emoji}</span><strong>{cheerOf(c.kind).text}</strong><small>{day(c.day)} · {c.on==='pad'?'내 연잎에':'내 개구리에게'}</small></li>)}</ul>
    <p>누가 보냈는지는 보여주지 않아요. 다른 사람이 받은 응원도 보이지 않아요.</p></section>}
-  {mine&&showFrog!==undefined&&<div className="village-show"><span><strong>내 개구리 보여주기</strong><small>{showFrog?`마을에 온 날, ${mine.name}의 이름과 모습이 같은 기수 사람들에게 보여요.`:'지금은 구경만 해요. 다른 사람에게 내 개구리가 보이지 않아요.'}</small></span><button type="button" role="switch" aria-checked={showFrog} aria-label="내 개구리 보여주기" className={'switch'+(showFrog?' on':'')} onClick={()=>onShowFrog(!showFrog)}><span/></button></div>}
   {rest.length>0&&(more?<section className="pond-water" aria-label="지난 연잎"><div className="pond-pads">{rest.map((p,i)=><div key={p.id} className={'pad-spot'+(p.hidden?' is-hidden':'')} style={{zIndex:rest.length-i,'--rise':`${padLook(p.id).rise}px`,'--tilt':`${padLook(p.id).tilt}deg`} as React.CSSProperties}>{padButton(p)}</div>)}</div></section>
    :<button className="text-button village-more" onClick={()=>setMore(true)}>지난 연잎도 보기<ArrowRight size={15}/></button>)}
-  <div className="small-note pond-note"><ShieldCheck size={19}/><p>좋아요 숫자나 순위는 없어요. 응원은 정해진 말로만 보내고, 받은 사람만 봐요. 지금 누가 접속해 있는지는 따로 표시하지 않아요. 내 개구리를 보여주기로 했다면, 마을에 있는 동안 움직이는 모습이 같은 기수 사람들에게 보여요. 연잎과 개구리는 같은 기수 사람들과 기수 운영진만 보고, 운영진은 마을에 맞지 않는 것을 잠시 내려둘 수 있어요. 기수에서 나가면 내 연잎과 개구리, 주고받은 응원도 함께 지워져요.</p></div>
+  <div className="small-note pond-note"><ShieldCheck size={19}/><p>좋아요 숫자나 순위는 없어요. 응원은 정해진 말로만 보내고, 받은 사람만 봐요. 지금 누가 접속해 있는지는 따로 표시하지 않아요. 마을에 있는 동안 내 개구리의 이름과 움직이는 모습이 같은 기수 사람들에게 보여요. 연잎과 개구리는 같은 기수 사람들과 기수 운영진만 보고, 운영진은 마을에 맞지 않는 것을 잠시 내려둘 수 있어요. 기수에서 나가면 내 연잎과 개구리, 주고받은 응원도 함께 지워져요.</p></div>
   </div>}
   <dialog ref={sheetRef} className="pad-sheet" aria-label={open?.pad?'연잎 크게 보기':'개구리 만나기'} onClose={()=>setOpen(null)} onClick={e=>{if(e.target===sheetRef.current)setOpen(null)}}><div className="dialog-content">{open&&<>
    <button className="icon-button close" aria-label="닫기" onClick={()=>setOpen(null)}><X size={21}/></button>
