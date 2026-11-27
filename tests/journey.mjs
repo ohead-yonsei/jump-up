@@ -32,3 +32,14 @@ console.log(`${n} Poljjak journey checks passed.`);
  test('a scale result is kept with the profile, and a broken one is dropped',()=>{const r=l.scaleResult([3,3,0,0,0,0],new Date('2026-11-12T03:00:00Z'));assert.deepEqual(r,{answers:[3,3,0,0,0,0],total:18,level:5,at:'2026-11-12'});const p={...j.createProfile(1,l.connectionFromLevel(r.level),'rhythm'),scale:r};assert.deepEqual(j.validProfile(p).scale,r);assert.equal('scale' in j.validProfile({...p,scale:{answers:[9],total:1,level:1,at:'x'}}),false);assert.equal('scale' in j.validProfile(j.createProfile(1,1,'rhythm')),false);assert.equal(l.validScale({answers:[0,0,3,3,3,3],total:99,level:5,at:'2026-11-12'}).level,1)});
  console.log(`${n} journey tests passed (with scale)`);
 }
+// ‘해볼게요’ → ‘해봤어요’ (0.57.0): the mission being tried is remembered for the day only.
+{
+ await fs.writeFile(new URL('doing.js',out),ts.transpileModule(await fs.readFile(new URL('../lib/doing.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+ const d=await import(new URL('doing.js',out));
+ test('a mission being tried is kept for its own day, and anything else is let go',()=>{
+  assert.equal(d.doingToday({id:'outside-walk',day:'2026-11-27'},'2026-11-27'),'outside-walk');assert.equal(d.doingToday({id:'outside-walk',day:'2026-11-26'},'2026-11-27'),null);
+  for(const bad of [null,'outside-walk',{},{id:5,day:'2026-11-27'},{id:'<b>',day:'2026-11-27'},{id:'a-'+'b'.repeat(60),day:'2026-11-27'},{id:'outside-walk'}])assert.equal(d.doingToday(bad,'2026-11-27'),null);
+  for(const m of j.springMissions)assert.equal(d.doingToday({id:m.id,day:'x'},'x'),m.id,m.id);
+ });
+ console.log('1 mission-in-progress test passed');
+}

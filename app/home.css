@@ -165,10 +165,23 @@
 /* 0.34.0 · the cheer after a mission: about five seconds, then it closes on its own */
 .complete-meaning{margin:10px 0 0!important;font-size:12.5px!important;font-weight:650;color:var(--accent)!important}
 .complete-timer{display:block;width:120px;height:4px;margin:16px auto 2px;border-radius:2px;background:#e3eef2;overflow:hidden}
-.complete-timer i{display:block;height:100%;border-radius:2px;background:var(--accent);transform-origin:left;animation:complete-timer 5.2s linear both}
+.complete-timer i{display:block;height:100%;border-radius:2px;background:var(--accent);transform-origin:left;animation:complete-timer 5.2s linear 3.2s both}
 .spring-complete.auto .frog-says{font-size:15px!important;padding:12px 16px}
 @keyframes complete-timer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.complete-timer i{animation:none}}
+/* 0.58.0 — the cheer after a mission comes one line at a time: the friend's words, the leaves, what comes next. Nothing lands on top of anything else. */
+.spring-complete .reveal{animation:complete-reveal .7s cubic-bezier(.2,.7,.3,1) both;animation-delay:var(--d,0s)}
+@keyframes complete-reveal{from{opacity:0;visibility:hidden;transform:translateY(8px)}}
+.complete-leaves{display:inline-flex;align-items:center;gap:5px;margin:12px 0 0!important;padding:6px 12px;border-radius:999px;background:#ffffffb8;font-size:12.5px!important;font-weight:650;color:#4d6b3c!important}
+.complete-leaves svg{color:#6ba24a;flex-shrink:0}
+.complete-action{display:flex;flex-direction:column;align-items:center;width:100%}
+.complete-action>.secondary{margin:20px 0 7px}
+@media (prefers-reduced-motion:reduce){.spring-complete .reveal{animation:none}}
+/* 0.57.0 — ‘해볼게요’ first: the mission being tried is marked on the home and inside its card. */
+.today-mission.is-doing{border-color:var(--accent);background:linear-gradient(135deg,#fff,var(--sky))}
+.today-mission .category b{font-weight:750;color:var(--accent)}
+.mission-detail.is-doing{border-color:var(--accent)}
+.mission-doing-note{margin:16px 0 12px;font-size:12.5px;line-height:1.6;color:#6b7684}
 .evolve-go{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:190px;height:52px;margin:16px auto 0;padding:0 24px;border-radius:26px;background:linear-gradient(135deg,#2f4a6b,#16233a);color:#ffd56b;font-size:16px;font-weight:750;box-shadow:0 6px 18px #16233a40;animation:evolve-go 1.8s ease-in-out infinite}
 .evolve-go:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .complete-frog.ready-evolve{animation:ready-evolve 1.2s ease-in-out infinite}

@@ -57,16 +57,27 @@ await test('an area name is found by place, then by address, and reported back',
  await assert.rejects(p.searchPlaces({kind:'cafe',near:'파리'},'k',fake([['/search/keyword.json',ok([{place_name:'파리',x:'2.35',y:'48.85'}])]],[])),e=>e.code==='not_found');
  await assert.rejects(p.searchPlaces({kind:'cafe',lat:37.4,lng:127.1},'k',fake([],[])),e=>e.code==='unavailable');
 });
+await test('youth spaces keep public places named for 청년, searched under both of their names',async()=>{
+ const youth=[doc(1,1849,{place_name:'성남시청년지원센터 청년이봄',category_name:'사회,공공기관 > 단체,협회'}),doc(2,1226,{place_name:'청년문화공간JU',category_name:'문화,예술 > 문화시설'}),doc(3,2628,{place_name:'권선청소년청년센터',category_name:'교육,학문 > 교육단체 > 청소년수련시설'}),
+  doc(4,2627,{place_name:'권선청소년청년센터 주차장',category_name:'교통,수송 > 교통시설 > 주차장'}),doc(5,2610,{place_name:'서대문청년창업센터',category_name:'사회,공공기관 > 단체,협회 > 사회복지단체'}),doc(6,1235,{place_name:'천주교 서울대교구 청소년국 청년부',category_name:'문화,예술 > 종교 > 천주교'}),
+  doc(7,1236,{place_name:'청년문화공간동교동',category_name:'음식점 > 카페'}),doc(8,1014,{place_name:'춘천시청년마음건강센터',category_name:'의료,건강 > 상담'}),doc(9,2612,{place_name:'키조',category_name:'가정,생활 > 패션 > 패션잡화점 > 구두,신발'}),doc(10,4807,{place_name:'메리워드청년공간',category_name:'문화,예술 > 종교 > 종교시설'})];
+ assert.deepEqual(p.toPlaces(youth,'youth').map(x=>x.id),['2','1','3']);assert.equal(p.toPlaces(youth,'youth')[0].detail,'');
+ const calls=[];const result=await p.searchPlaces({kind:'youth',lat:37.432,lng:127.129},'k',fake([['/search/keyword.json',ok([youth[0],youth[4]])]],calls));
+ assert.deepEqual(calls.map(c=>c.url.searchParams.get('query')),['청년센터','청년공간']);assert.equal(calls[0].url.searchParams.get('radius'),'5000');assert.deepEqual(result.places.map(x=>x.id),['1']);
+ assert.equal(p.mapLinks('youth','모란역').kakao,'https://map.kakao.com/link/search/'+encodeURIComponent('모란역 청년센터'));
+ assert.deepEqual(p.placeKinds.filter(k=>k.free).map(k=>k.id),['park','library','youth']);
+ const at=(d,h)=>new Date(2026,10,d,h);assert.equal(p.quietHint('youth',at(24,14)).calm,true);assert.equal(p.quietHint('youth',at(21,14)).calm,false);assert.equal(p.quietHint('youth',at(24,19)).calm,false);
+});
 await test('every mission that points to a place exists and maps to a known kind',()=>{
  const ids=new Set(j.springMissions.map(m=>m.id));
  for(const [mission,kind] of Object.entries(p.missionPlaces)){assert(ids.has(mission),mission);assert(p.placeKinds.some(k=>k.id===kind));}
 });
 await test('every kind of place is a lily pad with its own name, and the real word stays beside it',()=>{
- const pads=p.placeKinds.map(k=>k.pad);assert.equal(new Set(pads).size,4);for(const k of p.placeKinds){assert(k.pad.endsWith('연잎'),k.id);assert(k.label.length>=2&&!k.label.includes('연잎'),k.id);}
+ const pads=p.placeKinds.map(k=>k.pad);assert.equal(new Set(pads).size,5);for(const k of p.placeKinds){assert(k.pad.endsWith('연잎'),k.id);assert(k.label.length>=2&&!k.label.includes('연잎'),k.id);}
 });
 await test('stamps count visits by kind from the records, and nothing else',()=>{
- const none=p.padStamps([]);assert.deepEqual(none,{cafe:0,park:0,library:0,store:0});
- const got=p.padStamps([{missionId:'place-cafe'},{missionId:'place-cafe'},{missionId:'place-store'},{missionId:'outside-store'},{missionId:'place-moon'},{},{missionId:'rhythm-water'}]);assert.deepEqual(got,{cafe:2,park:0,library:0,store:1});
+ const none=p.padStamps([]);assert.deepEqual(none,{cafe:0,park:0,library:0,youth:0,store:0});
+ const got=p.padStamps([{missionId:'place-cafe'},{missionId:'place-cafe'},{missionId:'place-store'},{missionId:'outside-store'},{missionId:'place-moon'},{},{missionId:'rhythm-water'}]);assert.deepEqual(got,{cafe:2,park:0,library:0,youth:0,store:1});
 });
 await test('the quiet-hour hint speaks of tendencies at every hour, never as a fact about one place',()=>{
  const at=(d,h,m=0)=>new Date(2026,10,d,h,m);// November 2026: the 21st is a Saturday, the 24th a Tuesday
