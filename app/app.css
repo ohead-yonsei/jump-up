@@ -341,11 +341,15 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .place-search{position:relative;overflow:hidden}
 .place-search h2{padding-right:92px}
 .place-nest{position:absolute;right:6px;top:16px;width:92px;height:auto;pointer-events:none}
-.place-kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px}
+.place-kinds{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:14px}
 .place-kinds button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:66px;padding:0 2px;border-radius:16px;background:#fff;border:1px solid var(--hair);font-size:12.5px;font-weight:600;color:#556274}
 .place-kinds button svg{color:#8a95a3}
 .place-kinds button.selected{background:var(--btn);border-color:var(--accent);color:var(--brand-ink)}
 .place-kinds button.selected svg{color:var(--accent)}
+/* 0.59.0 — kinds a person can walk into without paying say so, on the button and beside the pad's name */
+.place-kinds button{position:relative;letter-spacing:-.3px}
+.place-kinds .free-tag{position:absolute;top:-6px;right:-2px;padding:1px 6px;border-radius:999px;background:#e9f5df;border:1px solid #cfe6bd;font-size:10px;font-weight:700;line-height:1.5;color:#4d7a2f}
+.place-free{display:inline-block;margin:0 0 3px 8px;padding:1px 8px;border-radius:999px;background:#e9f5df;font-size:11px;font-weight:700;color:#4d7a2f;vertical-align:top}
 .place-kind-note{margin-top:10px;padding:11px 13px;border-radius:14px;background:#fff}
 .place-kind-note strong{display:block;font-size:14px;color:#303a47}
 .place-kind-note p{font-size:12.5px;line-height:1.65;color:#5f6b7b;margin-top:2px}
@@ -556,15 +560,15 @@ dialog .dialog-content:before{content:'';position:absolute;left:50%;top:9px;widt
 .place-pad{position:relative;display:inline-grid;place-items:center;flex-shrink:0;color:#fff}
 .place-pad svg:first-child{position:absolute;inset:0;fill:#8ec46a}
 .place-pad>svg+svg{position:relative}
-.place-pad.kind-cafe svg:first-child{fill:#e2a66a}.place-pad.kind-park svg:first-child{fill:#7fbf6a}.place-pad.kind-library svg:first-child{fill:#8fa9d6}.place-pad.kind-store svg:first-child{fill:#6fc2b4}
+.place-pad.kind-cafe svg:first-child{fill:#e2a66a}.place-pad.kind-park svg:first-child{fill:#7fbf6a}.place-pad.kind-library svg:first-child{fill:#8fa9d6}.place-pad.kind-store svg:first-child{fill:#6fc2b4}.place-pad.kind-youth svg:first-child{fill:#b79bd9}
 .place-pad-name{display:inline-flex;align-items:center;gap:5px;margin-bottom:3px;font-size:11.5px;font-weight:700;color:var(--accent)}
 .place-kind-note p.place-quiet{margin-top:8px;padding:8px 10px;border-radius:11px;font-weight:600}
 .place-quiet.calm{background:#eef6e9;color:#44663a!important}.place-quiet.busy{background:#fbf2e2;color:#7a5a22!important}
 .place-quiet small{display:block;margin-top:1px;font-size:10.5px;font-weight:500;opacity:.8}
-.place-stamps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 0;padding:0}
+.place-stamps{list-style:none;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin:14px 0 0;padding:0}
 .place-stamps li{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;text-align:center}
 .place-stamps li:not(.got) .place-pad{opacity:.34;filter:grayscale(1)}
-.place-stamps span:not(.place-pad){font-size:11px;font-weight:700;letter-spacing:-.4px;color:#35404f;white-space:nowrap}
+.place-stamps span:not(.place-pad){font-size:10.5px;font-weight:700;letter-spacing:-.6px;color:#35404f;white-space:nowrap}
 .place-stamps small{font-size:10.5px;color:#7e8999}
 .place-stamps li.got small{color:var(--accent);font-weight:700}
 .place-visit>p.place-stamps-note{margin-top:10px;font-size:12px!important;text-align:center}

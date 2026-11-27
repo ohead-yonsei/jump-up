@@ -26,7 +26,8 @@ export function Frog3D({character,equipped={},growth='frog',framing='full',inter
   setBursts(b=>[...b.slice(-4),{id,kind,x:x===undefined?r.width/2:x-r.left,y:y===undefined?r.height*.35:y-r.top}]);setTimeout(()=>setBursts(b=>b.filter(i=>i.id!==id)),1300);
   // A pat on the head sometimes gets a line about the friend's own frog life (lib/frog-lore.ts).
   const own=touched&&kind==='pat'&&!latest.current.lines&&Math.random()<.4?frogSays[latest.current.look.growth??'frog']:null;
-  const pool=own??latest.current.lines??touchPool(latest.current.look.growth??'frog',kind);setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),BUBBLE_MS);
+  // An empty line means the friend only moves: what it says is shown elsewhere (the cheer after a mission).
+  if(line!==''){const pool=own??latest.current.lines??touchPool(latest.current.look.growth??'frog',kind);setBubble({text:line??pool[Math.floor(Math.random()*pool.length)],id});setTimeout(()=>setBubble(v=>v?.id===id?null:v),BUBBLE_MS);}
   // Only a touch makes a sound: the friend greeting on its own stays quiet, so nothing startles.
   if(touched){haptic(kind==='hug'?[10,40,10]:8);sfx(kind);setHint(false);try{localStorage.setItem(TOUCHED_KEY,'1');}catch{}}latest.current.onReact?.(kind,touched);
  }

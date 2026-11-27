@@ -1,8 +1,8 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import {ArrowRight,ArrowUpRight,Check,Coffee,Trees,Library,Store,LocateFixed,Search,LoaderCircle,MapPin,Footprints,MessageCircle,ShieldCheck} from 'lucide-react';
+import {ArrowRight,ArrowUpRight,Armchair,Check,Coffee,Trees,Library,Store,LocateFixed,Search,LoaderCircle,MapPin,Footprints,MessageCircle,ShieldCheck} from 'lucide-react';
 import {placeKinds,placeKind,mapLinks,formatDistance,coarse,quietHint,type Place,type PlaceKind} from '@/lib/places';
-const kindIcons:Record<PlaceKind,typeof Coffee>={cafe:Coffee,park:Trees,library:Library,store:Store};
+const kindIcons:Record<PlaceKind,typeof Coffee>={cafe:Coffee,park:Trees,library:Library,youth:Armchair,store:Store};
 type Origin={lat:number;lng:number}|{near:string};
 /** A lily pad: every real place is one in the pond, a spot to hop to and rest on. */
 function Pad({kind,size=44,children}:{kind:PlaceKind;size?:number;children?:React.ReactNode}){return <span className={'place-pad kind-'+kind} style={{width:size,height:size}} aria-hidden="true"><svg viewBox="0 0 48 48" width={size} height={size}><path d="M24 3a21 21 0 1 0 19.6 13.4L24 24l7.4-19.7A21 21 0 0 0 24 3z"/></svg>{children}</span>}
@@ -10,7 +10,7 @@ function MapLinks({kind,near,lead}:{kind:PlaceKind;near?:string|null;lead:string
  const links=mapLinks(kind,near);
  return <div className="place-maps"><span>{lead}</span><div><a href={links.kakao} target="_blank" rel="noopener noreferrer">카카오맵<ArrowUpRight size={14}/></a><a href={links.naver} target="_blank" rel="noopener noreferrer">네이버 지도<ArrowUpRight size={14}/></a></div></div>
 }
-/** Cafes, parks, libraries and convenience stores near the person, nearest first. The search point lives only in this screen. */
+/** Cafes, parks, libraries, youth spaces and convenience stores near the person, nearest first. The search point lives only in this screen. */
 /** `practice` is the list of things to say that can be rehearsed first; it sits between the places and the stamps (0.51.0). */
 export function NearbyPlaces({kind,onKind,practice,onVisit,stamps}:{kind:PlaceKind;onKind:(k:PlaceKind)=>void;practice?:React.ReactNode;onVisit:(k:PlaceKind,arrived:boolean)=>void;stamps?:Record<PlaceKind,number>}){
  const [configured,setConfigured]=useState<boolean|null>(null);
@@ -47,8 +47,8 @@ export function NearbyPlaces({kind,onKind,practice,onVisit,stamps}:{kind:PlaceKi
    <img className="place-nest" src="/art/frog-nest.webp" alt="" width={120} height={88}/>
    <span className="step-label"><MapPin size={12}/>가까운 곳 찾기</span>
    <h2>둥지에서 먼저 살펴보고,<br/>가까운 연잎으로 한 번만.</h2>
-   <div className="place-kinds" role="group" aria-label="찾을 곳">{placeKinds.map(k=>{const KindIcon=kindIcons[k.id];return <button key={k.id} type="button" aria-pressed={kind===k.id} className={kind===k.id?'selected':''} onClick={()=>pick(k.id)}><KindIcon size={21}/>{k.label}</button>})}</div>
-   <div className="place-kind-note"><span className="place-pad-name"><Pad kind={kind} size={18}/>{current.pad}</span><strong>{current.title}</strong><p>{current.tip}</p><p className={'place-quiet '+(quiet.calm?'calm':'busy')}>{quiet.text}<small>보통의 경향이에요. 곳마다 달라요.</small></p></div>
+   <div className="place-kinds" role="group" aria-label="찾을 곳">{placeKinds.map(k=>{const KindIcon=kindIcons[k.id];return <button key={k.id} type="button" aria-pressed={kind===k.id} className={kind===k.id?'selected':''} onClick={()=>pick(k.id)}><KindIcon size={21}/>{k.label}{k.free&&<small className="free-tag">무료</small>}</button>})}</div>
+   <div className="place-kind-note"><span className="place-pad-name"><Pad kind={kind} size={18}/>{current.pad}</span>{current.free&&<span className="place-free">돈을 내지 않아도 돼요</span>}<strong>{current.title}</strong><p>{current.tip}</p><p className={'place-quiet '+(quiet.calm?'calm':'busy')}>{quiet.text}<small>보통의 경향이에요. 곳마다 달라요.</small></p></div>
    {configured===false?<MapLinks kind={kind} lead={`지도 앱이 지금 있는 곳 근처의 ${current.obj} 보여줘요.`}/>:<>
     <div className="place-origin"><button className="primary" onClick={locate} disabled={busy||configured===null}><LocateFixed size={17}/>지금 위치로 찾기</button><button className="secondary" aria-expanded={typing} onClick={()=>setTyping(!typing)}><Search size={16}/>동네 이름으로</button></div>
     {typing&&<form className="place-area" onSubmit={e=>{e.preventDefault();const v=area.replace(/\s+/g,' ').trim();if(v.length>=2){located.current++;void search({near:v});}}}><label className="sr-only" htmlFor="place-area">찾을 동네 이름</label><input id="place-area" value={area} maxLength={30} onChange={e=>setArea(e.target.value)} placeholder="예: 모란역, 성남시청" autoComplete="off" enterKeyHint="search"/><button className="primary" disabled={busy||area.trim().length<2}>찾기</button></form>}
